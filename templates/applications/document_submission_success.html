@@ -1,0 +1,272 @@
+{% extends 'applications/base.html' %}
+{% load static %}
+
+{% block title %}Documents Submitted Successfully - {{ application.business_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .success-icon {
+        font-size: 4rem;
+        color: #28a745;
+        margin-bottom: 1rem;
+    }
+    
+    .application-card {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .status-badge {
+        display: inline-block;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 500;
+    }
+    
+    .status-submitted {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    
+    .next-steps {
+        background-color: #f8f9fa;
+        border-left: 4px solid #007bff;
+        padding: 20px;
+        margin: 20px 0;
+    }
+
+    /* Ensure all cards have white backgrounds */
+    .alert-info {
+        background: #e3f2fd !important;
+        color: #1565c0 !important;
+        border: none !important;
+        border-left: 4px solid #2196f3 !important;
+        border-radius: 8px !important;
+        padding: 1rem 1.5rem !important;
+        margin-bottom: 2rem !important;
+    }
+
+    /* Ensure header and footer styling */
+    .fixed-header {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        z-index: 1000 !important;
+        background: linear-gradient(135deg, #1e3a5f 0%, #2c4f7c 100%) !important;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.16) !important;
+        backdrop-filter: blur(10px) !important;
+    }
+
+    .header-content {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        max-width: 1400px !important;
+        margin: 0 auto !important;
+        padding: 1rem 2rem !important;
+    }
+
+    .app-title h1 {
+        color: white !important;
+        font-size: 1.5rem !important;
+        font-weight: 700 !important;
+        margin: 0 !important;
+    }
+
+    .app-title p {
+        color: rgba(255, 255, 255, 0.85) !important;
+        margin: 0.25rem 0 0 0 !important;
+        font-weight: 400 !important;
+    }
+
+    .footer {
+        background: #1e3a5f !important;
+        color: white !important;
+        padding: 3rem 0 2rem !important;
+        margin-top: 4rem !important;
+    }
+
+    .footer-content {
+        max-width: 1200px !important;
+        margin: 0 auto !important;
+        padding: 0 2rem !important;
+        display: grid !important;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)) !important;
+        gap: 2rem !important;
+    }
+
+    .footer-section h4 {
+        margin-bottom: 1rem !important;
+        font-size: 1.1rem !important;
+        color: white !important;
+    }
+
+    .footer-links {
+        list-style: none !important;
+        padding: 0 !important;
+    }
+
+    .footer-links li {
+        margin-bottom: 0.5rem !important;
+    }
+
+    .footer-links a {
+        color: rgba(255, 255, 255, 0.8) !important;
+        text-decoration: none !important;
+        transition: all 0.3s ease !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
+    }
+
+    .footer-links a:hover {
+        color: white !important;
+    }
+
+    .footer-bottom {
+        border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+        margin-top: 2rem !important;
+        padding-top: 2rem !important;
+        text-align: center !important;
+        color: rgba(255, 255, 255, 0.7) !important;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .header-content {
+            flex-direction: column !important;
+            gap: 1rem !important;
+            padding: 1rem !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Success Header Card -->
+            <div class="application-card text-center mb-5">
+                <div class="success-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h2 class="text-success mb-3">Documents Submitted Successfully!</h2>
+                <p class="lead text-muted">
+                    Thank you for completing your document submission. Your application is now under review.
+                </p>
+            </div>
+            
+            <!-- Application Details -->
+            <div class="application-card">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5 class="text-primary mb-3">
+                            <i class="fas fa-building"></i> Application Details
+                        </h5>
+                        <p><strong>Business Name:</strong> {{ application.business_name }}</p>
+                        <p><strong>Tracking Code:</strong> <code>{{ application.tracking_code }}</code></p>
+                        <p><strong>Application Date:</strong> {{ application.created_at|date:"F d, Y" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h5 class="text-primary mb-3">
+                            <i class="fas fa-info-circle"></i> Current Status
+                        </h5>
+                        <p><strong>Status:</strong> 
+                            <span class="status-badge status-submitted">
+                                <i class="fas fa-clock"></i> {{ application.get_status_display }}
+                            </span>
+                        </p>
+                        <p><strong>Last Updated:</strong> {{ application.updated_at|date:"F d, Y H:i" }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Outstanding Request Info -->
+            {% if outstanding_request %}
+            <div class="alert alert-info">
+                <h6><i class="fas fa-info-circle"></i> Document Request Completed</h6>
+                <p class="mb-2"><strong>Requested by:</strong> {{ outstanding_request.requested_by.get_full_name|default:outstanding_request.requested_by.username }}</p>
+                <p class="mb-2"><strong>Requested on:</strong> {{ outstanding_request.created_at|date:"M d, Y H:i" }}</p>
+                <p class="mb-2"><strong>Completed on:</strong> {{ outstanding_request.resolved_at|date:"M d, Y H:i" }}</p>
+                <p class="mb-0"><strong>Message:</strong> {{ outstanding_request.message }}</p>
+            </div>
+            {% endif %}
+            
+            <!-- Next Steps Card -->
+            <div class="application-card">
+                <h5 class="text-primary mb-3">
+                    <i class="fas fa-arrow-right"></i> What Happens Next?
+                </h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-search text-info"></i> Document Review</h6>
+                        <p class="small text-muted">
+                            Our team will review all submitted documents to ensure they meet the requirements.
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-envelope text-info"></i> Status Updates</h6>
+                        <p class="small text-muted">
+                            You will receive email notifications about any status changes or additional requirements.
+                        </p>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-clock text-info"></i> Processing Time</h6>
+                        <p class="small text-muted">
+                            Please allow 5-10 business days for complete processing of your application.
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-phone text-info"></i> Contact Support</h6>
+                        <p class="small text-muted">
+                            If you have questions, contact us at support@gcx.com or call +233 123 456 789.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons Card -->
+            <div class="application-card text-center mt-4">
+                <a href="{% url 'applications:application-success' %}" 
+                   class="btn btn-primary btn-lg">
+                    <i class="fas fa-eye"></i> View Application Details
+                </a>
+                <a href="{% url 'applications:application-form' %}" 
+                   class="btn btn-outline-secondary btn-lg ms-2">
+                    <i class="fas fa-plus"></i> Submit New Application
+                </a>
+            </div>
+            
+            <!-- Contact Information Card -->
+            <div class="application-card text-center mt-4">
+                <h6 class="text-muted">Need Help?</h6>
+                <p class="text-muted">
+                    <i class="fas fa-envelope"></i> support@gcx.com | 
+                    <i class="fas fa-phone"></i> +233 123 456 789 | 
+                    <i class="fas fa-clock"></i> Mon-Fri 8AM-5PM
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-refresh status every 30 seconds
+setInterval(function() {
+    // You could add AJAX call here to check for status updates
+    console.log('Checking for status updates...');
+}, 30000);
+</script>
+{% endblock %}

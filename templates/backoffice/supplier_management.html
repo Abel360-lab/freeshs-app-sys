@@ -1,0 +1,477 @@
+{% extends "backoffice/base.html" %}
+
+{% block title %}Supplier Management - GCX Admin Portal{% endblock %}
+
+{% block page_icon %}<i class="fas fa-users"></i>{% endblock %}
+{% block page_title %}Supplier Management{% endblock %}
+{% block page_subtitle %}Manage approved suppliers and their information{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'applications:backoffice-dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Suppliers</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block page_actions %}
+<div class="d-flex gap-2">
+    <button class="btn btn-outline-primary btn-sm" onclick="exportSuppliers()">
+        <i class="fas fa-download"></i> Export
+    </button>
+    <button class="btn btn-primary btn-sm" onclick="addSupplier()">
+        <i class="fas fa-plus"></i> Add Supplier
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Filters and Search -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="search" class="form-label">Search</label>
+                        <input type="text" class="form-control" id="search" name="search" 
+                               value="{{ current_search }}" placeholder="Business name, email, or tracking code...">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="region" class="form-label">Region</label>
+                        <select class="form-select" id="region" name="region">
+                            <option value="">All Regions</option>
+                            {% for region in regions %}
+                            <option value="{{ region.id }}" {% if current_region == region.id|stringformat:"s" %}selected{% endif %}>
+                                {{ region.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="sort" class="form-label">Sort By</label>
+                        <select class="form-select" id="sort" name="sort">
+                            <option value="name">Business Name</option>
+                            <option value="date">Approval Date</option>
+                            <option value="region">Region</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search"></i> Search
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Supplier Stats -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stat-card success">
+            <i class="fas fa-users stat-icon"></i>
+            <div class="stat-value">{{ page_obj.paginator.count }}</div>
+            <div class="stat-label">Total Suppliers</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stat-card info">
+            <i class="fas fa-map-marker-alt stat-icon"></i>
+            <div class="stat-value">{{ regions|length }}</div>
+            <div class="stat-label">Regions Covered</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stat-card warning">
+            <i class="fas fa-calendar stat-icon"></i>
+            <div class="stat-value">{{ this_month_count|default:"0" }}</div>
+            <div class="stat-label">This Month</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stat-card primary">
+            <i class="fas fa-chart-line stat-icon"></i>
+            <div class="stat-value">{{ growth_rate|default:"0" }}%</div>
+            <div class="stat-label">Growth Rate</div>
+        </div>
+    </div>
+</div>
+
+<!-- Suppliers Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">
+                    <i class="fas fa-list"></i>
+                    Approved Suppliers
+                    <span class="badge bg-success ms-2">{{ page_obj.paginator.count }}</span>
+                </h5>
+                <div class="card-actions">
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-outline-secondary btn-sm" onclick="selectAll()">
+                            <i class="fas fa-check-square"></i> Select All
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="clearSelection()">
+                            <i class="fas fa-square"></i> Clear
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if page_obj %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th width="30">
+                                    <input type="checkbox" id="selectAllCheckbox" onchange="toggleAll()">
+                                </th>
+                                <th>Supplier</th>
+                                <th>Contact</th>
+                                <th>Region</th>
+                                <th>Commodities</th>
+                                <th>Approved</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for supplier in page_obj %}
+                            <tr>
+                                <td>
+                                    <input type="checkbox" class="supplier-checkbox" value="{{ supplier.id }}">
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0">
+                                            <div class="supplier-avatar">
+                                                {{ supplier.business_name|first|upper }}
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <h6 class="mb-0">{{ supplier.business_name }}</h6>
+                                            <small class="text-muted">{{ supplier.tracking_code }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <div class="fw-medium">{{ supplier.email }}</div>
+                                        <small class="text-muted">{{ supplier.telephone }}</small>
+                                    </div>
+                                </td>
+                                <td>{{ supplier.region.name|default:"--" }}</td>
+                                <td>
+                                    <div class="commodities-list">
+                                        {% for commodity in supplier.commodities_to_supply.all|slice:":2" %}
+                                        <span class="badge bg-light text-dark me-1">{{ commodity.name }}</span>
+                                        {% endfor %}
+                                        {% if supplier.commodities_to_supply.count > 2 %}
+                                        <span class="badge bg-secondary">+{{ supplier.commodities_to_supply.count|add:"-2" }} more</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <div class="fw-medium">{{ supplier.decided_at|date:"M d, Y"|default:"--" }}</div>
+                                        <small class="text-muted">{{ supplier.decided_at|timesince|default:"--" }} ago</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'applications:backoffice-application-detail' supplier.pk %}" 
+                                           class="btn btn-icon btn-sm btn-outline-primary"
+                                           data-bs-toggle="tooltip" 
+                                           title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <button class="btn btn-icon btn-sm btn-outline-info"
+                                                onclick="viewProfile({{ supplier.id }})"
+                                                data-bs-toggle="tooltip" 
+                                                title="View Profile">
+                                            <i class="fas fa-user"></i>
+                                        </button>
+                                        <button class="btn btn-icon btn-sm btn-outline-success"
+                                                onclick="sendMessage({{ supplier.id }})"
+                                                data-bs-toggle="tooltip" 
+                                                title="Send Message">
+                                            <i class="fas fa-envelope"></i>
+                                        </button>
+                                        <div class="dropdown">
+                                            <button class="btn btn-icon btn-sm btn-outline-secondary dropdown-toggle" 
+                                                    data-bs-toggle="dropdown">
+                                                <i class="fas fa-ellipsis-v"></i>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="#" onclick="editSupplier({{ supplier.id }})">
+                                                    <i class="fas fa-edit me-2"></i>Edit
+                                                </a></li>
+                                                <li><a class="dropdown-item" href="#" onclick="viewDocuments({{ supplier.id }})">
+                                                    <i class="fas fa-folder me-2"></i>Documents
+                                                </a></li>
+                                                <li><a class="dropdown-item" href="#" onclick="viewActivity({{ supplier.id }})">
+                                                    <i class="fas fa-history me-2"></i>Activity
+                                                </a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item text-warning" href="#" onclick="suspendSupplier({{ supplier.id }})">
+                                                    <i class="fas fa-pause me-2"></i>Suspend
+                                                </a></li>
+                                                <li><a class="dropdown-item text-danger" href="#" onclick="removeSupplier({{ supplier.id }})">
+                                                    <i class="fas fa-trash me-2"></i>Remove
+                                                </a></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if page_obj.has_other_pages %}
+                <nav aria-label="Suppliers pagination" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% if current_region %}&region={{ current_region }}{% endif %}{% if current_search %}&search={{ current_search }}{% endif %}">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_region %}&region={{ current_region }}{% endif %}{% if current_search %}&search={{ current_search }}{% endif %}">
+                                <i class="fas fa-angle-left"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% if current_region %}&region={{ current_region }}{% endif %}{% if current_search %}&search={{ current_search }}{% endif %}">{{ num }}</a>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_region %}&region={{ current_region }}{% endif %}{% if current_search %}&search={{ current_search }}{% endif %}">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if current_region %}&region={{ current_region }}{% endif %}{% if current_search %}&search={{ current_search }}{% endif %}">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No suppliers found</h5>
+                    <p class="text-muted">No approved suppliers match your search criteria.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Actions Modal -->
+<div class="modal fade" id="bulkActionsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Bulk Actions</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Select an action to perform on the selected suppliers:</p>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-info" onclick="bulkSendMessage()">
+                        <i class="fas fa-envelope"></i> Send Message
+                    </button>
+                    <button class="btn btn-warning" onclick="bulkSuspend()">
+                        <i class="fas fa-pause"></i> Suspend
+                    </button>
+                    <button class="btn btn-danger" onclick="bulkRemove()">
+                        <i class="fas fa-trash"></i> Remove
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.supplier-avatar {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--accent-color), #22c55e);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.commodities-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(40, 167, 69, 0.05);
+}
+
+.btn-group .btn {
+    margin-right: 2px;
+}
+
+.btn-group .btn:last-child {
+    margin-right: 0;
+}
+</style>
+{% endblock %}
+
+{% block extrajs %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+});
+
+// Selection functions
+function selectAll() {
+    const checkboxes = document.querySelectorAll('.supplier-checkbox');
+    checkboxes.forEach(checkbox => checkbox.checked = true);
+    document.getElementById('selectAllCheckbox').checked = true;
+}
+
+function clearSelection() {
+    const checkboxes = document.querySelectorAll('.supplier-checkbox');
+    checkboxes.forEach(checkbox => checkbox.checked = false);
+    document.getElementById('selectAllCheckbox').checked = false;
+}
+
+function toggleAll() {
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    const checkboxes = document.querySelectorAll('.supplier-checkbox');
+    checkboxes.forEach(checkbox => checkbox.checked = selectAllCheckbox.checked);
+}
+
+// Supplier actions
+function viewProfile(supplierId) {
+    console.log('Viewing profile for supplier:', supplierId);
+    alert('Profile view functionality will be implemented soon.');
+}
+
+function sendMessage(supplierId) {
+    console.log('Sending message to supplier:', supplierId);
+    alert('Message functionality will be implemented soon.');
+}
+
+function editSupplier(supplierId) {
+    console.log('Editing supplier:', supplierId);
+    alert('Edit functionality will be implemented soon.');
+}
+
+function viewDocuments(supplierId) {
+    console.log('Viewing documents for supplier:', supplierId);
+    alert('Document view functionality will be implemented soon.');
+}
+
+function viewActivity(supplierId) {
+    console.log('Viewing activity for supplier:', supplierId);
+    alert('Activity view functionality will be implemented soon.');
+}
+
+function suspendSupplier(supplierId) {
+    if (confirm('Are you sure you want to suspend this supplier?')) {
+        console.log('Suspending supplier:', supplierId);
+        alert('Supplier suspension functionality will be implemented soon.');
+    }
+}
+
+function removeSupplier(supplierId) {
+    if (confirm('Are you sure you want to remove this supplier? This action cannot be undone.')) {
+        console.log('Removing supplier:', supplierId);
+        alert('Supplier removal functionality will be implemented soon.');
+    }
+}
+
+// Bulk actions
+function getSelectedSuppliers() {
+    const checkboxes = document.querySelectorAll('.supplier-checkbox:checked');
+    return Array.from(checkboxes).map(checkbox => checkbox.value);
+}
+
+function bulkSendMessage() {
+    const selected = getSelectedSuppliers();
+    if (selected.length === 0) {
+        alert('Please select at least one supplier.');
+        return;
+    }
+    
+    console.log('Bulk sending message to suppliers:', selected);
+    alert('Bulk message functionality will be implemented soon.');
+}
+
+function bulkSuspend() {
+    const selected = getSelectedSuppliers();
+    if (selected.length === 0) {
+        alert('Please select at least one supplier.');
+        return;
+    }
+    
+    if (confirm(`Are you sure you want to suspend ${selected.length} supplier(s)?`)) {
+        console.log('Bulk suspending suppliers:', selected);
+        alert('Bulk suspension functionality will be implemented soon.');
+    }
+}
+
+function bulkRemove() {
+    const selected = getSelectedSuppliers();
+    if (selected.length === 0) {
+        alert('Please select at least one supplier.');
+        return;
+    }
+    
+    if (confirm(`Are you sure you want to remove ${selected.length} supplier(s)? This action cannot be undone.`)) {
+        console.log('Bulk removing suppliers:', selected);
+        alert('Bulk removal functionality will be implemented soon.');
+    }
+}
+
+function addSupplier() {
+    console.log('Adding new supplier...');
+    alert('Add supplier functionality will be implemented soon.');
+}
+
+function exportSuppliers() {
+    console.log('Exporting suppliers...');
+    alert('Export functionality will be implemented soon.');
+}
+</script>
+{% endblock %}

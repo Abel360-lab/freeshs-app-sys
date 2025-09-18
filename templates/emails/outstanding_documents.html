@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outstanding Documents Required - GCX Supplier Portal</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #fd7e14;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+        }
+        .content {
+            background-color: #f8f9fa;
+            padding: 30px;
+            border-radius: 0 0 8px 8px;
+        }
+        .tracking-code {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .info-box {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            border-left: 4px solid #fd7e14;
+            margin: 20px 0;
+        }
+        .warning-box {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .button {
+            display: inline-block;
+            background-color: #fd7e14;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+            color: #6c757d;
+            font-size: 14px;
+        }
+        .document-list {
+            background-color: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .document-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f3f4;
+        }
+        .document-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>GCX Supplier Application Portal</h1>
+        <p>Outstanding Documents Required</p>
+    </div>
+    
+    <div class="content">
+        <h2>Dear {{ business_name }},</h2>
+        
+        <p>Thank you for your application to become a GCX supplier. Our review team has examined your application and requires additional documents to complete the review process.</p>
+        
+        <div class="tracking-code">
+            Tracking Code: {{ tracking_code }}
+        </div>
+        
+        <div class="warning-box">
+            <h3>⚠️ Action Required</h3>
+            <p>Please upload the following outstanding documents using the secure link provided below. This link will expire on <strong>{{ expires_at|date:"F d, Y" }}</strong>.</p>
+        </div>
+        
+        <div class="document-list">
+            <h3>Outstanding Documents:</h3>
+            {% for requirement in missing_requirements %}
+            <div class="document-item">
+                <strong>{{ requirement.label }}</strong><br>
+                <small>{{ requirement.description }}</small>
+                {% if requirement.condition_note %}
+                <br><small style="color: #6c757d;"><em>{{ requirement.condition_note }}</em></small>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="info-box">
+            <h3>Document Upload Instructions:</h3>
+            <ul>
+                <li>Click the "Upload Documents" button below to access the secure upload page</li>
+                <li>Upload each document individually</li>
+                <li>Accepted file formats: PDF, JPG, JPEG, PNG</li>
+                <li>Maximum file size: 10MB per document</li>
+                <li>Ensure documents are clear and readable</li>
+            </ul>
+        </div>
+        
+        <div style="text-align: center;">
+            <a href="{{ upload_url }}" class="button">Upload Outstanding Documents</a>
+        </div>
+        
+        <div class="info-box">
+            <h4>Important Notes:</h4>
+            <ul>
+                <li>This secure link is unique to your application and will expire in 30 days</li>
+                <li>Do not share this link with anyone else</li>
+                <li>Once all required documents are uploaded and verified, your application will proceed to the next review stage</li>
+                <li>If you have any questions about the required documents, contact us at +233 24 123 4567</li>
+            </ul>
+        </div>
+        
+        <p>We appreciate your cooperation in providing these documents to complete your application.</p>
+        
+        <p>Best regards,<br>
+        <strong>GCX Supplier Portal Review Team</strong></p>
+    </div>
+    
+    <div class="footer">
+        <p>This is an automated message. Please do not reply to this email.</p>
+        <p>&copy; 2025 Ghana Commodity Exchange. All rights reserved.</p>
+    </div>
+</body>
+</html>

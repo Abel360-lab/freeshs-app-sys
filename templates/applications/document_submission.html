@@ -1,0 +1,744 @@
+{% extends 'applications/base.html' %}
+{% load static %}
+
+{% block title %}Complete Document Submission - {{ application.business_name }}{% endblock %}
+
+{% block header_title %}Ghana Commodity Exchange{% endblock %}
+{% block header_subtitle %}Document Submission Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+    .success-icon {
+        font-size: 4rem;
+        color: #28a745;
+        margin-bottom: 1rem;
+    }
+    
+    .application-card {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        background: white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .status-badge {
+        display: inline-block;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 500;
+    }
+    
+    .status-needs-docs {
+        background-color: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+    
+    .next-steps {
+        background-color: #f8f9fa;
+        border-left: 4px solid #007bff;
+        padding: 20px;
+        margin: 20px 0;
+    }
+
+    .info-section {
+        background-color: #e3f2fd;
+        border-left: 4px solid #2196f3;
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 8px;
+    }
+
+    /* Ensure all cards have white backgrounds */
+    .alert-info {
+        background: #e3f2fd !important;
+        color: #1565c0 !important;
+        border: none !important;
+        border-left: 4px solid #2196f3 !important;
+        border-radius: 8px !important;
+        padding: 1rem 1.5rem !important;
+        margin-bottom: 2rem !important;
+    }
+
+    /* File Upload Enhancement - matching old application form */
+    .file-upload-area {
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        padding: 2rem;
+        text-align: center;
+        background: #f8f9fa;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+        margin-bottom: 1rem;
+    }
+    
+    .file-upload-area:hover {
+        border-color: #1e3a5f;
+        background: rgba(30, 58, 95, 0.02);
+    }
+    
+    .file-upload-area.dragover {
+        border-color: #28a745;
+        background: rgba(40, 167, 69, 0.05);
+    }
+    
+    .file-upload-icon {
+        font-size: 3rem;
+        color: #1e3a5f;
+        margin-bottom: 1rem;
+    }
+    
+    .file-upload-text {
+        color: #2c3e50;
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+    
+    .file-upload-hint {
+        color: #6c757d;
+        font-size: 0.875rem;
+    }
+
+    .file-upload-condition {
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid #dee2e6;
+    }
+
+    .file-input-hidden {
+        position: absolute;
+        opacity: 0;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+    }
+
+    /* Form Labels */
+    .form-label {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.75rem;
+        display: block;
+        font-size: 1rem;
+    }
+
+    .required {
+        color: #dc3545;
+        margin-left: 0.25rem;
+    }
+
+    /* Progress Bar */
+    .progress-container {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border: 1px solid #dee2e6;
+    }
+
+    .progress-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .progress-text {
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 1.1rem;
+    }
+
+    .progress-percentage {
+        font-weight: 700;
+        color: #28a745;
+        font-size: 1.1rem;
+    }
+
+    .progress {
+        height: 8px;
+        border-radius: 4px;
+        background: #e9ecef;
+        overflow: hidden;
+    }
+
+    .progress-bar {
+        background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+        transition: width 0.3s ease;
+    }
+
+    /* Buttons */
+    .btn {
+        border-radius: 8px;
+        font-weight: 500;
+        padding: 0.75rem 1.5rem;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+    }
+
+    .btn-primary {
+        background: #1e3a5f;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #1a2f4a;
+        color: white;
+    }
+
+    .btn-success {
+        background: #28a745;
+        color: white;
+    }
+
+    .btn-success:hover {
+        background: #218838;
+        color: white;
+    }
+
+    .btn-outline-secondary {
+        border: 2px solid #dee2e6;
+        color: #6c757d;
+        background: transparent;
+    }
+
+    .btn-outline-secondary:hover {
+        background: #f8f9fa;
+        border-color: #6c757d;
+        color: #2c3e50;
+    }
+
+    .btn-lg {
+        padding: 1rem 2rem;
+        font-size: 1.1rem;
+    }
+
+    /* Loading States */
+    .loading {
+        opacity: 0.6;
+        pointer-events: none;
+    }
+
+    .spinner-border-sm {
+        width: 1rem;
+        height: 1rem;
+    }
+
+    /* Ensure header and footer styling */
+    .fixed-header {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        z-index: 1000 !important;
+        background: linear-gradient(135deg, #1e3a5f 0%, #2c4f7c 100%) !important;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.16) !important;
+        backdrop-filter: blur(10px) !important;
+    }
+
+    .header-content {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        max-width: 1400px !important;
+        margin: 0 auto !important;
+        padding: 1rem 2rem !important;
+    }
+
+    .app-title h1 {
+        color: white !important;
+        font-size: 1.5rem !important;
+        font-weight: 700 !important;
+        margin: 0 !important;
+    }
+
+    .app-title p {
+        color: rgba(255, 255, 255, 0.85) !important;
+        margin: 0.25rem 0 0 0 !important;
+        font-weight: 400 !important;
+    }
+
+    .footer {
+        background: #1e3a5f !important;
+        color: white !important;
+        padding: 3rem 0 2rem !important;
+        margin-top: 4rem !important;
+    }
+
+    .footer-content {
+        max-width: 1200px !important;
+        margin: 0 auto !important;
+        padding: 0 2rem !important;
+        display: grid !important;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)) !important;
+        gap: 2rem !important;
+    }
+
+    .footer-section h4 {
+        margin-bottom: 1rem !important;
+        font-size: 1.1rem !important;
+        color: white !important;
+    }
+
+    .footer-links {
+        list-style: none !important;
+        padding: 0 !important;
+    }
+
+    .footer-links li {
+        margin-bottom: 0.5rem !important;
+    }
+
+    .footer-links a {
+        color: rgba(255, 255, 255, 0.8) !important;
+        text-decoration: none !important;
+        transition: all 0.3s ease !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
+    }
+
+    .footer-links a:hover {
+        color: white !important;
+    }
+
+    .footer-bottom {
+        border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+        margin-top: 2rem !important;
+        padding-top: 2rem !important;
+        text-align: center !important;
+        color: rgba(255, 255, 255, 0.7) !important;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .file-upload-area {
+            padding: 1.5rem;
+        }
+
+        .file-upload-icon {
+            font-size: 2rem;
+        }
+
+        .btn-lg {
+            padding: 0.875rem 1.5rem;
+            font-size: 1rem;
+        }
+
+        .header-content {
+            flex-direction: column !important;
+            gap: 1rem !important;
+            padding: 1rem !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Header Card -->
+            <div class="application-card text-center mb-5">
+                <div class="success-icon">
+                    <i class="fas fa-folder-open"></i>
+                </div>
+                <h2 class="text-primary mb-3">Complete Document Submission</h2>
+                <p class="lead text-muted">
+                    Upload the remaining required documents to complete your application
+                </p>
+            </div>
+            
+            <!-- Application Details -->
+            <div class="application-card">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5 class="text-primary mb-3">
+                            <i class="fas fa-building"></i> Application Details
+                        </h5>
+                        <p><strong>Business Name:</strong> {{ application.business_name }}</p>
+                        <p><strong>Tracking Code:</strong> <code>{{ application.tracking_code }}</code></p>
+                        <p><strong>Application Date:</strong> {{ application.created_at|date:"F d, Y" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h5 class="text-primary mb-3">
+                            <i class="fas fa-info-circle"></i> Current Status
+                        </h5>
+                        <p><strong>Status:</strong> 
+                            <span class="status-badge status-needs-docs">
+                                <i class="fas fa-exclamation-triangle"></i> Needs More Documents
+                            </span>
+                        </p>
+                        <p><strong>Last Updated:</strong> {{ application.updated_at|date:"F d, Y H:i" }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Outstanding Request Info -->
+            {% if outstanding_request %}
+            <div class="info-section">
+                <h6><i class="fas fa-info-circle"></i> Document Request Details</h6>
+                <p class="mb-2"><strong>Requested by:</strong> {{ outstanding_request.requested_by.get_full_name|default:outstanding_request.requested_by.username }}</p>
+                <p class="mb-2"><strong>Requested on:</strong> {{ outstanding_request.created_at|date:"M d, Y H:i" }}</p>
+                <p class="mb-0"><strong>Message:</strong> {{ outstanding_request.message }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Progress Bar -->
+            <div class="progress-container">
+                <div class="progress-info">
+                    <span class="progress-text">Document Completion Progress</span>
+                    <span class="progress-percentage" id="progress-percentage">0%</span>
+                </div>
+                <div class="progress">
+                    <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Document Upload Form -->
+            <div class="application-card">
+                <h5 class="text-primary mb-4">
+                    <i class="fas fa-upload"></i> Upload Required Documents
+                </h5>
+                <p class="text-muted mb-4">
+                    Please upload the remaining required documents below. Files should be in PDF, JPG, or PNG format (max 5MB each). 
+                    You can click to upload or drag and drop files directly onto the upload areas.
+                </p>
+
+                <form id="document-submission-form" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        {% for requirement in required_docs %}
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label">
+                                {{ requirement.label }}
+                                {% if requirement.is_required %}<span class="required">*</span>{% endif %}
+                            </label>
+                            <div class="file-upload-area" data-requirement="{{ requirement.code }}">
+                                <input type="file" 
+                                       class="file-input-hidden document-upload" 
+                                       id="{{ requirement.code|lower }}" 
+                                       name="{{ requirement.code|lower }}" 
+                                       accept=".pdf,.jpg,.jpeg,.png"
+                                       data-required="{% if requirement.is_required %}true{% else %}false{% endif %}"
+                                       {% if requirement.is_required %}required{% endif %}>
+                                <i class="fas fa-cloud-upload-alt file-upload-icon"></i>
+                                <div class="file-upload-text">Click to upload or drag and drop</div>
+                                <div class="file-upload-hint" data-original-hint="{{ requirement.description }}">{{ requirement.description }}</div>
+                                {% if requirement.condition_note %}
+                                <div class="file-upload-condition">
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle"></i> {{ requirement.condition_note }}
+                                    </small>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Submit Buttons -->
+                    <div class="d-flex justify-content-between align-items-center mt-4">
+                        <a href="{% url 'applications:application-success' %}" class="btn btn-outline-secondary btn-lg">
+                            <i class="fas fa-arrow-left"></i> Back to Application
+                        </a>
+                        <button type="submit" class="btn btn-success btn-lg" id="submit-btn">
+                            <i class="fas fa-upload"></i> Upload Documents
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Next Steps Card -->
+            <div class="application-card">
+                <h5 class="text-primary mb-3">
+                    <i class="fas fa-arrow-right"></i> What Happens Next?
+                </h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-search text-info"></i> Document Review</h6>
+                        <p class="small text-muted">
+                            Our team will review all submitted documents to ensure they meet the requirements.
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-envelope text-info"></i> Status Updates</h6>
+                        <p class="small text-muted">
+                            You will receive email notifications about any status changes or additional requirements.
+                        </p>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-clock text-info"></i> Processing Time</h6>
+                        <p class="small text-muted">
+                            Please allow 5-10 business days for complete processing of your application.
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-phone text-info"></i> Contact Support</h6>
+                        <p class="small text-muted">
+                            If you have questions, contact us at support@gcx.com or call +233 123 456 789.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Contact Information Card -->
+            <div class="application-card text-center mt-4">
+                <h6 class="text-muted">Need Help?</h6>
+                <p class="text-muted">
+                    <i class="fas fa-envelope"></i> support@gcx.com | 
+                    <i class="fas fa-phone"></i> +233 123 456 789 | 
+                    <i class="fas fa-clock"></i> Mon-Fri 8AM-5PM
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('document-submission-form');
+        const submitBtn = document.getElementById('submit-btn');
+        const progressBar = document.getElementById('progress-bar');
+        const progressPercentage = document.getElementById('progress-percentage');
+        const fileUploadAreas = document.querySelectorAll('.file-upload-area');
+        const fileInputs = document.querySelectorAll('.document-upload');
+
+        // Debug logging
+        console.log('DEBUG: Form found:', !!form);
+        console.log('DEBUG: Submit button found:', !!submitBtn);
+        console.log('DEBUG: File upload areas found:', fileUploadAreas.length);
+        console.log('DEBUG: File inputs found:', fileInputs.length);
+
+        let uploadedFiles = 0;
+        const totalFiles = {{ required_docs|length|default:0 }};
+
+        // Update progress
+        function updateProgress() {
+            const percentage = totalFiles > 0 ? Math.round((uploadedFiles / totalFiles) * 100) : 0;
+            if (progressBar) progressBar.style.width = percentage + '%';
+            if (progressPercentage) progressPercentage.textContent = percentage + '%';
+        }
+
+        // File upload enhancements (exact same as application form)
+        fileUploadAreas.forEach(area => {
+            const input = area.querySelector('.file-input-hidden');
+            
+            // Handle click on the upload area
+            area.addEventListener('click', function(e) {
+                console.log('DEBUG: File upload area clicked', e.target);
+                // Don't trigger if clicking directly on the input
+                if (e.target === input) return;
+                
+                // If file is already uploaded, allow re-upload
+                if (area.dataset.uploaded === 'true') {
+                    console.log('DEBUG: File already uploaded, allowing re-upload');
+                    area.dataset.uploaded = 'false';
+                    uploadedFiles--;
+                    updateProgress();
+                    resetFileDisplay(area);
+                }
+                
+                // Trigger the file input
+                console.log('DEBUG: Triggering file input click');
+                input.click();
+            });
+            
+            // Handle double-click to clear file
+            area.addEventListener('dblclick', function(e) {
+                if (area.dataset.uploaded === 'true') {
+                    console.log('DEBUG: Double-click detected, clearing file');
+                    input.value = '';
+                    area.dataset.uploaded = 'false';
+                    uploadedFiles--;
+                    updateProgress();
+                    resetFileDisplay(area);
+                }
+            });
+            
+            area.addEventListener('dragover', (e) => {
+                console.log('DEBUG: Drag over detected');
+                e.preventDefault();
+                e.stopPropagation();
+                area.classList.add('dragover');
+            });
+            
+            area.addEventListener('dragenter', (e) => {
+                console.log('DEBUG: Drag enter detected');
+                e.preventDefault();
+                e.stopPropagation();
+                area.classList.add('dragover');
+            });
+            
+            area.addEventListener('dragleave', (e) => {
+                console.log('DEBUG: Drag leave detected');
+                e.preventDefault();
+                e.stopPropagation();
+                area.classList.remove('dragover');
+            });
+            
+            area.addEventListener('drop', (e) => {
+                console.log('DEBUG: File dropped', e.dataTransfer.files.length);
+                e.preventDefault();
+                e.stopPropagation();
+                area.classList.remove('dragover');
+                
+                if (e.dataTransfer.files.length) {
+                    console.log('DEBUG: Setting files on input', e.dataTransfer.files[0].name);
+                    input.files = e.dataTransfer.files;
+                    updateFileDisplay(area, e.dataTransfer.files[0]);
+                }
+            });
+            
+            input.addEventListener('change', (e) => {
+                if (e.target.files.length) {
+                    updateFileDisplay(area, e.target.files[0]);
+                }
+            });
+        });
+
+        function updateFileDisplay(area, file) {
+            console.log('DEBUG: updateFileDisplay called with file:', file.name);
+            const text = area.querySelector('.file-upload-text');
+            const hint = area.querySelector('.file-upload-hint');
+            const icon = area.querySelector('.file-upload-icon');
+            
+            if (text) {
+                text.textContent = file.name;
+                text.style.color = '#28a745';
+                text.style.fontWeight = 'bold';
+            }
+            if (hint) {
+                hint.textContent = `${(file.size / 1024 / 1024).toFixed(2)} MB`;
+                hint.style.color = '#6c757d';
+            }
+            if (icon) {
+                icon.classList.remove('fa-cloud-upload-alt');
+                icon.classList.add('fa-check-circle');
+                icon.style.color = '#28a745';
+            }
+            area.style.borderColor = '#28a745';
+            area.style.backgroundColor = 'rgba(40, 167, 69, 0.05)';
+            console.log('DEBUG: File display updated successfully');
+            
+            // Update progress
+            if (!area.dataset.uploaded) {
+                uploadedFiles++;
+                area.dataset.uploaded = 'true';
+                updateProgress();
+            }
+        }
+
+        function resetFileDisplay(area) {
+            const text = area.querySelector('.file-upload-text');
+            const hint = area.querySelector('.file-upload-hint');
+            const icon = area.querySelector('.file-upload-icon');
+            
+            if (text) {
+                text.textContent = 'Click to upload or drag and drop';
+                text.style.color = '#2c3e50';
+                text.style.fontWeight = '500';
+            }
+            if (hint) {
+                hint.textContent = area.querySelector('.file-upload-hint').getAttribute('data-original-hint') || 'PDF, JPG, PNG up to 10MB';
+                hint.style.color = '#6c757d';
+            }
+            if (icon) {
+                icon.classList.remove('fa-check-circle');
+                icon.classList.add('fa-cloud-upload-alt');
+                icon.style.color = '#1e3a5f';
+            }
+            area.style.borderColor = '#dee2e6';
+            area.style.backgroundColor = '#f8f9fa';
+        }
+
+        // Form submission
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                console.log('DEBUG: Form submit event triggered');
+                e.preventDefault();
+                
+                // Check if at least one file is selected
+                const hasFiles = Array.from(fileInputs).some(input => input.files.length > 0);
+                console.log('DEBUG: Has files:', hasFiles);
+                if (!hasFiles) {
+                    alert('Please select at least one file to upload.');
+                    return;
+                }
+
+            // Show loading state
+            if (submitBtn) {
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Uploading...';
+                submitBtn.disabled = true;
+            }
+            if (form) form.classList.add('loading');
+
+            // Create FormData
+            const formData = new FormData();
+            formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+            // Add files
+            fileInputs.forEach(input => {
+                if (input.files.length > 0) {
+                    formData.append(input.name, input.files[0]);
+                }
+            });
+
+            // Submit via fetch to the upload endpoint
+            const uploadUrl = window.location.href.replace('/submit/', '/upload/');
+            fetch(uploadUrl, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                }
+                throw new Error('Upload failed');
+            })
+            .then(data => {
+                if (data.success) {
+                    // Redirect to success page
+                    window.location.href = "{% url 'applications:document-submission-success' token=application.completion_token %}";
+                } else {
+                    throw new Error(data.message || 'Upload failed');
+                }
+            })
+            .catch(error => {
+                console.error('Upload error:', error);
+                alert('Upload failed. Please try again.');
+                
+                // Reset button state
+                if (submitBtn) {
+                    submitBtn.innerHTML = '<i class="fas fa-upload"></i> Upload Documents';
+                    submitBtn.disabled = false;
+                }
+                if (form) form.classList.remove('loading');
+            });
+        } else {
+            console.error('DEBUG: Form not found!');
+        }
+
+        // Initialize progress
+        updateProgress();
+    });
+</script>
+{% endblock %}

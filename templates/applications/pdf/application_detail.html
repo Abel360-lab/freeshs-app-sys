@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GCX Supplier Application - {{ application.tracking_code }}</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #2d3748;
+            background: #ffffff;
+            font-size: 11pt;
+        }
+        
+        .document-container {
+            max-width: 210mm;
+            margin: 0 auto;
+            padding: 20mm;
+            background: white;
+            min-height: 297mm;
+        }
+        
+        /* Header Styling */
+        .document-header {
+            border-bottom: 4px solid #1a365d;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            padding: 25px;
+            margin: -20px -20px 30px -20px;
+            position: relative;
+        }
+        
+        .document-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #1a365d 0%, #2b6cb0 50%, #1a365d 100%);
+        }
+        
+        .header-logo {
+            width: 60px;
+            height: 60px;
+            background: #1a365d;
+            color: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            float: left;
+            margin-right: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .header-content {
+            overflow: hidden;
+        }
+        
+        .document-title {
+            font-size: 28pt;
+            font-weight: 700;
+            color: #1a365d;
+            margin-bottom: 5px;
+            letter-spacing: -0.5px;
+        }
+        
+        .document-subtitle {
+            font-size: 14pt;
+            color: #4a5568;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        
+        .tracking-info {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #2b6cb0;
+            margin-top: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .tracking-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .tracking-row:last-child {
+            margin-bottom: 0;
+        }
+        
+        .tracking-label {
+            font-weight: 600;
+            color: #2d3748;
+            font-size: 10pt;
+        }
+        
+        .tracking-value {
+            font-weight: 500;
+            color: #4a5568;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 9pt;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-submitted { background: #c6f6d5; color: #22543d; border: 1px solid #9ae6b4; }
+        .status-pending { background: #fed7c3; color: #9c4221; border: 1px solid #fbb6ce; }
+        .status-approved { background: #bee3f8; color: #2a4365; border: 1px solid #90cdf4; }
+        .status-rejected { background: #fed7d7; color: #742a2a; border: 1px solid #feb2b2; }
+        .status-draft { background: #e2e8f0; color: #4a5568; border: 1px solid #cbd5e0; }
+        
+        /* Section Styling */
+        .section {
+            margin-bottom: 35px;
+            page-break-inside: avoid;
+        }
+        
+        .section-title {
+            font-size: 16pt;
+            font-weight: 700;
+            color: #1a365d;
+            margin-bottom: 20px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e2e8f0;
+            position: relative;
+        }
+        
+        .section-title::before {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 60px;
+            height: 2px;
+            background: #2b6cb0;
+        }
+        
+        /* Info Grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .info-item {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .info-item.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: #4a5568;
+            font-size: 9pt;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            font-size: 11pt;
+            color: #2d3748;
+            font-weight: 500;
+            word-break: break-word;
+        }
+        
+        /* Table Styling */
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background: white;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .table thead {
+            background: linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%);
+        }
+        
+        .table th {
+            color: white;
+            font-weight: 600;
+            text-align: left;
+            padding: 12px 15px;
+            font-size: 9pt;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 10pt;
+            color: #4a5568;
+            vertical-align: top;
+        }
+        
+        .table tbody tr:hover {
+            background: #f7fafc;
+        }
+        
+        .table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        
+        /* Lists */
+        .commodities-list {
+            list-style: none;
+            padding: 0;
+            background: #f7fafc;
+            border-radius: 6px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .commodities-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
+            color: #4a5568;
+            font-weight: 500;
+            position: relative;
+            padding-left: 20px;
+        }
+        
+        .commodities-list li:before {
+            content: '•';
+            color: #2b6cb0;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+        
+        .commodities-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .no-data {
+            color: #9ca3af;
+            font-style: italic;
+            text-align: center;
+            padding: 30px;
+            background: #f9fafb;
+            border-radius: 6px;
+            border: 2px dashed #d1d5db;
+        }
+        
+        /* Footer */
+        .document-footer {
+            margin-top: 50px;
+            padding-top: 25px;
+            border-top: 2px solid #e2e8f0;
+            background: #f7fafc;
+            padding: 25px;
+            margin-left: -20px;
+            margin-right: -20px;
+            margin-bottom: -20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .document-footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 20px;
+            right: 20px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent 0%, #2b6cb0 50%, transparent 100%);
+        }
+        
+        .footer-content {
+            color: #6b7280;
+            font-size: 9pt;
+            line-height: 1.8;
+        }
+        
+        .footer-content p {
+            margin-bottom: 5px;
+        }
+        
+        .generation-info {
+            font-weight: 600;
+            color: #4a5568;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #d1d5db;
+        }
+        
+        /* Declaration Section Special Styling */
+        .declaration-section {
+            background: #f0fff4;
+            border: 2px solid #9ae6b4;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+        
+        .declaration-section .section-title {
+            color: #22543d;
+            border-bottom-color: #9ae6b4;
+        }
+        
+        .declaration-section .section-title::before {
+            background: #48bb78;
+        }
+        
+        .declaration-section .info-item {
+            background: white;
+            border-color: #9ae6b4;
+        }
+        
+        /* Print Specific Styles */
+        @media print {
+            .document-container {
+                margin: 0;
+                padding: 15mm;
+                box-shadow: none;
+            }
+            
+            .section {
+                page-break-inside: avoid;
+            }
+            
+            .table {
+                page-break-inside: avoid;
+            }
+        }
+        
+        /* Responsive adjustments for screen viewing */
+        @media screen and (max-width: 768px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .document-container {
+                padding: 15px;
+            }
+            
+            .document-header {
+                margin: -15px -15px 20px -15px;
+                padding: 20px 15px;
+            }
+            
+            .document-footer {
+                margin-left: -15px;
+                margin-right: -15px;
+                padding: 20px 15px;
+            }
+            
+            .table {
+                font-size: 9pt;
+            }
+            
+            .table th,
+            .table td {
+                padding: 8px 10px;
+            }
+        }
+        
+        .official-seal {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #2b6cb0 0%, #1a365d 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 10pt;
+            font-weight: 700;
+            text-align: center;
+            line-height: 1.2;
+            border: 3px solid #90cdf4;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="document-container">
+        <!-- Official Header -->
+        <div class="document-header">
+            <div class="official-seal">
+                GCX<br>OFFICIAL
+            </div>
+            <div class="header-logo">
+                🌾
+            </div>
+            <div class="header-content">
+                <h1 class="document-title">Supplier Application Report</h1>
+                <p class="document-subtitle">Ghana Commodity Exchange - Supplier Registration Portal</p>
+                
+                <div class="tracking-info">
+                    <div class="tracking-row">
+                        <span class="tracking-label">Application Tracking Code:</span>
+                        <span class="tracking-value"><strong>{{ application.tracking_code }}</strong></span>
+                    </div>
+                    <div class="tracking-row">
+                        <span class="tracking-label">Current Status:</span>
+                        <span class="status-badge status-{{ application.status|lower }}">{{ status_display }}</span>
+                    </div>
+                    <div class="tracking-row">
+                        <span class="tracking-label">Application Type:</span>
+                        <span class="tracking-value">Supplier Registration</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Basic Information -->
+        <div class="section">
+            <h2 class="section-title">Business Information</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Registered Business Name</div>
+                    <div class="info-value">{{ application.business_name }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Business Classification</div>
+                    <div class="info-value">{{ business_type_display }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Business Registration Number</div>
+                    <div class="info-value">{{ application.registration_number|default:"Not provided" }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Tax Identification Number (TIN)</div>
+                    <div class="info-value">{{ application.tin_number|default:"Not provided" }}</div>
+                </div>
+                <div class="info-item full-width">
+                    <div class="info-label">Registered Physical Address</div>
+                    <div class="info-value">{{ application.physical_address }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">City/Municipality</div>
+                    <div class="info-value">{{ application.city }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Administrative Region</div>
+                    <div class="info-value">{{ application.region.name }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Postal/ZIP Code</div>
+                    <div class="info-value">{{ application.postal_code|default:"Not provided" }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Country of Operation</div>
+                    <div class="info-value">{{ application.country }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Information -->
+        <div class="section">
+            <h2 class="section-title">Contact Information</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Primary Email Address</div>
+                    <div class="info-value">{{ application.email }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Primary Telephone Number</div>
+                    <div class="info-value">{{ application.telephone }}</div>
+                </div>
+                <div class="info-item full-width">
+                    <div class="info-label">Warehouse/Storage Facility Location</div>
+                    <div class="info-value">{{ application.warehouse_location }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Commodities -->
+        <div class="section">
+            <h2 class="section-title">Commodity Supply Information</h2>
+            {% if commodities %}
+                <ul class="commodities-list">
+                    {% for commodity in commodities %}
+                        <li>{{ commodity.name }}{% if commodity.is_processed_food %} <em>(Processed Food Category)</em>{% endif %}</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="no-data">No commodities have been selected for supply</p>
+            {% endif %}
+            
+            {% if application.other_commodities %}
+                <div class="info-grid" style="margin-top: 20px;">
+                    <div class="info-item full-width">
+                        <div class="info-label">Additional/Other Commodities</div>
+                        <div class="info-value">{{ application.other_commodities }}</div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Team Members -->
+        <div class="section">
+            <h2 class="section-title">Authorized Personnel & Team Members</h2>
+            {% if team_members %}
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Full Name</th>
+                            <th>Position/Role</th>
+                            <th>Experience (Years)</th>
+                            <th>Contact Information</th>
+                            <th>Identification</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for member in team_members %}
+                            <tr>
+                                <td><strong>{{ member.full_name }}</strong></td>
+                                <td>{{ member.position|default:"Not specified" }}</td>
+                                <td>{{ member.years_experience|default:"Not specified" }}</td>
+                                <td>
+                                    {% if member.email %}<strong>Email:</strong> {{ member.email }}<br>{% endif %}
+                                    {% if member.telephone %}<strong>Phone:</strong> {{ member.telephone }}{% endif %}
+                                </td>
+                                <td>
+                                    {% if member.id_card_type %}
+                                        <strong>Type:</strong> {{ member.get_id_card_type_display }}<br>
+                                        {% if member.id_card_number %}<strong>Number:</strong> {{ member.id_card_number }}{% endif %}
+                                    {% else %}
+                                        Not provided
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="no-data">No team member information has been provided</p>
+            {% endif %}
+        </div>
+
+        <!-- Next of Kin -->
+        <div class="section">
+            <h2 class="section-title">Emergency Contact Information (Next of Kin)</h2>
+            {% if next_of_kin %}
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Full Name</th>
+                            <th>Relationship</th>
+                            <th>Mobile Number</th>
+                            <th>Identification</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for kin in next_of_kin %}
+                            <tr>
+                                <td><strong>{{ kin.full_name }}</strong></td>
+                                <td>{{ kin.relationship }}</td>
+                                <td>{{ kin.mobile }}</td>
+                                <td>
+                                    {% if kin.id_card_type %}
+                                        <strong>{{ kin.get_id_card_type_display }}</strong><br>
+                                        {% if kin.id_card_number %}{{ kin.id_card_number }}{% endif %}
+                                    {% else %}
+                                        Not provided
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="no-data">No emergency contact information has been provided</p>
+            {% endif %}
+        </div>
+
+        <!-- Bank Accounts -->
+        <div class="section">
+            <h2 class="section-title">Banking & Financial Information</h2>
+            {% if bank_accounts %}
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Financial Institution</th>
+                            <th>Branch Location</th>
+                            <th>Account Holder Name</th>
+                            <th>Account Number</th>
+                            <th>Account Reference</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for account in bank_accounts %}
+                            <tr>
+                                <td><strong>{{ account.bank_name }}</strong></td>
+                                <td>{{ account.branch }}</td>
+                                <td>{{ account.account_name }}</td>
+                                <td>{{ account.account_number }}</td>
+                                <td>Primary Account {{ account.account_index }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="no-data">No banking information has been provided</p>
+            {% endif %}
+        </div>
+
+        <!-- Documents -->
+        <div class="section">
+            <h2 class="section-title">Document Submission Status</h2>
+            {% if documents %}
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Required Document</th>
+                            <th>Submitted File</th>
+                            <th>Submission Date</th>
+                            <th>Verification Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for doc in documents %}
+                            <tr>
+                                <td><strong>{{ doc.requirement.label }}</strong></td>
+                                <td>{{ doc.file.name|default:"No file submitted" }}</td>
+                                <td>{{ doc.uploaded_at|date:"M d, Y \a\t g:i A" }}</td>
+                                <td>
+                                    {% if doc.verified %}
+                                        <span class="status-badge status-approved">Verified</span>
+                                    {% else %}
+                                        <span class="status-badge status-pending">Under Review</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="no-data">No documents have been submitted</p>
+            {% endif %}
+        </div>
+
+        <!-- Declaration -->
+        <div class="section declaration-section">
+            <h2 class="section-title">Official Declaration & Consent</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Authorized Signatory Name</div>
+                    <div class="info-value">{{ application.signer_name }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Signatory Designation/Title</div>
+                    <div class="info-value">{{ application.signer_designation }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Declaration Agreement Status</div>
+                    <div class="info-value">{{ application.declaration_agreed|yesno:"Agreed and Accepted,Not Agreed" }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Data Processing Consent</div>
+                    <div class="info-value">{{ application.data_consent|yesno:"Consent Granted,Consent Not Granted" }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Official Submission Date</div>
+                    <div class="info-value">{{ application.submitted_at|date:"F d, Y \a\t g:i A"|default:"Application not yet submitted" }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Application Completion Status</div>
+                    <div class="info-value">
+                        {% if application.submitted_at %}
+                            <strong>Completed and Submitted</strong>
+                        {% else %}
+                            <strong>Draft - Pending Submission</strong>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Official Footer -->
+        <div class="document-footer">
+            <div class="footer-content">
+                <p><strong>OFFICIAL DOCUMENT - GHANA COMMODITY EXCHANGE</strong></p>
+                <p>This supplier application report has been automatically generated by the GCX Supplier Registration Portal.</p>
+                <p>All information contained herein is subject to verification and approval by authorized GCX personnel.</p>
+                <p>For inquiries regarding this application, please contact GCX Support Services.</p>
+                
+                <div class="generation-info">
+                    <p><strong>Document Generated:</strong> {{ generated_at|date:"F d, Y \a\t g:i A" }}</p>
+                    <p><strong>Reference Code:</strong> {{ application.tracking_code }}</p>
+                    <p><strong>System Version:</strong> GCX Portal v2.1.4</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

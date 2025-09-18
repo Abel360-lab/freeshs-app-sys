@@ -1,0 +1,498 @@
+{% extends 'backoffice/base.html' %}
+{% load static %}
+
+{% block title %}System Settings{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'applications:backoffice-dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item active">System Settings</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block page_icon %}<i class="fas fa-cogs"></i>{% endblock %}
+{% block page_title %}System Settings{% endblock %}
+{% block page_subtitle %}Configure system-wide settings and preferences{% endblock %}
+
+{% block page_actions %}
+<button type="button" class="btn btn-outline-warning btn-sm" onclick="resetSettings()">
+    <i class="fas fa-undo"></i> Reset to Defaults
+</button>
+<button type="button" class="btn btn-outline-info btn-sm" onclick="testNotificationAPI()">
+    <i class="fas fa-plug"></i> Test API
+</button>
+<a href="{% url 'core:settings-export' %}" class="btn btn-outline-success btn-sm">
+    <i class="fas fa-download"></i> Export Settings
+</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .settings-section {
+        background: white;
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        border: 1px solid #e9ecef;
+    }
+    
+    .settings-section h5 {
+        color: var(--primary-color);
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #f8f9fa;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: var(--text-color);
+        margin-bottom: 8px;
+    }
+    
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        padding: 12px 15px;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(30, 58, 95, 0.25);
+    }
+    
+    .form-check {
+        margin-bottom: 15px;
+    }
+    
+    .form-check-input {
+        width: 1.2em;
+        height: 1.2em;
+        margin-top: 0.1em;
+    }
+    
+    .form-check-label {
+        font-weight: 500;
+        margin-left: 8px;
+    }
+    
+    .help-text {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-top: 5px;
+    }
+    
+    .settings-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+    }
+    
+    .status-indicator {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 8px;
+    }
+    
+    .status-online {
+        background-color: #28a745;
+    }
+    
+    .status-offline {
+        background-color: #dc3545;
+    }
+    
+    .status-unknown {
+        background-color: #ffc107;
+    }
+    
+    .btn-save {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+        border: none;
+        color: white;
+        padding: 12px 30px;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(30, 58, 95, 0.3);
+    }
+    
+    .alert-custom {
+        border-radius: 8px;
+        border: none;
+        padding: 15px 20px;
+    }
+    
+    .maintenance-warning {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+        border-left: 4px solid #ffc107;
+        color: #856404;
+    }
+    
+    .api-status {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        margin-bottom: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- API Status -->
+    <div class="settings-section">
+        <h5><i class="fas fa-plug"></i> API Status</h5>
+        <div class="api-status">
+            <span class="status-indicator status-unknown" id="apiStatus"></span>
+            <span id="apiStatusText">Click "Test API" to check notification service status</span>
+        </div>
+    </div>
+
+    <form method="post" id="settingsForm">
+        {% csrf_token %}
+        
+        <!-- General Settings -->
+        <div class="settings-section">
+            <h5><i class="fas fa-globe"></i> General Settings</h5>
+            <div class="settings-grid">
+                <div class="form-group">
+                    <label for="site_name" class="form-label">Site Name</label>
+                    <input type="text" class="form-control" id="site_name" name="site_name" 
+                           value="{{ settings.site_name }}" required>
+                    <div class="help-text">Name displayed in the admin portal header</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="site_description" class="form-label">Site Description</label>
+                    <textarea class="form-control" id="site_description" name="site_description" 
+                              rows="3">{{ settings.site_description }}</textarea>
+                    <div class="help-text">Brief description of the admin portal</div>
+                </div>
+            </div>
+            
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="maintenance_mode" name="maintenance_mode" 
+                       {% if settings.maintenance_mode %}checked{% endif %}>
+                <label class="form-check-label" for="maintenance_mode">
+                    Enable Maintenance Mode
+                </label>
+                <div class="help-text">Restrict access to the admin portal during maintenance</div>
+            </div>
+            
+            {% if settings.maintenance_mode %}
+            <div class="alert alert-custom maintenance-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>Maintenance Mode Active!</strong> Users will see the maintenance message instead of the portal.
+            </div>
+            {% endif %}
+            
+            <div class="form-group">
+                <label for="maintenance_message" class="form-label">Maintenance Message</label>
+                <textarea class="form-control" id="maintenance_message" name="maintenance_message" 
+                          rows="3">{{ settings.maintenance_message }}</textarea>
+                <div class="help-text">Message displayed to users during maintenance mode</div>
+            </div>
+        </div>
+
+        <!-- Email Settings -->
+        <div class="settings-section">
+            <h5><i class="fas fa-envelope"></i> Email Settings</h5>
+            <div class="settings-grid">
+                <div class="form-group">
+                    <label for="email_from_name" class="form-label">From Name</label>
+                    <input type="text" class="form-control" id="email_from_name" name="email_from_name" 
+                           value="{{ settings.email_from_name }}" required>
+                    <div class="help-text">Default sender name for outgoing emails</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email_from_address" class="form-label">From Address</label>
+                    <input type="email" class="form-control" id="email_from_address" name="email_from_address" 
+                           value="{{ settings.email_from_address }}" required>
+                    <div class="help-text">Default sender email address</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email_reply_to" class="form-label">Reply-To Address</label>
+                    <input type="email" class="form-control" id="email_reply_to" name="email_reply_to" 
+                           value="{{ settings.email_reply_to }}">
+                    <div class="help-text">Reply-to email address (optional)</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="admin_notification_email" class="form-label">Admin Notification Email</label>
+                    <input type="email" class="form-control" id="admin_notification_email" name="admin_notification_email" 
+                           value="{{ settings.admin_notification_email }}" required>
+                    <div class="help-text">Email address to receive notifications for new applications</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SMS Settings -->
+        <div class="settings-section">
+            <h5><i class="fas fa-sms"></i> SMS Settings</h5>
+            <div class="settings-grid">
+                <div class="form-group">
+                    <label for="sms_from_name" class="form-label">From Name</label>
+                    <input type="text" class="form-control" id="sms_from_name" name="sms_from_name" 
+                           value="{{ settings.sms_from_name }}" required>
+                    <div class="help-text">Default sender name for SMS messages</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notification Settings -->
+        <div class="settings-section">
+            <h5><i class="fas fa-bell"></i> Notification Settings</h5>
+            <div class="settings-grid">
+                <div class="form-group">
+                    <label for="notification_api_url" class="form-label">API URL</label>
+                    <input type="url" class="form-control" id="notification_api_url" name="notification_api_url" 
+                           value="{{ settings.notification_api_url }}" required>
+                    <div class="help-text">External notification API endpoint</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="notification_timeout" class="form-label">Timeout (seconds)</label>
+                    <input type="number" class="form-control" id="notification_timeout" name="notification_timeout" 
+                           value="{{ settings.notification_timeout }}" min="5" max="300" required>
+                    <div class="help-text">API request timeout in seconds</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Application Settings -->
+        <div class="settings-section">
+            <h5><i class="fas fa-file-alt"></i> Application Settings</h5>
+            <div class="settings-grid">
+                <div class="form-group">
+                    <label for="application_approval_days" class="form-label">Auto-Approval Days</label>
+                    <input type="number" class="form-control" id="application_approval_days" name="application_approval_days" 
+                           value="{{ settings.application_approval_days }}" min="1" max="30" required>
+                    <div class="help-text">Days to wait before auto-approval (if enabled)</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="max_file_size" class="form-label">Max File Size (MB)</label>
+                    <input type="number" class="form-control" id="max_file_size" name="max_file_size" 
+                           value="{{ settings.max_file_size }}" min="1" max="100" required>
+                    <div class="help-text">Maximum file size for document uploads</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="allowed_file_types" class="form-label">Allowed File Types</label>
+                    <input type="text" class="form-control" id="allowed_file_types" name="allowed_file_types" 
+                           value="{{ settings.allowed_file_types }}" required>
+                    <div class="help-text">Comma-separated list of allowed file extensions</div>
+                </div>
+            </div>
+            
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="application_auto_approve" name="application_auto_approve" 
+                       {% if settings.application_auto_approve %}checked{% endif %}>
+                <label class="form-check-label" for="application_auto_approve">
+                    Enable Auto-Approval
+                </label>
+                <div class="help-text">Automatically approve applications after the specified number of days</div>
+            </div>
+            
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="document_verification_required" name="document_verification_required" 
+                       {% if settings.document_verification_required %}checked{% endif %}>
+                <label class="form-check-label" for="document_verification_required">
+                    Require Document Verification
+                </label>
+                <div class="help-text">Require manual verification of uploaded documents</div>
+            </div>
+        </div>
+
+        <!-- Security Settings -->
+        <div class="settings-section">
+            <h5><i class="fas fa-shield-alt"></i> Security Settings</h5>
+            <div class="settings-grid">
+                <div class="form-group">
+                    <label for="password_min_length" class="form-label">Minimum Password Length</label>
+                    <input type="number" class="form-control" id="password_min_length" name="password_min_length" 
+                           value="{{ settings.password_min_length }}" min="6" max="50" required>
+                    <div class="help-text">Minimum number of characters required in passwords</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="session_timeout" class="form-label">Session Timeout (minutes)</label>
+                    <input type="number" class="form-control" id="session_timeout" name="session_timeout" 
+                           value="{{ settings.session_timeout }}" min="15" max="1440" required>
+                    <div class="help-text">How long before users are automatically logged out</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="max_login_attempts" class="form-label">Max Login Attempts</label>
+                    <input type="number" class="form-control" id="max_login_attempts" name="max_login_attempts" 
+                           value="{{ settings.max_login_attempts }}" min="3" max="20" required>
+                    <div class="help-text">Maximum failed login attempts before account lockout</div>
+                </div>
+            </div>
+            
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="password_require_special" name="password_require_special" 
+                       {% if settings.password_require_special %}checked{% endif %}>
+                <label class="form-check-label" for="password_require_special">
+                    Require Special Characters in Passwords
+                </label>
+                <div class="help-text">Enforce use of special characters (!@#$%^&*) in passwords</div>
+            </div>
+        </div>
+
+        <!-- Audit Settings -->
+        <div class="settings-section">
+            <h5><i class="fas fa-clipboard-list"></i> Audit & Logging Settings</h5>
+            <div class="settings-grid">
+                <div class="form-group">
+                    <label for="audit_log_retention_days" class="form-label">Log Retention (days)</label>
+                    <input type="number" class="form-control" id="audit_log_retention_days" name="audit_log_retention_days" 
+                           value="{{ settings.audit_log_retention_days }}" min="30" max="3650" required>
+                    <div class="help-text">Number of days to retain audit logs</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="log_level" class="form-label">Log Level</label>
+                    <select class="form-select" id="log_level" name="log_level" required>
+                        {% for value, label in log_level_choices %}
+                        <option value="{{ value }}" {% if settings.log_level == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <div class="help-text">Level of detail in system logs</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Save Button -->
+        <div class="text-center">
+            <button type="submit" class="btn btn-save btn-lg">
+                <i class="fas fa-save"></i> Save Settings
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function resetSettings() {
+    if (confirm('Are you sure you want to reset all settings to their default values? This action cannot be undone.')) {
+        fetch('{% url "core:reset-settings" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Error resetting settings. Please try again.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error resetting settings. Please try again.');
+        });
+    }
+}
+
+function testNotificationAPI() {
+    const statusIndicator = document.getElementById('apiStatus');
+    const statusText = document.getElementById('apiStatusText');
+    
+    if (!statusIndicator || !statusText) {
+        console.error('Required elements not found');
+        return;
+    }
+    
+    statusIndicator.className = 'status-indicator status-unknown';
+    statusText.textContent = 'Testing API connection...';
+    
+    fetch('{% url "core:test-notification-api" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            statusIndicator.className = 'status-indicator status-online';
+            statusText.textContent = 'Notification API is working correctly!';
+        } else {
+            statusIndicator.className = 'status-indicator status-offline';
+            statusText.textContent = `API Error: ${data.message}`;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        statusIndicator.className = 'status-indicator status-offline';
+        statusText.textContent = 'Error testing API connection';
+    });
+}
+
+// Form validation
+document.addEventListener('DOMContentLoaded', function() {
+    const settingsForm = document.getElementById('settingsForm');
+    if (settingsForm) {
+        settingsForm.addEventListener('submit', function(e) {
+            const requiredFields = this.querySelectorAll('input[required], select[required], textarea[required]');
+            let isValid = true;
+            
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    field.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    field.classList.remove('is-invalid');
+                }
+            });
+            
+            if (!isValid) {
+                e.preventDefault();
+                alert('Please fill in all required fields.');
+            }
+        });
+    }
+
+    // Real-time validation
+    document.querySelectorAll('input[required], select[required], textarea[required]').forEach(field => {
+        field.addEventListener('blur', function() {
+            if (!this.value.trim()) {
+                this.classList.add('is-invalid');
+            } else {
+                this.classList.remove('is-invalid');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

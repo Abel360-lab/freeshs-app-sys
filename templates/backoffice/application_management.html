@@ -1,0 +1,665 @@
+{% extends "backoffice/base.html" %}
+
+{% block title %}Application Management - GCX Admin Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Responsive table improvements */
+    .applications-table {
+        min-width: 100%;
+    }
+    
+    /* Ensure status badges are always visible */
+    .badge-status {
+        min-height: 32px;
+        display: inline-flex !important;
+        align-items: center !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+    
+    /* Column widths for better responsiveness */
+    .checkbox-col {
+        width: 40px;
+        min-width: 40px;
+    }
+    
+    .business-col {
+        min-width: 200px;
+    }
+    
+    .contact-col {
+        min-width: 180px;
+    }
+    
+    .region-col {
+        width: 120px;
+        min-width: 120px;
+    }
+    
+    .status-col {
+        width: 140px;
+        min-width: 140px;
+    }
+    
+    .date-col {
+        width: 120px;
+        min-width: 120px;
+    }
+    
+    .actions-col {
+        width: 120px;
+        min-width: 120px;
+    }
+    
+    /* Mobile optimizations */
+    @media (max-width: 576px) {
+        .applications-table .btn-group {
+            flex-direction: column;
+        }
+        
+        .applications-table .btn {
+            margin-bottom: 2px;
+            width: 100%;
+        }
+        
+        .business-avatar {
+            width: 32px;
+            height: 32px;
+            font-size: 0.875rem;
+        }
+        
+        .applications-table .business-col h6 {
+            font-size: 0.875rem;
+        }
+        
+        /* Make status badges more visible on mobile */
+        .badge-status {
+            padding: 0.375rem 0.5rem;
+            font-size: 0.7rem;
+        }
+        
+        .badge-status::before {
+            width: 6px;
+            height: 6px;
+        }
+    }
+    
+    /* Tablet optimizations */
+    @media (max-width: 768px) {
+        .applications-table .btn-icon {
+            padding: 0.375rem;
+        }
+        
+        .applications-table .btn-group .btn {
+            margin: 0 1px;
+        }
+    }
+    
+    /* Desktop optimizations */
+    @media (min-width: 1200px) {
+        .applications-table {
+            min-width: 900px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block page_icon %}<i class="fas fa-file-alt"></i>{% endblock %}
+{% block page_title %}Application Management{% endblock %}
+{% block page_subtitle %}Review, manage and process supplier applications{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'applications:backoffice-dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Applications</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block page_actions %}
+<div class="d-flex gap-2">
+    <button class="btn btn-outline-primary btn-sm" onclick="exportApplications()">
+        <i class="fas fa-download"></i> Export
+    </button>
+    <div class="dropdown">
+        <button class="btn btn-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+            <i class="fas fa-filter"></i> Filter
+        </button>
+        <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="?status=pending">Pending Review</a></li>
+            <li><a class="dropdown-item" href="?status=under_review">Under Review</a></li>
+            <li><a class="dropdown-item" href="?status=approved">Approved</a></li>
+            <li><a class="dropdown-item" href="?status=rejected">Rejected</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="?">All Applications</a></li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Filters and Search -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="get" class="row g-3" id="searchForm">
+                    <div class="col-md-4">
+                        <label for="search" class="form-label">Search</label>
+                        <input type="text" class="form-control" id="search" name="search" 
+                               value="{% if current_search and current_search != 'None' %}{{ current_search }}{% endif %}" placeholder="Business name, email, or tracking code...">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="status" class="form-label">Status</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="">All Statuses</option>
+                            <option value="pending" {% if current_status == 'pending' %}selected{% endif %}>Pending Review</option>
+                            <option value="under_review" {% if current_status == 'under_review' %}selected{% endif %}>Under Review</option>
+                            <option value="approved" {% if current_status == 'approved' %}selected{% endif %}>Approved</option>
+                            <option value="rejected" {% if current_status == 'rejected' %}selected{% endif %}>Rejected</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="region" class="form-label">Region</label>
+                        <select class="form-select" id="region" name="region">
+                            <option value="">All Regions</option>
+                            {% for region in regions %}
+                            <option value="{{ region.id }}" {% if current_region == region.id|stringformat:"s" %}selected{% endif %}>
+                                {{ region.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-grid">
+                            <button type="button" class="btn btn-secondary" id="clearFilters">
+                                <i class="fas fa-times"></i> Clear
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Applications Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">
+                    <i class="fas fa-list"></i>
+                    Applications
+                    <span class="badge bg-primary ms-2">{{ page_obj.paginator.count }}</span>
+                </h5>
+                <div class="card-actions">
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-outline-secondary btn-sm" onclick="selectAll()">
+                            <i class="fas fa-check-square"></i> Select All
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="clearSelection()">
+                            <i class="fas fa-square"></i> Clear
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if page_obj %}
+                <div class="table-responsive">
+                    <table class="table table-hover applications-table">
+                        <thead>
+                            <tr>
+                                <th width="30" class="checkbox-col">
+                                    <input type="checkbox" id="selectAllCheckbox" onchange="toggleAll()">
+                                </th>
+                                <th class="business-col">Business</th>
+                                <th class="contact-col d-none d-lg-table-cell">Contact</th>
+                                <th class="region-col d-none d-md-table-cell">Region</th>
+                                <th class="status-col">Status</th>
+                                <th class="date-col d-none d-sm-table-cell">Submitted</th>
+                                <th class="actions-col">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for application in page_obj %}
+                            <tr>
+                                <td class="checkbox-col">
+                                    <input type="checkbox" class="application-checkbox" value="{{ application.id }}">
+                                </td>
+                                <td class="business-col">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0">
+                                            <div class="business-avatar">
+                                                {{ application.business_name|first|upper }}
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <h6 class="mb-0">{{ application.business_name }}</h6>
+                                            <small class="text-muted">{{ application.tracking_code }}</small>
+                                            <!-- Show contact info on mobile -->
+                                            <div class="d-lg-none mt-1">
+                                                <small class="text-muted">{{ application.email }}</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="contact-col d-none d-lg-table-cell">
+                                    <div>
+                                        <div class="fw-medium">{{ application.email }}</div>
+                                        <small class="text-muted">{{ application.telephone }}</small>
+                                    </div>
+                                </td>
+                                <td class="region-col d-none d-md-table-cell">{{ application.region.name|default:"--" }}</td>
+                                <td class="status-col">
+                                    <span class="badge badge-status badge-{{ application.status|default:'pending_review'|lower }}">
+                                        {{ application.get_status_display|default:'Pending Review' }}
+                                    </span>
+                                </td>
+                                <td class="date-col d-none d-sm-table-cell">
+                                    <div>
+                                        <div class="fw-medium">{{ application.submitted_at|date:"M d, Y"|default:"--" }}</div>
+                                        <small class="text-muted">{{ application.submitted_at|timesince|default:"--" }} ago</small>
+                                    </div>
+                                </td>
+                                <td class="actions-col">
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'applications:backoffice-application-detail' application.pk %}" 
+                                           class="btn btn-icon btn-sm btn-outline-primary"
+                                           data-bs-toggle="tooltip" 
+                                           title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {% if application.status == 'pending_review' %}
+                                        <form method="post" action="{% url 'applications:backoffice-approve-application' application.pk %}" style="display: inline;">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-icon btn-sm btn-outline-success"
+                                                    onclick="return confirm('Are you sure you want to approve this application?')"
+                                                    data-bs-toggle="tooltip" 
+                                                    title="Approve">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                        </form>
+                                        <button class="btn btn-icon btn-sm btn-outline-danger"
+                                                onclick="showRejectModal({{ application.id }})"
+                                                data-bs-toggle="tooltip" 
+                                                title="Reject">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                        {% endif %}
+                                        {% if application.status == 'under_review' %}
+                                        <button class="btn btn-icon btn-sm btn-outline-info"
+                                                onclick="showRequestDocumentsModal({{ application.id }})"
+                                                data-bs-toggle="tooltip" 
+                                                title="Request Documents">
+                                            <i class="fas fa-file-upload"></i>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if page_obj.has_other_pages %}
+                <nav aria-label="Applications pagination" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% if current_status %}&status={{ current_status }}{% endif %}{% if current_region %}&region={{ current_region }}{% endif %}{% if current_search %}&search={{ current_search }}{% endif %}">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_region %}&region={{ current_region }}{% endif %}{% if current_search %}&search={{ current_search }}{% endif %}">
+                                <i class="fas fa-angle-left"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_region %}&region={{ current_region }}{% endif %}{% if current_search %}&search={{ current_search }}{% endif %}">{{ num }}</a>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_region %}&region={{ current_region }}{% endif %}{% if current_search %}&search={{ current_search }}{% endif %}">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_region %}&region={{ current_region }}{% endif %}{% if current_search %}&search={{ current_search }}{% endif %}">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No applications found</h5>
+                    <p class="text-muted">Try adjusting your search criteria or filters.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reject Application Modal -->
+<div class="modal fade" id="rejectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Reject Application</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" id="rejectForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p>Please provide a reason for rejecting this application:</p>
+                    <div class="mb-3">
+                        <label for="rejectReason" class="form-label">Reason for Rejection</label>
+                        <textarea class="form-control" id="rejectReason" name="reason" rows="4" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Reject Application</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Request Documents Modal -->
+<div class="modal fade" id="requestDocumentsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Request Additional Documents</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" id="requestDocumentsForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p>Please specify which additional documents are required:</p>
+                    <div class="mb-3">
+                        <label for="documentRequest" class="form-label">Document Request Details</label>
+                        <textarea class="form-control" id="documentRequest" name="comment" rows="4" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-info">Send Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Actions Modal -->
+<div class="modal fade" id="bulkActionsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Bulk Actions</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Select an action to perform on the selected applications:</p>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-success" onclick="bulkApprove()">
+                        <i class="fas fa-check"></i> Approve Selected
+                    </button>
+                    <button class="btn btn-danger" onclick="bulkReject()">
+                        <i class="fas fa-times"></i> Reject Selected
+                    </button>
+                    <button class="btn btn-info" onclick="bulkRequestDocuments()">
+                        <i class="fas fa-file-upload"></i> Request Documents
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.business-avatar {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(30, 58, 95, 0.05);
+}
+
+.btn-group .btn {
+    margin-right: 2px;
+}
+
+.btn-group .btn:last-child {
+    margin-right: 0;
+}
+</style>
+{% endblock %}
+
+{% block extrajs %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+    
+    // Real-time search and filter functionality
+    const searchInput = document.getElementById('search');
+    const statusSelect = document.getElementById('status');
+    const regionSelect = document.getElementById('region');
+    const clearButton = document.getElementById('clearFilters');
+    
+    let searchTimeout;
+    
+    // Function to perform search
+    function performSearch() {
+        const form = document.getElementById('searchForm');
+        const formData = new FormData(form);
+        const params = new URLSearchParams();
+        
+        // Add form data to params, but skip empty values and "None" strings
+        for (let [key, value] of formData.entries()) {
+            if (value && value.trim() !== '' && value !== 'None') {
+                params.append(key, value);
+            }
+        }
+        
+        // Update URL and reload page
+        const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+        window.location.href = newUrl;
+    }
+    
+    // Search input with debouncing
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(performSearch, 500); // 500ms delay
+    });
+    
+    // Status and region filters - immediate search
+    statusSelect.addEventListener('change', performSearch);
+    regionSelect.addEventListener('change', performSearch);
+    
+    // Clear filters button
+    clearButton.addEventListener('click', function() {
+        searchInput.value = '';
+        statusSelect.value = '';
+        regionSelect.value = '';
+        performSearch();
+    });
+});
+
+// Selection functions
+function selectAll() {
+    const checkboxes = document.querySelectorAll('.application-checkbox');
+    checkboxes.forEach(checkbox => checkbox.checked = true);
+    document.getElementById('selectAllCheckbox').checked = true;
+}
+
+function clearSelection() {
+    const checkboxes = document.querySelectorAll('.application-checkbox');
+    checkboxes.forEach(checkbox => checkbox.checked = false);
+    document.getElementById('selectAllCheckbox').checked = false;
+}
+
+function toggleAll() {
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    const checkboxes = document.querySelectorAll('.application-checkbox');
+    checkboxes.forEach(checkbox => checkbox.checked = selectAllCheckbox.checked);
+}
+
+// Application actions
+function showRejectModal(applicationId) {
+    const form = document.getElementById('rejectForm');
+    form.action = `/backoffice/applications/${applicationId}/reject/`;
+    const modal = new bootstrap.Modal(document.getElementById('rejectModal'));
+    modal.show();
+}
+
+function showRequestDocumentsModal(applicationId) {
+    const form = document.getElementById('requestDocumentsForm');
+    form.action = `/backoffice/applications/${applicationId}/request-documents/`;
+    const modal = new bootstrap.Modal(document.getElementById('requestDocumentsModal'));
+    modal.show();
+}
+
+// Bulk actions
+function getSelectedApplications() {
+    const checkboxes = document.querySelectorAll('.application-checkbox:checked');
+    return Array.from(checkboxes).map(checkbox => checkbox.value);
+}
+
+function bulkApprove() {
+    const selected = getSelectedApplications();
+    if (selected.length === 0) {
+        alert('Please select at least one application.');
+        return;
+    }
+    
+    if (confirm(`Are you sure you want to approve ${selected.length} application(s)?`)) {
+        // Create a form and submit it
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{% url "applications:backoffice-bulk-approve" %}';
+        
+        // Add CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = csrfToken;
+        form.appendChild(csrfInput);
+        
+        // Add selected application IDs
+        selected.forEach(id => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'application_ids';
+            input.value = id;
+            form.appendChild(input);
+        });
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function bulkReject() {
+    const selected = getSelectedApplications();
+    if (selected.length === 0) {
+        alert('Please select at least one application.');
+        return;
+    }
+    
+    const reason = prompt('Please provide a reason for rejection:');
+    if (reason) {
+        // Create a form and submit it
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{% url "applications:backoffice-bulk-reject" %}';
+        
+        // Add CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = csrfToken;
+        form.appendChild(csrfInput);
+        
+        // Add reason
+        const reasonInput = document.createElement('input');
+        reasonInput.type = 'hidden';
+        reasonInput.name = 'reason';
+        reasonInput.value = reason;
+        form.appendChild(reasonInput);
+        
+        // Add selected application IDs
+        selected.forEach(id => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'application_ids';
+            input.value = id;
+            form.appendChild(input);
+        });
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function bulkRequestDocuments() {
+    const selected = getSelectedApplications();
+    if (selected.length === 0) {
+        alert('Please select at least one application.');
+        return;
+    }
+    
+    const comment = prompt('Please specify which documents are required:');
+    if (comment) {
+        // For bulk document requests, we'll need to handle each application individually
+        // This is a simplified version - in practice, you might want to create a bulk endpoint
+        alert('Bulk document request functionality will be implemented soon.');
+    }
+}
+
+function exportApplications() {
+    // This would typically generate and download an export file
+    console.log('Exporting applications...');
+    alert('Export functionality will be implemented soon.');
+}
+</script>
+{% endblock %}

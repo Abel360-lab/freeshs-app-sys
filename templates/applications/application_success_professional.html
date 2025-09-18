@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application Submitted Successfully - {{ reference_number }}</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        :root {
+            --primary-color: #1e3a5f;
+            --primary-dark: #0f2847;
+            --primary-light: #2c4f7c;
+            --secondary-color: #e8f0fe;
+            --accent-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --text-color: #2c3e50;
+            --text-muted: #6c757d;
+            --border-color: #dee2e6;
+            --background-light: #f8f9fa;
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.08);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.12);
+            --shadow-lg: 0 8px 24px rgba(0,0,0,0.16);
+            --border-radius: 10px;
+            --border-radius-sm: 6px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+            color: var(--text-color);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .document-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        /* Header Styling */
+        .document-header {
+            background: linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .document-header::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #f7fafc 0%, #e2e8f0 50%, #f7fafc 100%);
+        }
+        
+        .document-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .document-subtitle {
+            font-size: 1.2rem;
+            font-weight: 400;
+            opacity: 0.9;
+        }
+        
+        .success-badge {
+            display: inline-block;
+            background: #48bb78;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-top: 20px;
+            box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        /* Application Info Card */
+        .info-card {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .info-card h3 {
+            color: #1a365d;
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: #4a5568;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .info-value {
+            color: #2d3748;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-pending {
+            background: #fef5e7;
+            color: #d69e2e;
+            border: 1px solid #f6e05e;
+        }
+        
+        .status-under-review {
+            background: #e6fffa;
+            color: #319795;
+            border: 1px solid #81e6d9;
+        }
+        
+        /* Commodities Section */
+        .commodities-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .commodity-tag {
+            background: #edf2f7;
+            color: #4a5568;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border: 1px solid #cbd5e0;
+        }
+        
+        /* Documents Section */
+        .documents-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .document-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+        
+        .document-status {
+            margin-left: auto;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .status-uploaded {
+            background: #f0fff4;
+            color: #38a169;
+        }
+        
+        .status-not-uploaded {
+            background: #fed7d7;
+            color: #e53e3e;
+        }
+        
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 40px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .btn-primary {
+            background: #3182ce;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2c5aa0;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(49, 130, 206, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+        
+        .btn-secondary:hover {
+            background: #cbd5e0;
+            transform: translateY(-2px);
+        }
+        
+        /* Footer */
+        .document-footer {
+            background: #f7fafc;
+            padding: 30px 40px;
+            text-align: center;
+            border-top: 1px solid #e2e8f0;
+            color: #718096;
+        }
+        
+        .footer-text {
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .document-container {
+                margin: 10px;
+                border-radius: 8px;
+            }
+            
+            .document-header {
+                padding: 30px 20px;
+            }
+            
+            .document-title {
+                font-size: 2rem;
+            }
+            
+            .content {
+                padding: 30px 20px;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="document-container">
+        <!-- Header -->
+        <div class="document-header">
+            <h1 class="document-title">GCX Supplier Application</h1>
+            <p class="document-subtitle">Application Submitted Successfully</p>
+            <div class="success-badge">✓ Application Received</div>
+        </div>
+        
+        <!-- Content -->
+        <div class="content">
+            <!-- Application Information -->
+            <div class="info-card">
+                <h3>Application Information</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Tracking Code</span>
+                        <span class="info-value">{{ reference_number }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Business Name</span>
+                        <span class="info-value">{{ business_name }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Application Date</span>
+                        <span class="info-value">{{ submitted_at|date:"F d, Y" }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Status</span>
+                        <span class="status-badge status-pending">{{ status }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Business Information -->
+            <div class="info-card">
+                <h3>Business Information</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Business Name</span>
+                        <span class="info-value">{{ business_name }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Business Type</span>
+                        <span class="info-value">{{ business_type|title }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Registration Number</span>
+                        <span class="info-value">{{ registration_number|default:"Not provided" }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">TIN Number</span>
+                        <span class="info-value">{{ tin_number|default:"Not provided" }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Physical Address</span>
+                        <span class="info-value">{{ physical_address }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">City</span>
+                        <span class="info-value">{{ city }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Region</span>
+                        <span class="info-value">{{ region }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Phone Number</span>
+                        <span class="info-value">{{ telephone }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Email Address</span>
+                        <span class="info-value">{{ business_email }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Warehouse Location</span>
+                        <span class="info-value">{{ warehouse_location }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Commodities -->
+            <div class="info-card">
+                <h3>Commodities</h3>
+                <div class="commodities-list">
+                    {% for commodity in commodities %}
+                    <span class="commodity-tag">{{ commodity }}</span>
+                    {% endfor %}
+                    {% if other_commodities %}
+                    <span class="commodity-tag">{{ other_commodities }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Uploaded Documents -->
+            <!-- <div class="info-card">
+                <h3>Document Status</h3>
+                <div class="documents-grid">
+                    <div class="document-item">
+                        <span>Business Registration</span>
+                        <span class="document-status status-not-uploaded">Not Uploaded</span>
+                    </div>
+                    <div class="document-item">
+                        <span>VAT Certificate</span>
+                        <span class="document-status status-not-uploaded">Not Uploaded</span>
+                    </div>
+                    <div class="document-item">
+                        <span>PPA Certificate</span>
+                        <span class="document-status status-not-uploaded">Not Uploaded</span>
+                    </div>
+                    <div class="document-item">
+                        <span>Tax Clearance</span>
+                        <span class="document-status status-not-uploaded">Not Uploaded</span>
+                    </div>
+                    <div class="document-item">
+                        <span>Proof of Office</span>
+                        <span class="document-status status-not-uploaded">Not Uploaded</span>
+                    </div>
+                    <div class="document-item">
+                        <span>ID of Directors</span>
+                        <span class="document-status status-not-uploaded">Not Uploaded</span>
+                    </div>
+                    <div class="document-item">
+                        <span>GCX Registration</span>
+                        <span class="document-status status-not-uploaded">Not Uploaded</span>
+                    </div>
+                    <div class="document-item">
+                        <span>Team Member ID</span>
+                        <span class="document-status status-not-uploaded">Not Uploaded</span>
+                    </div>
+                    <div class="document-item">
+                        <span>FDA Certificate</span>
+                        <span class="document-status status-not-uploaded">Not Uploaded</span>
+                    </div>
+                </div>
+            </div> -->
+            
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <a href="{% url 'applications:application-form' %}" class="btn btn-secondary">
+                    📝 Submit Another Application
+                </a>
+                <a href="{% url 'applications:application-status' reference_number %}" class="btn btn-primary">
+                    📊 Check Application Status
+                </a>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="document-footer">
+            <div class="footer-text">
+                <p><strong>Next Steps:</strong></p>
+                <p>Your application has been received and is now pending review. You will be notified via email when the review process begins.</p>
+                <p>Please ensure all required documents are uploaded to complete your application.</p>
+                <br>
+                <p>For any questions or support, please contact us at <strong>support@gcx.com</strong></p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

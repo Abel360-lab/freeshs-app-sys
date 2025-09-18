@@ -1,0 +1,540 @@
+{% extends 'backoffice/base.html' %}
+{% load static %}
+
+{% block title %}Notification Analytics{% endblock %}
+
+{% block breadcrumb_current %}Notification Analytics{% endblock %}
+
+{% block page_icon %}<i class="fas fa-chart-bar"></i>{% endblock %}
+{% block page_title %}Notification Analytics{% endblock %}
+{% block page_subtitle %}Detailed performance metrics and analytics for notifications{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group" role="group">
+    <button type="button" class="btn btn-outline-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+        <i class="fas fa-calendar"></i> Last {{ days }} days
+    </button>
+    <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="?days=7">Last 7 days</a></li>
+        <li><a class="dropdown-item" href="?days=30">Last 30 days</a></li>
+        <li><a class="dropdown-item" href="?days=90">Last 90 days</a></li>
+    </ul>
+</div>
+<a href="{% url 'notifications:dashboard' %}" class="btn btn-outline-primary btn-sm">
+    <i class="fas fa-arrow-left"></i> Back to Dashboard
+</a>
+<a href="{% url 'notifications:logs' %}" class="btn btn-primary btn-sm">
+    <i class="fas fa-list"></i> View Logs
+</a>
+{% endblock %}
+
+{% block extrahead %}
+<style>
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        box-shadow: var(--shadow-sm);
+        border-left: 4px solid var(--primary-color);
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100px;
+        height: 100px;
+        background: linear-gradient(135deg, transparent 0%, rgba(30, 58, 95, 0.05) 100%);
+        border-radius: 50%;
+        transform: translate(30px, -30px);
+    }
+    
+    .stat-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-5px);
+    }
+    
+    .stat-card.success {
+        border-left-color: var(--accent-color);
+    }
+    
+    .stat-card.warning {
+        border-left-color: var(--warning-color);
+    }
+    
+    .stat-card.danger {
+        border-left-color: var(--danger-color);
+    }
+    
+    .stat-card.info {
+        border-left-color: var(--info-color);
+    }
+    
+    .stat-icon {
+        position: absolute;
+        top: 1.5rem;
+        right: 1.5rem;
+        font-size: 2rem;
+        opacity: 0.1;
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin: 0;
+        line-height: 1;
+    }
+    
+    .stat-label {
+        color: var(--text-muted);
+        font-size: 0.875rem;
+        margin: 0.5rem 0 0 0;
+        font-weight: 500;
+    }
+    
+    .stat-change {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-top: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 20px;
+    }
+    
+    .stat-change.positive {
+        color: var(--accent-color);
+        background: rgba(40, 167, 69, 0.1);
+    }
+    
+    .stat-change.negative {
+        color: var(--danger-color);
+        background: rgba(220, 53, 69, 0.1);
+    }
+    
+    .chart-container {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        box-shadow: var(--shadow-sm);
+        margin-bottom: 2rem;
+    }
+    
+    .chart-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .chart-title i {
+        font-size: 1rem;
+        opacity: 0.8;
+    }
+    
+    .chart-wrapper {
+        height: 400px;
+        position: relative;
+    }
+    
+    .comparison-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .performance-metrics {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .metric-item {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: 1rem;
+        text-align: center;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--background-light);
+    }
+    
+    .metric-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin: 0;
+    }
+    
+    .metric-label {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin: 0.25rem 0 0 0;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .fade-in {
+        animation: fadeIn 0.5s ease;
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .comparison-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .performance-metrics {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Performance Metrics Overview -->
+<div class="performance-metrics">
+    <div class="metric-item">
+        <div class="metric-value">{{ overall_stats.delivery_rate }}%</div>
+        <div class="metric-label">Delivery Rate</div>
+    </div>
+    <div class="metric-item">
+        <div class="metric-value">{{ overall_stats.success_rate }}%</div>
+        <div class="metric-label">Success Rate</div>
+    </div>
+    <div class="metric-item">
+        <div class="metric-value">{{ overall_stats.total }}</div>
+        <div class="metric-label">Total Sent</div>
+    </div>
+    <div class="metric-item">
+        <div class="metric-value">{{ overall_stats.delivered }}</div>
+        <div class="metric-label">Delivered</div>
+    </div>
+    <div class="metric-item">
+        <div class="metric-value">{{ overall_stats.failed }}</div>
+        <div class="metric-label">Failed</div>
+    </div>
+    <div class="metric-item">
+        <div class="metric-value">{{ email_stats.open_rate }}%</div>
+        <div class="metric-label">Email Open Rate</div>
+    </div>
+</div>
+
+<!-- Email vs SMS Comparison -->
+<div class="comparison-grid">
+    <!-- Email Statistics -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-envelope"></i>
+                Email Performance
+            </h3>
+        </div>
+        <div class="card-body">
+            <div class="stats-grid">
+                <div class="stat-card success">
+                    <i class="fas fa-paper-plane stat-icon"></i>
+                    <div class="stat-value">{{ email_stats.sent }}</div>
+                    <div class="stat-label">Sent</div>
+                </div>
+                
+                <div class="stat-card info">
+                    <i class="fas fa-check-circle stat-icon"></i>
+                    <div class="stat-value">{{ email_stats.delivered }}</div>
+                    <div class="stat-label">Delivered</div>
+                </div>
+                
+                <div class="stat-card success">
+                    <i class="fas fa-envelope-open stat-icon"></i>
+                    <div class="stat-value">{{ email_stats.opened }}</div>
+                    <div class="stat-label">Opened</div>
+                </div>
+                
+                <div class="stat-card info">
+                    <i class="fas fa-mouse-pointer stat-icon"></i>
+                    <div class="stat-value">{{ email_stats.clicked }}</div>
+                    <div class="stat-label">Clicked</div>
+                </div>
+                
+                <div class="stat-card danger">
+                    <i class="fas fa-times-circle stat-icon"></i>
+                    <div class="stat-value">{{ email_stats.failed }}</div>
+                    <div class="stat-label">Failed</div>
+                </div>
+                
+                <div class="stat-card warning">
+                    <i class="fas fa-exclamation-triangle stat-icon"></i>
+                    <div class="stat-value">{{ email_stats.bounced }}</div>
+                    <div class="stat-label">Bounced</div>
+                </div>
+            </div>
+            
+            <div class="row mt-3">
+                <div class="col-4">
+                    <div class="text-center">
+                        <h5 class="text-success">{{ email_stats.delivery_rate }}%</h5>
+                        <small class="text-muted">Delivery Rate</small>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="text-center">
+                        <h5 class="text-info">{{ email_stats.open_rate }}%</h5>
+                        <small class="text-muted">Open Rate</small>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="text-center">
+                        <h5 class="text-primary">{{ email_stats.click_rate }}%</h5>
+                        <small class="text-muted">Click Rate</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- SMS Statistics -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-sms"></i>
+                SMS Performance
+            </h3>
+        </div>
+        <div class="card-body">
+            <div class="stats-grid">
+                <div class="stat-card success">
+                    <i class="fas fa-paper-plane stat-icon"></i>
+                    <div class="stat-value">{{ sms_stats.sent }}</div>
+                    <div class="stat-label">Sent</div>
+                </div>
+                
+                <div class="stat-card info">
+                    <i class="fas fa-check-circle stat-icon"></i>
+                    <div class="stat-value">{{ sms_stats.delivered }}</div>
+                    <div class="stat-label">Delivered</div>
+                </div>
+                
+                <div class="stat-card success">
+                    <i class="fas fa-mobile-alt stat-icon"></i>
+                    <div class="stat-value">{{ sms_stats.opened }}</div>
+                    <div class="stat-label">Opened</div>
+                </div>
+                
+                <div class="stat-card info">
+                    <i class="fas fa-mouse-pointer stat-icon"></i>
+                    <div class="stat-value">{{ sms_stats.clicked }}</div>
+                    <div class="stat-label">Clicked</div>
+                </div>
+                
+                <div class="stat-card danger">
+                    <i class="fas fa-times-circle stat-icon"></i>
+                    <div class="stat-value">{{ sms_stats.failed }}</div>
+                    <div class="stat-label">Failed</div>
+                </div>
+                
+                <div class="stat-card warning">
+                    <i class="fas fa-exclamation-triangle stat-icon"></i>
+                    <div class="stat-value">{{ sms_stats.bounced }}</div>
+                    <div class="stat-label">Bounced</div>
+                </div>
+            </div>
+            
+            <div class="row mt-3">
+                <div class="col-4">
+                    <div class="text-center">
+                        <h5 class="text-success">{{ sms_stats.delivery_rate }}%</h5>
+                        <small class="text-muted">Delivery Rate</small>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="text-center">
+                        <h5 class="text-info">{{ sms_stats.open_rate }}%</h5>
+                        <small class="text-muted">Open Rate</small>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="text-center">
+                        <h5 class="text-primary">{{ sms_stats.click_rate }}%</h5>
+                        <small class="text-muted">Click Rate</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Daily Activity Chart -->
+<div class="chart-container">
+    <div class="chart-title">
+        <i class="fas fa-chart-line"></i>
+        Daily Notification Activity
+    </div>
+    <div class="chart-wrapper">
+        <canvas id="dailyChart"></canvas>
+    </div>
+</div>
+
+<!-- Top Templates -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">
+            <i class="fas fa-star"></i>
+            Top Notification Templates
+        </h3>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Template Name</th>
+                        <th>Type</th>
+                        <th>Sent Count</th>
+                        <th>Success Rate</th>
+                        <th>Last Used</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for template in top_templates %}
+                    <tr>
+                        <td>
+                            <strong>{{ template.name }}</strong>
+                        </td>
+                        <td>
+                            <span class="badge {% if template.notification_type == 'APPLICATION_SUBMITTED' %}badge-info{% elif template.notification_type == 'DOCUMENT_REQUEST' %}badge-warning{% else %}badge-secondary{% endif %}">
+                                {{ template.notification_type }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge badge-primary">{{ template.sent_count|default:0 }}</span>
+                        </td>
+                        <td>
+                            <span class="badge badge-success">95%</span>
+                        </td>
+                        <td>
+                            <small>{{ template.last_used|date:"M d, Y" }}</small>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">
+                            <i class="fas fa-file-alt fa-2x mb-2"></i>
+                            <br>No templates found
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extrajs %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Daily activity chart
+    const dailyData = {{ daily_stats|safe }};
+    
+    const ctx = document.getElementById('dailyChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dailyData.map(d => d.date),
+            datasets: [{
+                label: 'Emails',
+                data: dailyData.map(d => d.emails),
+                borderColor: '#17a2b8',
+                backgroundColor: 'rgba(23, 162, 184, 0.1)',
+                tension: 0.4,
+                fill: true
+            }, {
+                label: 'SMS',
+                data: dailyData.map(d => d.sms),
+                borderColor: '#28a745',
+                backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                tension: 0.4,
+                fill: true
+            }, {
+                label: 'Total',
+                data: dailyData.map(d => d.total),
+                borderColor: '#1e3a5f',
+                backgroundColor: 'rgba(30, 58, 95, 0.1)',
+                tension: 0.4,
+                fill: false,
+                borderWidth: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            }
+        }
+    });
+    
+    // Add fade-in animation to elements
+    document.addEventListener('DOMContentLoaded', function() {
+        const elements = document.querySelectorAll('.stat-card, .card, .metric-item');
+        elements.forEach(function(element, index) {
+            setTimeout(function() {
+                element.classList.add('fade-in');
+            }, index * 100);
+        });
+    });
+</script>
+{% endblock %}

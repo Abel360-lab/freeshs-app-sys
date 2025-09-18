@@ -1,0 +1,1509 @@
+{% extends 'backoffice/base.html' %}
+{% load static %}
+
+{% block title %}Notification Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-color: #2563eb;
+        --primary-dark: #1d4ed8;
+        --secondary-color: #64748b;
+        --success-color: #059669;
+        --warning-color: #d97706;
+        --danger-color: #dc2626;
+        --info-color: #0891b2;
+        --light-bg: #f8fafc;
+        --white: #ffffff;
+        --border-color: #e2e8f0;
+        --text-primary: #1e293b;
+        --text-secondary: #64748b;
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        --radius-sm: 6px;
+        --radius-md: 8px;
+        --radius-lg: 12px;
+    }
+
+    body {
+        background-color: var(--light-bg);
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .page-header h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .page-header .subtitle {
+        font-size: 1rem;
+        opacity: 0.9;
+        margin-top: 0.5rem;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: var(--white);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-color);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--primary-color);
+    }
+
+    .stat-card.success::before {
+        background: var(--success-color);
+    }
+
+    .stat-card.warning::before {
+        background: var(--warning-color);
+    }
+
+    .stat-card.danger::before {
+        background: var(--danger-color);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .stat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .stat-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        color: white;
+    }
+
+    .stat-icon.primary {
+        background: var(--primary-color);
+    }
+
+    .stat-icon.success {
+        background: var(--success-color);
+    }
+
+    .stat-icon.warning {
+        background: var(--warning-color);
+    }
+
+    .stat-icon.danger {
+        background: var(--danger-color);
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        line-height: 1;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+
+    .stat-change {
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.25rem 0.5rem;
+        border-radius: var(--radius-sm);
+        margin-top: 0.5rem;
+        display: inline-block;
+    }
+
+    .stat-change.positive {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .stat-change.negative {
+        background: #fef2f2;
+        color: #991b1b;
+    }
+
+    .control-panel {
+        background: var(--white);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-color);
+    }
+
+    .control-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .control-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0;
+    }
+
+    .filter-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .form-label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text-primary);
+    }
+
+    .form-control, .form-select {
+        padding: 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        font-size: 0.875rem;
+        transition: all 0.2s ease;
+        background: var(--white);
+    }
+
+    .form-control:focus, .form-select:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
+    }
+
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: var(--radius-md);
+        font-size: 0.875rem;
+        font-weight: 500;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+    }
+
+    .btn-primary {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: var(--primary-dark);
+        transform: translateY(-1px);
+    }
+
+    .btn-outline-secondary {
+        background: transparent;
+        color: var(--text-secondary);
+        border: 1px solid var(--border-color);
+    }
+
+    .btn-outline-secondary:hover {
+        background: var(--light-bg);
+        border-color: var(--text-secondary);
+    }
+
+    .btn-sm {
+        padding: 0.5rem 1rem;
+        font-size: 0.75rem;
+    }
+
+    .btn-warning {
+        background: var(--warning-color);
+        color: white;
+    }
+
+    .btn-danger {
+        background: var(--danger-color);
+        color: white;
+    }
+
+    .btn-success {
+        background: var(--success-color);
+        color: white;
+    }
+
+    .btn-info {
+        background: var(--info-color);
+        color: white;
+    }
+
+    .bulk-actions-panel {
+        background: var(--white);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-color);
+    }
+
+    .bulk-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .bulk-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0;
+    }
+
+    .bulk-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .selection-info {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+
+    .data-table {
+        background: var(--white);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-color);
+    }
+
+    .table {
+        width: 100%;
+        margin: 0;
+        border-collapse: collapse;
+    }
+
+    .table th {
+        background: var(--light-bg);
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 0.875rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .table td {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-color);
+        vertical-align: middle;
+        font-size: 0.875rem;
+    }
+
+    .table tbody tr:hover {
+        background: var(--light-bg);
+    }
+
+    .table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: var(--radius-md);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+    }
+
+    .status-pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-sent {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .status-delivered {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .status-opened {
+        background: #e0e7ff;
+        color: #3730a3;
+    }
+
+    .status-clicked {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-failed {
+        background: #fef2f2;
+        color: #991b1b;
+    }
+
+    .status-bounced {
+        background: #f3f4f6;
+        color: #374151;
+    }
+
+    .status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .action-btn {
+        padding: 0.375rem 0.75rem;
+        border-radius: var(--radius-sm);
+        font-size: 0.75rem;
+        font-weight: 500;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .action-btn:hover {
+        transform: translateY(-1px);
+        opacity: 0.9;
+    }
+
+    .action-btn.retry {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .action-btn.pause {
+        background: #f3f4f6;
+        color: #374151;
+    }
+
+    .action-btn.resume {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .action-btn.delete {
+        background: #fef2f2;
+        color: #991b1b;
+    }
+
+    .action-btn.view {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .real-time-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+        color: var(--success-color);
+        font-weight: 500;
+    }
+
+    .pulse-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--success-color);
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    .auto-refresh-control {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 44px;
+        height: 24px;
+    }
+
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #cbd5e1;
+        transition: .4s;
+        border-radius: 24px;
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    input:checked + .slider {
+        background-color: var(--success-color);
+    }
+
+    input:checked + .slider:before {
+        transform: translateX(20px);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: var(--text-secondary);
+    }
+
+    .empty-state-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    .empty-state-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state-text {
+        font-size: 0.875rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .pagination-wrapper {
+        display: flex;
+        justify-content: center;
+        margin-top: 2rem;
+    }
+
+    .pagination {
+        display: flex;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        gap: 0.5rem;
+    }
+
+    .page-item {
+        display: flex;
+    }
+
+    .page-link {
+        padding: 0.5rem 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        color: var(--text-primary);
+        text-decoration: none;
+        font-size: 0.875rem;
+        transition: all 0.2s ease;
+    }
+
+    .page-link:hover {
+        background: var(--light-bg);
+        border-color: var(--primary-color);
+    }
+
+    .page-item.active .page-link {
+        background: var(--primary-color);
+        border-color: var(--primary-color);
+        color: white;
+    }
+
+    .page-item.disabled .page-link {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .toast {
+        position: fixed;
+        top: 1rem;
+        right: 1rem;
+        z-index: 9999;
+        min-width: 300px;
+        padding: 1rem;
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-lg);
+        animation: slideIn 0.3s ease;
+    }
+
+    .toast.success {
+        background: var(--success-color);
+        color: white;
+    }
+
+    .toast.error {
+        background: var(--danger-color);
+        color: white;
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .filter-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .bulk-actions {
+            flex-direction: column;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+        
+        .table {
+            font-size: 0.75rem;
+        }
+        
+        .table th,
+        .table td {
+            padding: 0.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container-fluid">
+            <h1>
+                <i class="fas fa-bell"></i>
+                Notification Dashboard
+                <div class="real-time-indicator">
+                    <span class="pulse-dot"></span>
+                    Live
+                </div>
+            </h1>
+            <p class="subtitle">Monitor notification performance and delivery rates in real-time</p>
+            <div class="auto-refresh-control">
+                <span>Auto-refresh:</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="autoRefreshToggle" checked>
+                    <span class="slider"></span>
+                </label>
+                <span id="lastUpdate" class="text-white-50">
+                    Last updated: <span id="lastUpdateTime">{{ "now"|date:"H:i:s" }}</span>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Time Range Selector -->
+    <div class="container-fluid mb-4">
+        <div class="btn-group" role="group">
+            <a href="?days=1" class="btn {% if days == 1 %}btn-primary{% else %}btn-outline-secondary{% endif %}">Today</a>
+            <a href="?days=7" class="btn {% if days == 7 %}btn-primary{% else %}btn-outline-secondary{% endif %}">7 Days</a>
+            <a href="?days=30" class="btn {% if days == 30 %}btn-primary{% else %}btn-outline-secondary{% endif %}">30 Days</a>
+            <a href="?days=90" class="btn {% if days == 90 %}btn-primary{% else %}btn-outline-secondary{% endif %}">90 Days</a>
+        </div>
+    </div>
+    
+    <!-- Filters and Controls -->
+    <div class="control-panel">
+        <div class="control-header">
+            <h3 class="control-title">Filters & Controls</h3>
+        </div>
+        <div class="filter-grid">
+            <div class="form-group">
+                <label for="statusFilter" class="form-label">Status</label>
+                <select class="form-select" id="statusFilter">
+                    <option value="">All Statuses</option>
+                    <option value="PENDING">Pending</option>
+                    <option value="SENT">Sent</option>
+                    <option value="DELIVERED">Delivered</option>
+                    <option value="OPENED">Opened</option>
+                    <option value="CLICKED">Clicked</option>
+                    <option value="FAILED">Failed</option>
+                    <option value="BOUNCED">Bounced</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="channelFilter" class="form-label">Channel</label>
+                <select class="form-select" id="channelFilter">
+                    <option value="">All Channels</option>
+                    <option value="EMAIL">Email</option>
+                    <option value="SMS">SMS</option>
+                    <option value="PUSH">Push</option>
+                    <option value="IN_APP">In-App</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="searchInput" class="form-label">Search</label>
+                <input type="text" class="form-control" id="searchInput" placeholder="Email, subject, or template...">
+            </div>
+            <div class="form-group d-flex align-items-end">
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary" onclick="applyFilters()">
+                        <i class="fas fa-search"></i> Filter
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="clearFilters()">
+                        <i class="fas fa-times"></i> Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bulk Actions -->
+    <div class="bulk-actions-panel">
+        <div class="bulk-header">
+            <h4 class="bulk-title">Bulk Actions</h4>
+            <span class="selection-info" id="selectedCount">0 selected</span>
+        </div>
+        <div class="bulk-actions">
+            <button class="btn btn-sm btn-warning" onclick="bulkRetry()" id="bulkRetryBtn" disabled>
+                <i class="fas fa-redo"></i> Retry Selected
+            </button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="bulkPause()" id="bulkPauseBtn" disabled>
+                <i class="fas fa-pause"></i> Pause Selected
+            </button>
+            <button class="btn btn-sm btn-danger" onclick="bulkDelete()" id="bulkDeleteBtn" disabled>
+                <i class="fas fa-trash"></i> Delete Selected
+            </button>
+        </div>
+    </div>
+    
+    <!-- Summary Statistics -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-header">
+                <div>
+                    <div class="stat-number">{{ total_emails|add:total_sms }}</div>
+                    <div class="stat-label">Total Notifications</div>
+                </div>
+                <div class="stat-icon primary">
+                    <i class="fas fa-bell"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-card success">
+            <div class="stat-header">
+                <div>
+                    <div class="stat-number">{{ email_stats.delivered|add:sms_stats.delivered }}</div>
+                    <div class="stat-label">Delivered</div>
+                    <div class="stat-change positive">
+                        <i class="fas fa-arrow-up"></i> 95.2%
+                    </div>
+                </div>
+                <div class="stat-icon success">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-card warning">
+            <div class="stat-header">
+                <div>
+                    <div class="stat-number">{{ email_stats.failed|add:sms_stats.failed }}</div>
+                    <div class="stat-label">Failed</div>
+                    <div class="stat-change negative">
+                        <i class="fas fa-arrow-down"></i> 2.1%
+                    </div>
+                </div>
+                <div class="stat-icon warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-card danger">
+            <div class="stat-header">
+                <div>
+                    <div class="stat-number">{{ email_stats.bounced|add:sms_stats.bounced }}</div>
+                    <div class="stat-label">Bounced</div>
+                    <div class="stat-change negative">
+                        <i class="fas fa-arrow-down"></i> 1.8%
+                    </div>
+                </div>
+                <div class="stat-icon danger">
+                    <i class="fas fa-times-circle"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Email Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h5 class="text-primary mb-3">
+                    <i class="fas fa-envelope"></i> Email Performance
+                </h5>
+                <div class="row">
+                    <div class="col-6">
+                        <div class="text-center">
+                            <div class="h3 text-success">{{ email_stats.sent }}</div>
+                            <small class="text-muted">Sent</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center">
+                            <div class="h3 text-info">{{ email_stats.delivered }}</div>
+                            <small class="text-muted">Delivered</small>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-4">
+                        <div class="text-center">
+                            <div class="h4 text-primary">{{ email_stats.opened }}</div>
+                            <small class="text-muted">Opened</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-center">
+                            <div class="h4 text-warning">{{ email_stats.clicked }}</div>
+                            <small class="text-muted">Clicked</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-center">
+                            <div class="h4 text-danger">{{ email_stats.failed }}</div>
+                            <small class="text-muted">Failed</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Email Rates -->
+                {% if email_rates %}
+                <hr>
+                <div class="row">
+                    <div class="col-4">
+                        <div class="text-center">
+                            <div class="h5">
+                                <span class="rate-badge {% if email_rates.delivery_rate >= 95 %}rate-good{% elif email_rates.delivery_rate >= 85 %}rate-average{% else %}rate-poor{% endif %}">
+                                    {{ email_rates.delivery_rate|floatformat:1 }}%
+                                </span>
+                            </div>
+                            <small class="text-muted">Delivery Rate</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-center">
+                            <div class="h5">
+                                <span class="rate-badge {% if email_rates.open_rate >= 25 %}rate-good{% elif email_rates.open_rate >= 15 %}rate-average{% else %}rate-poor{% endif %}">
+                                    {{ email_rates.open_rate|floatformat:1 }}%
+                                </span>
+                            </div>
+                            <small class="text-muted">Open Rate</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-center">
+                            <div class="h5">
+                                <span class="rate-badge {% if email_rates.click_rate >= 5 %}rate-good{% elif email_rates.click_rate >= 2 %}rate-average{% else %}rate-poor{% endif %}">
+                                    {{ email_rates.click_rate|floatformat:1 }}%
+                                </span>
+                            </div>
+                            <small class="text-muted">Click Rate</small>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- SMS Statistics -->
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h5 class="text-primary mb-3">
+                    <i class="fas fa-sms"></i> SMS Performance
+                </h5>
+                <div class="row">
+                    <div class="col-6">
+                        <div class="text-center">
+                            <div class="h3 text-success">{{ sms_stats.sent }}</div>
+                            <small class="text-muted">Sent</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center">
+                            <div class="h3 text-info">{{ sms_stats.delivered }}</div>
+                            <small class="text-muted">Delivered</small>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-6">
+                        <div class="text-center">
+                            <div class="h4 text-danger">{{ sms_stats.failed }}</div>
+                            <small class="text-muted">Failed</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center">
+                            <div class="h4 text-warning">{{ sms_stats.bounced }}</div>
+                            <small class="text-muted">Bounced</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- SMS Rates -->
+                {% if sms_rates %}
+                <hr>
+                <div class="row">
+                    <div class="col-6">
+                        <div class="text-center">
+                            <div class="h5">
+                                <span class="rate-badge {% if sms_rates.delivery_rate >= 95 %}rate-good{% elif sms_rates.delivery_rate >= 85 %}rate-average{% else %}rate-poor{% endif %}">
+                                    {{ sms_rates.delivery_rate|floatformat:1 }}%
+                                </span>
+                            </div>
+                            <small class="text-muted">Delivery Rate</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center">
+                            <div class="h5">
+                                <span class="rate-badge {% if sms_rates.failure_rate <= 5 %}rate-good{% elif sms_rates.failure_rate <= 15 %}rate-average{% else %}rate-poor{% endif %}">
+                                    {{ sms_rates.failure_rate|floatformat:1 }}%
+                                </span>
+                            </div>
+                            <small class="text-muted">Failure Rate</small>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Top Templates -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h5 class="text-primary mb-3">
+                    <i class="fas fa-chart-bar"></i> Top Email Templates
+                </h5>
+                {% for template in top_templates %}
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>{{ template.template__name }}</span>
+                    <span class="badge bg-primary">{{ template.count }}</span>
+                </div>
+                {% empty %}
+                <p class="text-muted">No email templates found</p>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Recent Notifications -->
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h5 class="text-primary mb-3">
+                    <i class="fas fa-clock"></i> Recent Notifications
+                </h5>
+                {% for notification in recent_notifications %}
+                <div class="notification-item {% if notification.is_successful %}success{% elif notification.is_failed %}danger{% else %}warning{% endif %}">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong>{{ notification.template.name }}</strong>
+                            <br>
+                            <small class="text-muted">{{ notification.recipient_email }}</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-{% if notification.status == 'SENT' %}success{% elif notification.status == 'DELIVERED' %}info{% elif notification.status == 'OPENED' %}primary{% elif notification.status == 'CLICKED' %}warning{% else %}danger{% endif %}">
+                                {{ notification.get_status_display }}
+                            </span>
+                            <br>
+                            <small class="text-muted">{{ notification.created_at|timesince }} ago</small>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted">No recent notifications found</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notification Table -->
+    <div class="data-table">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>
+                        <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                    </th>
+                    <th>Status</th>
+                    <th>Template</th>
+                    <th>Recipient</th>
+                    <th>Subject</th>
+                    <th>Channel</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="notificationTableBody">
+                {% for notification in notification_logs %}
+                <tr data-notification-id="{{ notification.id }}" data-status="{{ notification.status }}">
+                    <td>
+                        <input type="checkbox" class="notification-checkbox" value="{{ notification.id }}" onchange="updateBulkActions()">
+                    </td>
+                    <td>
+                        <span class="status-badge status-{{ notification.status|lower }}">
+                            <span class="status-dot"></span>
+                            {{ notification.get_status_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <strong>{{ notification.template.name }}</strong>
+                    </td>
+                    <td>
+                        <div>
+                            <strong>{{ notification.recipient_email }}</strong>
+                            {% if notification.recipient_name %}
+                            <br><small style="color: var(--text-secondary);">{{ notification.recipient_name }}</small>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>
+                        <span title="{{ notification.subject }}">{{ notification.subject|truncatechars:50 }}</span>
+                    </td>
+                    <td>
+                        <span class="status-badge" style="background: #f3f4f6; color: #374151;">
+                            {{ notification.get_channel_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <div>
+                            <strong>{{ notification.created_at|date:"M d, Y" }}</strong>
+                            <br><small style="color: var(--text-secondary);">{{ notification.created_at|time:"H:i:s" }}</small>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            {% if notification.status == 'FAILED' %}
+                            <button class="action-btn retry" onclick="retryNotification({{ notification.id }})" title="Retry">
+                                <i class="fas fa-redo"></i>
+                            </button>
+                            {% endif %}
+                            
+                            {% if notification.status == 'PENDING' %}
+                            <button class="action-btn pause" onclick="pauseNotification({{ notification.id }})" title="Pause">
+                                <i class="fas fa-pause"></i>
+                            </button>
+                            {% elif notification.status == 'PAUSED' %}
+                            <button class="action-btn resume" onclick="resumeNotification({{ notification.id }})" title="Resume">
+                                <i class="fas fa-play"></i>
+                            </button>
+                            {% endif %}
+                            
+                            <a href="{% url 'notifications:detail' notification.id %}" class="action-btn view" title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            
+                            <button class="action-btn delete" onclick="deleteNotification({{ notification.id }})" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="empty-state">
+                        <div class="empty-state-icon">
+                            <i class="fas fa-bell-slash"></i>
+                        </div>
+                        <div class="empty-state-title">No notifications found</div>
+                        <div class="empty-state-text">Try adjusting your filters or check back later.</div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination -->
+    {% if notification_logs.has_other_pages %}
+    <div class="pagination-wrapper">
+        <ul class="pagination">
+            {% if notification_logs.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1{% if days %}&days={{ days }}{% endif %}">First</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ notification_logs.previous_page_number }}{% if days %}&days={{ days }}{% endif %}">Previous</a>
+            </li>
+            {% endif %}
+            
+            <li class="page-item active">
+                <span class="page-link">
+                    Page {{ notification_logs.number }} of {{ notification_logs.paginator.num_pages }}
+                </span>
+            </li>
+            
+            {% if notification_logs.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ notification_logs.next_page_number }}{% if days %}&days={{ days }}{% endif %}">Next</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ notification_logs.paginator.num_pages }}{% if days %}&days={{ days }}{% endif %}">Last</a>
+            </li>
+            {% endif %}
+        </ul>
+    </div>
+    {% endif %}
+    
+    <!-- Action Buttons -->
+    <div class="control-panel mt-4">
+        <div class="control-header">
+            <h3 class="control-title">Quick Actions</h3>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{% url 'notifications:logs' %}" class="btn btn-primary">
+                <i class="fas fa-list"></i> View All Logs
+            </a>
+            <button class="btn btn-warning" onclick="retryAllFailed()">
+                <i class="fas fa-redo"></i> Retry All Failed
+            </button>
+            <button class="btn btn-info" onclick="refreshAnalytics()">
+                <i class="fas fa-sync"></i> Refresh Analytics
+            </button>
+            <button class="btn btn-success" onclick="exportNotifications()">
+                <i class="fas fa-download"></i> Export Data
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Global variables
+let autoRefreshInterval;
+let selectedNotifications = new Set();
+let isAutoRefreshEnabled = true;
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    initializeAutoRefresh();
+    updateLastUpdateTime();
+    setupEventListeners();
+});
+
+// Auto-refresh functionality
+function initializeAutoRefresh() {
+    const toggle = document.getElementById('autoRefreshToggle');
+    toggle.addEventListener('change', function() {
+        isAutoRefreshEnabled = this.checked;
+        if (isAutoRefreshEnabled) {
+            startAutoRefresh();
+        } else {
+            stopAutoRefresh();
+        }
+    });
+    
+    if (isAutoRefreshEnabled) {
+        startAutoRefresh();
+    }
+}
+
+function startAutoRefresh() {
+    stopAutoRefresh(); // Clear any existing interval
+    autoRefreshInterval = setInterval(function() {
+        if (isAutoRefreshEnabled) {
+            refreshData();
+        }
+    }, 30000); // Refresh every 30 seconds
+}
+
+function stopAutoRefresh() {
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+        autoRefreshInterval = null;
+    }
+}
+
+function refreshData() {
+    fetch(window.location.href, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.text())
+    .then(html => {
+        // Update the table body
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const newTableBody = doc.querySelector('#notificationTableBody');
+        if (newTableBody) {
+            document.querySelector('#notificationTableBody').innerHTML = newTableBody.innerHTML;
+            updateLastUpdateTime();
+        }
+    })
+    .catch(error => {
+        console.error('Error refreshing data:', error);
+    });
+}
+
+function updateLastUpdateTime() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString();
+    document.getElementById('lastUpdateTime').textContent = timeString;
+}
+
+// Filter functionality
+function applyFilters() {
+    const status = document.getElementById('statusFilter').value;
+    const channel = document.getElementById('channelFilter').value;
+    const search = document.getElementById('searchInput').value;
+    
+    const params = new URLSearchParams();
+    if (status) params.append('status', status);
+    if (channel) params.append('channel', channel);
+    if (search) params.append('search', search);
+    
+    window.location.href = window.location.pathname + '?' + params.toString();
+}
+
+function clearFilters() {
+    document.getElementById('statusFilter').value = '';
+    document.getElementById('channelFilter').value = '';
+    document.getElementById('searchInput').value = '';
+    window.location.href = window.location.pathname;
+}
+
+// Bulk actions
+function toggleSelectAll() {
+    const selectAll = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.notification-checkbox');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAll.checked;
+        if (selectAll.checked) {
+            selectedNotifications.add(checkbox.value);
+        } else {
+            selectedNotifications.delete(checkbox.value);
+        }
+    });
+    
+    updateBulkActions();
+}
+
+function updateBulkActions() {
+    const checkboxes = document.querySelectorAll('.notification-checkbox');
+    const selectedCount = document.querySelectorAll('.notification-checkbox:checked').length;
+    
+    selectedNotifications.clear();
+    checkboxes.forEach(checkbox => {
+        if (checkbox.checked) {
+            selectedNotifications.add(checkbox.value);
+        }
+    });
+    
+    document.getElementById('selectedCount').textContent = `${selectedCount} selected`;
+    
+    // Enable/disable bulk action buttons
+    const bulkRetryBtn = document.getElementById('bulkRetryBtn');
+    const bulkPauseBtn = document.getElementById('bulkPauseBtn');
+    const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+    
+    bulkRetryBtn.disabled = selectedCount === 0;
+    bulkPauseBtn.disabled = selectedCount === 0;
+    bulkDeleteBtn.disabled = selectedCount === 0;
+    
+    // Update select all checkbox
+    const selectAll = document.getElementById('selectAll');
+    if (selectedCount === 0) {
+        selectAll.checked = false;
+        selectAll.indeterminate = false;
+    } else if (selectedCount === checkboxes.length) {
+        selectAll.checked = true;
+        selectAll.indeterminate = false;
+    } else {
+        selectAll.checked = false;
+        selectAll.indeterminate = true;
+    }
+}
+
+// Individual notification actions
+function retryNotification(notificationId) {
+    if (confirm('Are you sure you want to retry this notification?')) {
+        performNotificationAction('retry', [notificationId]);
+    }
+}
+
+function pauseNotification(notificationId) {
+    if (confirm('Are you sure you want to pause this notification?')) {
+        performNotificationAction('pause', [notificationId]);
+    }
+}
+
+function resumeNotification(notificationId) {
+    if (confirm('Are you sure you want to resume this notification?')) {
+        performNotificationAction('resume', [notificationId]);
+    }
+}
+
+function deleteNotification(notificationId) {
+    if (confirm('Are you sure you want to delete this notification? This action cannot be undone.')) {
+        performNotificationAction('delete', [notificationId]);
+    }
+}
+
+// Bulk actions
+function bulkRetry() {
+    if (selectedNotifications.size === 0) return;
+    
+    if (confirm(`Are you sure you want to retry ${selectedNotifications.size} selected notifications?`)) {
+        performNotificationAction('retry', Array.from(selectedNotifications));
+    }
+}
+
+function bulkPause() {
+    if (selectedNotifications.size === 0) return;
+    
+    if (confirm(`Are you sure you want to pause ${selectedNotifications.size} selected notifications?`)) {
+        performNotificationAction('pause', Array.from(selectedNotifications));
+    }
+}
+
+function bulkDelete() {
+    if (selectedNotifications.size === 0) return;
+    
+    if (confirm(`Are you sure you want to delete ${selectedNotifications.size} selected notifications? This action cannot be undone.`)) {
+        performNotificationAction('delete', Array.from(selectedNotifications));
+    }
+}
+
+// Generic action performer
+function performNotificationAction(action, notificationIds) {
+    const formData = new FormData();
+    formData.append('action', action);
+    notificationIds.forEach(id => {
+        formData.append('notification_ids', id);
+    });
+    
+    fetch('{% url "notifications:bulk-actions" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message, 'success');
+            // Refresh the page to show updated data
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        } else {
+            showNotification(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred while performing the action.', 'error');
+    });
+}
+
+// Utility functions
+function retryAllFailed() {
+    if (confirm('Are you sure you want to retry all failed notifications?')) {
+        fetch('{% url "notifications:retry-failed" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification(data.message, 'success');
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
+            } else {
+                showNotification(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('An error occurred while retrying notifications.', 'error');
+        });
+    }
+}
+
+function refreshAnalytics() {
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+    btn.disabled = true;
+    
+    setTimeout(() => {
+        location.reload();
+    }, 1000);
+}
+
+function exportNotifications() {
+    const params = new URLSearchParams(window.location.search);
+    params.append('export', 'csv');
+    
+    window.open('{% url "notifications:dashboard" %}?' + params.toString(), '_blank');
+}
+
+function showNotification(message, type) {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `toast ${type === 'success' ? 'success' : 'error'}`;
+    notification.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span>${message}</span>
+            <button type="button" onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; margin-left: 1rem;">&times;</button>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+function setupEventListeners() {
+    // Add event listeners for individual checkboxes
+    document.addEventListener('change', function(e) {
+        if (e.target.classList.contains('notification-checkbox')) {
+            updateBulkActions();
+        }
+    });
+    
+    // Add keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl+A to select all
+        if (e.ctrlKey && e.key === 'a') {
+            e.preventDefault();
+            toggleSelectAll();
+        }
+        
+        // Escape to clear selection
+        if (e.key === 'Escape') {
+            selectedNotifications.clear();
+            document.querySelectorAll('.notification-checkbox').forEach(cb => cb.checked = false);
+            document.getElementById('selectAll').checked = false;
+            updateBulkActions();
+        }
+    });
+}
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', function() {
+    stopAutoRefresh();
+});
+</script>
+{% endblock %}

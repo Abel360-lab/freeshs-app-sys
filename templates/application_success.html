@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application Submitted Successfully - Ghana Commodity Exchange</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1e3a5f;
+            --primary-dark: #0f2847;
+            --primary-light: #2c4f7c;
+            --secondary-color: #e8f0fe;
+            --accent-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --text-color: #2c3e50;
+            --text-muted: #6c757d;
+            --border-color: #dee2e6;
+            --background-light: #f8f9fa;
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.08);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.12);
+            --shadow-lg: 0 8px 24px rgba(0,0,0,0.16);
+            --border-radius: 10px;
+            --border-radius-sm: 6px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+            color: var(--text-color);
+            padding-top: 100px;
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 400px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+            z-index: -1;
+        }
+        
+        /* Confetti Animation */
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+        
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: var(--accent-color);
+            animation: confetti-fall 3s linear;
+            z-index: 999;
+        }
+        
+        .confetti:nth-child(odd) {
+            background: var(--primary-color);
+            animation-duration: 2.5s;
+        }
+        
+        .confetti:nth-child(3n) {
+            background: var(--warning-color);
+            animation-duration: 3.5s;
+        }
+        
+        /* Enhanced Header */
+        .fixed-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+            box-shadow: var(--shadow-lg);
+            backdrop-filter: blur(10px);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        
+        .logo {
+            width: 65px;
+            height: 65px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            transition: var(--transition);
+        }
+        
+        .logo:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+        
+        .logo i {
+            font-size: 2rem;
+            color: white;
+        }
+        
+        .app-title h1 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: white;
+            margin: 0;
+            letter-spacing: -0.02em;
+        }
+        
+        .app-title p {
+            font-size: 0.875rem;
+            color: rgba(255, 255, 255, 0.85);
+            margin: 0.25rem 0 0 0;
+            font-weight: 400;
+        }
+        
+        .header-info {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            color: white;
+        }
+        
+        .header-info-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: var(--border-radius-sm);
+            backdrop-filter: blur(10px);
+        }
+        
+        .security-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 0.8rem;
+            background: rgba(40, 167, 69, 0.2);
+            border: 1px solid rgba(40, 167, 69, 0.3);
+            border-radius: 20px;
+            font-size: 0.75rem;
+            color: #90EE90;
+            font-weight: 500;
+        }
+        
+        /* Success Container */
+        .success-container {
+            max-width: 900px;
+            margin: 2rem auto;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            position: relative;
+            animation: slideUp 0.6s ease;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .success-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-color) 0%, var(--primary-color) 100%);
+        }
+        
+        .success-header {
+            background: linear-gradient(135deg, var(--accent-color) 0%, #22c55e 100%);
+            color: white;
+            padding: 3rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .success-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: rotate 30s linear infinite;
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .success-icon {
+            font-size: 5rem;
+            margin-bottom: 1.5rem;
+            position: relative;
+            z-index: 1;
+            animation: pulseScale 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulseScale {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .success-header h2 {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .success-header p {
+            font-size: 1.125rem;
+            opacity: 0.95;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .success-content {
+            padding: 3rem;
+        }
+        
+        /* Tracking Code Box */
+        .tracking-code-box {
+            background: linear-gradient(135deg, rgba(30, 58, 95, 0.05) 0%, rgba(30, 58, 95, 0.02) 100%);
+            border: 2px solid var(--primary-color);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            text-align: center;
+            margin: 0 0 2rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .tracking-code-box::after {
+            content: '\f00c';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            color: var(--accent-color);
+            font-size: 1.5rem;
+        }
+        
+        .tracking-label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .tracking-code {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+            letter-spacing: 0.1em;
+            padding: 0.5rem 1rem;
+            background: white;
+            border-radius: var(--border-radius-sm);
+            display: inline-block;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+        
+        .tracking-code:hover {
+            transform: scale(1.05);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .copy-hint {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 1rem;
+            opacity: 0.8;
+        }
+        
+        .copy-hint i {
+            color: var(--primary-color);
+        }
+        
+        /* Timeline */
+        .timeline-container {
+            margin: 3rem 0;
+        }
+        
+        .timeline-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .timeline {
+            position: relative;
+            padding-left: 3rem;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 1rem;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(180deg, var(--accent-color) 0%, var(--border-color) 100%);
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin-bottom: 2rem;
+            animation: fadeInLeft 0.6s ease;
+            animation-fill-mode: both;
+        }
+        
+        .timeline-item:nth-child(1) { animation-delay: 0.1s; }
+        .timeline-item:nth-child(2) { animation-delay: 0.2s; }
+        .timeline-item:nth-child(3) { animation-delay: 0.3s; }
+        .timeline-item:nth-child(4) { animation-delay: 0.4s; }
+        
+        @keyframes fadeInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .timeline-marker {
+            position: absolute;
+            left: -2.5rem;
+            top: 0.25rem;
+            width: 2rem;
+            height: 2rem;
+            background: white;
+            border: 3px solid var(--accent-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.75rem;
+            color: var(--accent-color);
+        }
+        
+        .timeline-item.current .timeline-marker {
+            background: var(--accent-color);
+            color: white;
+            box-shadow: 0 0 0 6px rgba(40, 167, 69, 0.1);
+        }
+        
+        .timeline-content {
+            background: var(--background-light);
+            padding: 1.25rem;
+            border-radius: var(--border-radius-sm);
+            border-left: 3px solid transparent;
+            transition: var(--transition);
+        }
+        
+        .timeline-item.current .timeline-content {
+            border-left-color: var(--accent-color);
+            background: white;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .timeline-content h5 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+        
+        .timeline-content p {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin: 0;
+        }
+        
+        .timeline-time {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        /* Info Cards */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .info-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            transition: var(--transition);
+        }
+        
+        .info-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+        
+        .info-card-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+            color: white;
+            border-radius: var(--border-radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+        }
+        
+        .info-card h5 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+        
+        .info-card p {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin: 0;
+            line-height: 1.5;
+        }
+        
+        
+        /* Application Summary Styles */
+        .application-summary {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin: 2rem 0;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+        }
+        
+        .summary-title {
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+        
+        .summary-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            padding: 0.75rem;
+            background: var(--background-light);
+            border-radius: var(--border-radius-sm);
+            border-left: 3px solid var(--primary-color);
+        }
+        
+        .summary-item label {
+            font-weight: 600;
+            color: var(--text-color);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .summary-item span {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-badge.status-submitted {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .status-badge.status-under-review {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+        
+        .status-badge.status-approved {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        
+        .status-badge.status-rejected {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 2px solid var(--border-color);
+        }
+        
+        .btn {
+            padding: 0.875rem 2rem;
+            border-radius: var(--border-radius-sm);
+            font-weight: 500;
+            font-size: 0.95rem;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn-outline {
+            background: white;
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+        }
+        
+        .btn-outline:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        /* Footer */
+        .footer {
+            background: var(--primary-dark);
+            color: white;
+            padding: 3rem 0;
+            margin-top: 5rem;
+        }
+        
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 3rem;
+        }
+        
+        .footer-section h4 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: white;
+        }
+        
+        .footer-section p {
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+        
+        .footer-links {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .footer-links li {
+            margin-bottom: 0.75rem;
+        }
+        
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .footer-links a:hover {
+            color: white;
+            transform: translateX(5px);
+        }
+        
+        .footer-bottom {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.875rem;
+        }
+        
+        /* Toast Notification */
+        .toast-notification {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--primary-dark);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: var(--border-radius-sm);
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 9999;
+        }
+        
+        .toast-notification.show {
+            transform: translateX(0);
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                padding-top: 80px;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem;
+            }
+            
+            .header-info {
+                width: 100%;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            
+            .success-container {
+                margin: 1rem;
+            }
+            
+            .success-header {
+                padding: 2rem;
+            }
+            
+            .success-icon {
+                font-size: 3.5rem;
+            }
+            
+            .success-header h2 {
+                font-size: 1.5rem;
+            }
+            
+            .success-content {
+                padding: 1.5rem;
+            }
+            
+            .tracking-code {
+                font-size: 1.5rem;
+            }
+            
+            .timeline {
+                padding-left: 2rem;
+            }
+            
+            .timeline-marker {
+                left: -1.5rem;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .footer-content {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Fixed Header -->
+    <header class="fixed-header">
+        <div class="header-content">
+            <div class="logo-container">
+                <div class="logo">
+                    <img src="/media/logo/logo1.png" alt="GCX Logo" style="height: 50px; width: auto;">
+                </div>
+                <div class="app-title">
+                    <h1>Ghana Commodity Exchange</h1>
+                    <p>Official Supplier Registration Portal</p>
+                </div>
+            </div>
+            <div class="header-info">
+                <div class="header-info-item">
+                    <i class="fas fa-headset"></i>
+                    <span>+233 24 123 4567</span>
+                </div>
+                <div class="security-badge">
+                    <i class="fas fa-shield-check"></i>
+                    <span>Secure Portal</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Success Content -->
+    <div class="container">
+        <div class="success-container">
+            <div class="success-header">
+                <div class="success-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h2>Congratulations {{ business_name }}!</h2>
+                <p>Your supplier application has been successfully received and is now under review. If you uploaded partial documents, you'll receive a secure link to upload the remaining documents.</p>
+            </div>
+            
+            <div class="success-content">
+                <!-- Tracking Code -->
+                <div class="tracking-code-box">
+                    <div class="tracking-label">Application Reference Number</div>
+                    <div class="tracking-code" id="tracking-code">{{ reference_number }}</div>
+                    <div class="copy-hint">
+                        <i class="fas fa-copy"></i> Click to copy • Save this code for future reference
+                    </div>
+                </div>
+                
+                <!-- Timeline -->
+                <div class="timeline-container">
+                    <h4 class="timeline-title">
+                        <i class="fas fa-tasks"></i>
+                        Application Process Timeline
+                    </h4>
+                    <div class="timeline">
+                        <div class="timeline-item current">
+                            <div class="timeline-marker">✓</div>
+                            <div class="timeline-content">
+                                <h5>Application Submitted</h5>
+                                <p>Your application has been received and logged in our system</p>
+                                <div class="timeline-time">
+                                    <i class="fas fa-clock"></i> Just now
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-marker">2</div>
+                            <div class="timeline-content">
+                                <h5>Document Verification</h5>
+                                <p>Our team will verify all submitted documents</p>
+                                <div class="timeline-time">
+                                    <i class="fas fa-clock"></i> 1-2 business days
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-marker">3</div>
+                            <div class="timeline-content">
+                                <h5>Application Review</h5>
+                                <p>Comprehensive review of your application by our committee</p>
+                                <div class="timeline-time">
+                                    <i class="fas fa-clock"></i> 3-5 business days
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-marker">4</div>
+                            <div class="timeline-content">
+                                <h5>Final Decision</h5>
+                                <p>You will receive the final decision via email</p>
+                                <div class="timeline-time">
+                                    <i class="fas fa-clock"></i> 7-10 business days
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Info Cards -->
+                <div class="info-grid">
+                    <div class="info-card">
+                        <div class="info-card-icon">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <h5>Email Confirmation</h5>
+                        <p>A detailed confirmation has been sent to your registered email address with all relevant information.</p>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-card-icon">
+                            <i class="fas fa-phone-alt"></i>
+                        </div>
+                        <h5>Support Available</h5>
+                        <p>Our support team is available Monday-Friday, 8:00 AM - 5:00 PM for any questions.</p>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-card-icon">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <h5>Status Updates</h5>
+                        <p>You'll receive email notifications at each stage of the review process.</p>
+                    </div>
+                </div>
+                
+                <!-- Application Summary -->
+                <div class="application-summary">
+                    <h4 class="summary-title">
+                        <i class="fas fa-clipboard-list"></i>
+                        Application Summary
+                    </h4>
+                    <div class="summary-grid">
+                        <div class="summary-item">
+                            <label>Business Name:</label>
+                            <span>{{ business_name }}</span>
+                        </div>
+                        <div class="summary-item">
+                            <label>Business Type:</label>
+                            <span>{{ business_type|default:"Not specified" }}</span>
+                        </div>
+                        <div class="summary-item">
+                            <label>Registration Number:</label>
+                            <span>{{ registration_number|default:"Not provided" }}</span>
+                        </div>
+                        <div class="summary-item">
+                            <label>TIN Number:</label>
+                            <span>{{ tin_number|default:"Not provided" }}</span>
+                        </div>
+                        <div class="summary-item">
+                            <label>Email:</label>
+                            <span>{{ business_email }}</span>
+                        </div>
+                        <div class="summary-item">
+                            <label>Telephone:</label>
+                            <span>{{ telephone|default:"Not provided" }}</span>
+                        </div>
+                        <div class="summary-item">
+                            <label>Region:</label>
+                            <span>{{ region }}</span>
+                        </div>
+                        <div class="summary-item">
+                            <label>City:</label>
+                            <span>{{ city|default:"Not specified" }}</span>
+                        </div>
+                        <div class="summary-item">
+                            <label>Physical Address:</label>
+                            <span>{{ physical_address|default:"Not provided" }}</span>
+                        </div>
+                        <div class="summary-item">
+                            <label>Warehouse Location:</label>
+                            <span>{{ warehouse_location|default:"Not specified" }}</span>
+                        </div>
+                        <div class="summary-item">
+                            <label>Commodities:</label>
+                            <span>
+                                {% if commodities %}
+                                    {{ commodities|join:", " }}
+                                {% else %}
+                                    Not specified
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% if other_commodities %}
+                        <div class="summary-item">
+                            <label>Other Commodities:</label>
+                            <span>{{ other_commodities }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="summary-item">
+                            <label>Submitted At:</label>
+                            <span>{{ submitted_at|date:"F d, Y \a\t g:i A" }}</span>
+                        </div>
+                        {% if signed_at %}
+                        <div class="summary-item">
+                            <label>Signed At:</label>
+                            <span>{{ signed_at|date:"F d, Y \a\t g:i A" }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="summary-item">
+                            <label>Current Status:</label>
+                            <span class="status-badge status-{{ status|lower|slugify }}">{{ status }}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>Ghana Commodity Exchange</h4>
+                <p>The official platform for agricultural commodity trading and supplier registration in Ghana.</p>
+                <p><i class="fas fa-map-marker-alt"></i> 2nd Floor, Africa Trade House, Ridge, Accra</p>
+                <p><i class="fas fa-phone"></i> +233 24 123 4567</p>
+                <p><i class="fas fa-envelope"></i> suppliers@gcx.gov.gh</p>
+            </div>
+            <div class="footer-section">
+                <h4>Quick Links</h4>
+                <ul class="footer-links">
+                    <li><a href="#"><i class="fas fa-angle-right"></i> About GCX</a></li>
+                    <li><a href="#"><i class="fas fa-angle-right"></i> Supplier Guidelines</a></li>
+                    <li><a href="#"><i class="fas fa-angle-right"></i> FAQ</a></li>
+                    <li><a href="#"><i class="fas fa-angle-right"></i> Contact Support</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Legal</h4>
+                <ul class="footer-links">
+                    <li><a href="#"><i class="fas fa-angle-right"></i> Privacy Policy</a></li>
+                    <li><a href="#"><i class="fas fa-angle-right"></i> Terms of Service</a></li>
+                    <li><a href="#"><i class="fas fa-angle-right"></i> Data Protection</a></li>
+                    <li><a href="#"><i class="fas fa-angle-right"></i> Compliance</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 Ghana Commodity Exchange. All rights reserved. | Government of Ghana</p>
+        </div>
+    </footer>
+
+    <!-- Toast Notification -->
+    <div class="toast-notification" id="toast">
+        <i class="fas fa-check-circle"></i>
+        <span>Tracking code copied to clipboard!</span>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Generate tracking number if needed
+        function generateTrackingNumber() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const trackingCode = urlParams.get('tracking_code');
+            
+            if (trackingCode) {
+                const element = document.getElementById('tracking-code');
+                if (element) {
+                    element.textContent = trackingCode;
+                }
+            } else {
+                // Generate random 6-digit number
+                const randomNum = Math.floor(100000 + Math.random() * 900000);
+                const element = document.getElementById('tracking-code');
+                if (element) {
+                    element.textContent = randomNum;
+                }
+            }
+        }
+        
+        // Copy tracking code functionality
+        document.getElementById('tracking-code').addEventListener('click', function() {
+            const code = this.textContent;
+            navigator.clipboard.writeText(code).then(function() {
+                // Show toast notification
+                const toast = document.getElementById('toast');
+                toast.classList.add('show');
+                
+                // Animate the tracking code
+                const trackingElement = document.getElementById('tracking-code');
+                trackingElement.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    trackingElement.style.transform = 'scale(1.05)';
+                }, 100);
+                setTimeout(() => {
+                    trackingElement.style.transform = 'scale(1)';
+                }, 200);
+                
+                // Hide toast after 3 seconds
+                setTimeout(function() {
+                    toast.classList.remove('show');
+                }, 3000);
+            });
+        });
+        
+        // Create confetti effect
+        function createConfetti() {
+            const colors = ['#1e3a5f', '#28a745', '#ffc107', '#17a2b8'];
+            const confettiCount = 50;
+            
+            for (let i = 0; i < confettiCount; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.animationDelay = Math.random() * 0.5 + 's';
+                    document.body.appendChild(confetti);
+                    
+                    setTimeout(() => confetti.remove(), 3500);
+                }, i * 30);
+            }
+        }
+        
+        // Print functionality
+        function printApplication() {
+            window.print();
+        }
+        
+        // Email reminder functionality
+        function sendEmailReminder() {
+            // This would typically make an API call
+            const toast = document.getElementById('toast');
+            toast.innerHTML = '<i class="fas fa-envelope"></i><span>Reminder email sent successfully!</span>';
+            toast.classList.add('show');
+            
+            setTimeout(function() {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            generateTrackingNumber();
+            
+            // Create confetti effect on page load
+            setTimeout(createConfetti, 500);
+            
+            // Animate timeline items on scroll
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.animationPlayState = 'running';
+                    }
+                });
+            }, observerOptions);
+            
+            document.querySelectorAll('.timeline-item').forEach(item => {
+                item.style.animationPlayState = 'paused';
+                observer.observe(item);
+            });
+        });
+        
+        // Add hover effect to info cards
+        document.querySelectorAll('.info-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-5px) scale(1.02)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) scale(1)';
+            });
+        });
+    </script>
+</body>
+</html>

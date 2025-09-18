@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supplier Dashboard - GCX</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .dashboard-header {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+        .dashboard-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        .nav-link {
+            color: #6c757d;
+            border-radius: 5px;
+            margin: 0.25rem 0;
+        }
+        .nav-link:hover, .nav-link.active {
+            background-color: #28a745;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="dashboard-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h2 class="mb-1">Welcome back, {{ user.get_display_name }}!</h2>
+                    <p class="mb-0 opacity-75">Supplier Dashboard</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="dropdown">
+                        <button class="btn btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-2"></i>{{ user.email }}
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Profile</a></li>
+                            <li><a class="dropdown-item" href="{% url 'accounts:password_change' %}"><i class="fas fa-key me-2"></i>Change Password</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'accounts:logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3">
+                <div class="dashboard-card">
+                    <h6 class="text-muted mb-3">Navigation</h6>
+                    <nav class="nav flex-column">
+                        <a class="nav-link active" href="#">
+                            <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                        </a>
+                        <a class="nav-link" href="#">
+                            <i class="fas fa-file-alt me-2"></i>Applications
+                        </a>
+                        <a class="nav-link" href="#">
+                            <i class="fas fa-chart-line me-2"></i>Analytics
+                        </a>
+                        <a class="nav-link" href="#">
+                            <i class="fas fa-cog me-2"></i>Settings
+                        </a>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-9">
+                <!-- Stats Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <div class="stat-number">1</div>
+                            <div>Active Applications</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <div class="stat-number">0</div>
+                            <div>Pending Orders</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <div class="stat-number">100%</div>
+                            <div>Profile Complete</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Welcome Message -->
+                <div class="dashboard-card">
+                    <h5 class="mb-3">
+                        <i class="fas fa-handshake me-2 text-success"></i>
+                        Welcome to GCX Supplier Portal
+                    </h5>
+                    <p class="text-muted">
+                        Your supplier application has been approved and your account is now active. 
+                        You can now access all supplier features and start trading on the GCX platform.
+                    </p>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Next Steps:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Complete your business profile</li>
+                            <li>Upload your commodity certificates</li>
+                            <li>Start participating in trading sessions</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="dashboard-card">
+                    <h5 class="mb-3">
+                        <i class="fas fa-clock me-2"></i>
+                        Recent Activity
+                    </h5>
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>Account Created</strong>
+                                <br>
+                                <small class="text-muted">Your supplier account was successfully created</small>
+                            </div>
+                            <span class="badge bg-success">Today</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>Application Approved</strong>
+                                <br>
+                                <small class="text-muted">Your supplier application has been approved</small>
+                            </div>
+                            <span class="badge bg-success">Today</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

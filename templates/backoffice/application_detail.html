@@ -1,0 +1,2334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ application.business_name }} - Application Details - Ghana Commodity Exchange</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- ApexCharts -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    
+    <!-- Prevent sidebar flash - run immediately -->
+    <script>
+        // Set sidebar state immediately to prevent flash
+        (function() {
+            const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+            if (sidebarCollapsed && window.innerWidth > 768) {
+                // Add collapsed class to body so CSS can apply it immediately
+                document.body.classList.add('sidebar-collapsed');
+            }
+            // Add a flag to indicate early initialization is complete
+            window.sidebarEarlyInit = true;
+        })();
+    </script>
+    
+    <style>
+        :root {
+            --primary-color: #1e3a5f;
+            --primary-dark: #0f2847;
+            --primary-light: #2c4f7c;
+            --secondary-color: #3498db;
+            --accent-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --text-color: #2c3e50;
+            --text-muted: #6c757d;
+            --border-color: #dee2e6;
+            --background-light: #f8f9fa;
+            --background-dark: #f5f7fa;
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.08);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.12);
+            --shadow-lg: 0 8px 24px rgba(0,0,0,0.16);
+            --border-radius: 10px;
+            --border-radius-sm: 6px;
+            --sidebar-width: 280px;
+            --sidebar-collapsed-width: 70px;
+            --header-height: 70px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+            color: var(--text-color);
+            font-size: 0.95rem;
+            overflow-x: hidden;
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--background-light);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-light);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-color);
+        }
+        
+        /* Header */
+        .admin-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: var(--header-height);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+            color: white;
+            z-index: 1000;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            transition: var(--transition);
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        
+        .header-logo {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: white;
+            gap: 1rem;
+        }
+        
+        .logo-icon {
+            width: 45px;
+            height: 45px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: var(--border-radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            font-size: 1.5rem;
+        }
+        
+        .logo-text h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0;
+            letter-spacing: -0.02em;
+        }
+        
+        .logo-text p {
+            font-size: 0.75rem;
+            margin: 0;
+            opacity: 0.85;
+        }
+        
+        .sidebar-toggle {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: var(--border-radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .sidebar-toggle:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+        
+        .header-center {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .search-bar {
+            max-width: 500px;
+            width: 100%;
+            position: relative;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 0.5rem 1rem 0.5rem 2.5rem;
+            border: none;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            color: white;
+            font-size: 0.875rem;
+            transition: var(--transition);
+        }
+        
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .search-input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.25);
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .header-item {
+            position: relative;
+        }
+        
+        .header-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: var(--border-radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+            transition: var(--transition);
+        }
+        
+        .header-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--danger-color);
+            color: white;
+            font-size: 0.625rem;
+            font-weight: 600;
+            padding: 2px 5px;
+            border-radius: 10px;
+            min-width: 18px;
+            text-align: center;
+        }
+        
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.4rem 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .user-menu:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .user-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-color) 0%, #22c55e 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.875rem;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .user-name {
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        /* Sidebar */
+        .admin-sidebar {
+            position: fixed;
+            top: var(--header-height);
+            left: 0;
+            width: var(--sidebar-width);
+            height: calc(100vh - var(--header-height));
+            background: white;
+            box-shadow: var(--shadow-md);
+            z-index: 999;
+            transition: var(--transition);
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        
+        .admin-sidebar.collapsed {
+            width: var(--sidebar-collapsed-width);
+        }
+        
+        .admin-sidebar.collapsed .nav-label,
+        .admin-sidebar.collapsed .nav-section-title,
+        .admin-sidebar.collapsed .nav-badge {
+            display: none;
+        }
+        
+        .admin-sidebar.collapsed .nav-link {
+            justify-content: center;
+            padding: 1rem;
+        }
+        
+        .admin-sidebar.collapsed .nav-icon {
+            margin: 0;
+            font-size: 1.25rem;
+        }
+
+        /* Prevent flash by setting initial state */
+        .admin-sidebar {
+            transition: none;
+        }
+        
+        .admin-sidebar.initialized {
+            transition: var(--transition);
+        }
+
+        /* Handle initial sidebar state via body class */
+        body.sidebar-collapsed .admin-sidebar {
+            width: var(--sidebar-collapsed-width);
+        }
+        
+        body.sidebar-collapsed .admin-sidebar .nav-label,
+        body.sidebar-collapsed .admin-sidebar .nav-section-title,
+        body.sidebar-collapsed .admin-sidebar .nav-badge {
+            display: none;
+        }
+        
+        body.sidebar-collapsed .admin-sidebar .nav-link {
+            justify-content: center;
+            padding: 1rem;
+        }
+        
+        body.sidebar-collapsed .admin-sidebar .nav-icon {
+            margin: 0;
+            font-size: 1.25rem;
+        }
+        
+        body.sidebar-collapsed .main-content {
+            margin-left: var(--sidebar-collapsed-width);
+        }
+        
+        .sidebar-content {
+            padding: 1.5rem 0;
+        }
+        
+        .nav-section {
+            margin-bottom: 2rem;
+        }
+        
+        .nav-section-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 0.5rem 1.5rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .nav-section-title::before {
+            content: '';
+            width: 3px;
+            height: 12px;
+            background: var(--primary-color);
+            border-radius: 2px;
+        }
+        
+        .nav-item {
+            margin: 0.25rem 0.75rem;
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            color: var(--text-color);
+            text-decoration: none;
+            border-radius: var(--border-radius-sm);
+            transition: var(--transition);
+            position: relative;
+            font-size: 0.9rem;
+        }
+        
+        .nav-link:hover {
+            background: var(--background-light);
+            color: var(--primary-color);
+            transform: translateX(5px);
+        }
+        
+        .nav-link.active {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+            color: white;
+            font-weight: 500;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .nav-link-content {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .nav-icon {
+            width: 20px;
+            text-align: center;
+            transition: var(--transition);
+        }
+        
+        .nav-link:hover .nav-icon {
+            transform: scale(1.1);
+        }
+        
+        .nav-badge {
+            background: var(--danger-color);
+            color: white;
+            font-size: 0.625rem;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 10px;
+        }
+        
+        /* Main Content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            margin-top: var(--header-height);
+            padding: 2rem;
+            min-height: calc(100vh - var(--header-height));
+            transition: var(--transition);
+        }
+        
+        .main-content.expanded {
+            margin-left: var(--sidebar-collapsed-width);
+        }
+        
+        /* Page Header */
+        .page-header {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .page-header-left {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .breadcrumb {
+            background: none;
+            padding: 0;
+            margin: 0;
+            font-size: 0.875rem;
+        }
+        
+        .breadcrumb-item + .breadcrumb-item::before {
+            content: "/";
+            color: var(--text-muted);
+        }
+        
+        .breadcrumb-item a {
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+        
+        .breadcrumb-item a:hover {
+            color: var(--primary-dark);
+        }
+        
+        .breadcrumb-item.active {
+            color: var(--text-muted);
+        }
+        
+        .page-title {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .page-subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin: 0;
+        }
+        
+        .page-header-right {
+            display: flex;
+            gap: 0.75rem;
+        }
+        
+        /* Cards */
+        .card {
+            background: white;
+            border: none;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 1.5rem;
+            transition: var(--transition);
+            overflow: hidden;
+        }
+        
+        .card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+        
+        .card-header {
+            background: white;
+            border-bottom: 2px solid var(--background-light);
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .card-title i {
+            font-size: 1rem;
+            opacity: 0.8;
+        }
+        
+        .card-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+        }
+        
+        /* Stats Cards */
+        .stat-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            border-left: 4px solid var(--primary-color);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, transparent 0%, rgba(30, 58, 95, 0.05) 100%);
+            border-radius: 50%;
+            transform: translate(30px, -30px);
+        }
+        
+        .stat-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-5px);
+        }
+        
+        .stat-card.success {
+            border-left-color: var(--accent-color);
+        }
+        
+        .stat-card.warning {
+            border-left-color: var(--warning-color);
+        }
+        
+        .stat-card.danger {
+            border-left-color: var(--danger-color);
+        }
+        
+        .stat-card.info {
+            border-left-color: var(--info-color);
+        }
+        
+        .stat-icon {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            font-size: 2.5rem;
+            opacity: 0.1;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin: 0;
+            line-height: 1;
+        }
+        
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            margin: 0.5rem 0 0 0;
+            font-weight: 500;
+        }
+        
+        .stat-change {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 20px;
+        }
+        
+        .stat-change.positive {
+            color: var(--accent-color);
+            background: rgba(40, 167, 69, 0.1);
+        }
+        
+        .stat-change.negative {
+            color: var(--danger-color);
+            background: rgba(220, 53, 69, 0.1);
+        }
+        
+        /* Tables */
+        .table-responsive {
+            border-radius: var(--border-radius);
+            overflow-x: auto;
+            overflow-y: visible;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .table {
+            margin-bottom: 0;
+        }
+        
+        .table thead th {
+            background: var(--background-light);
+            border: none;
+            font-weight: 600;
+            font-size: 0.825rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            padding: 1rem;
+        }
+        
+        .table tbody td {
+            padding: 1rem;
+            vertical-align: middle;
+            border-color: var(--background-light);
+        }
+        
+        .table tbody tr {
+            transition: var(--transition);
+        }
+        
+        .table tbody tr:hover {
+            background: var(--background-light);
+        }
+        
+        /* Buttons */
+        .btn {
+            padding: 0.5rem 1.25rem;
+            border-radius: var(--border-radius-sm);
+            font-weight: 500;
+            font-size: 0.875rem;
+            transition: var(--transition);
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+            color: white;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, var(--accent-color) 0%, #22c55e 100%);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger-color) 0%, #e74c3c 100%);
+            color: white;
+        }
+        
+        .btn-outline-primary {
+            background: white;
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+        }
+        
+        .btn-outline-primary:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-sm {
+            padding: 0.375rem 0.875rem;
+            font-size: 0.8125rem;
+        }
+        
+        .btn-icon {
+            width: 35px;
+            height: 35px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--border-radius-sm);
+        }
+        
+        /* Status Badges */
+        .badge {
+            padding: 0.375rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+        
+        .badge-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.7rem;
+            font-weight: 600;
+            border-radius: 12px;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        
+        .badge-status::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+            flex-shrink: 0;
+        }
+        
+        /* Special handling for pending badge dot */
+        .badge-pending::before {
+            background: #000;
+        }
+        
+        .badge-pending {
+            background: #ffc107;
+            color: #000;
+            border-color: #ffc107;
+        }
+        
+        .badge-approved {
+            background: #28a745;
+            color: #fff;
+            border-color: #28a745;
+        }
+        
+        .badge-rejected {
+            background: #dc3545;
+            color: #fff;
+            border-color: #dc3545;
+        }
+        
+        .badge-pending_review {
+            background: #ffc107;
+            color: #000;
+            border-color: #ffc107;
+        }
+        
+        .badge-review,
+        .badge-under_review {
+            background: #17a2b8;
+            color: #fff;
+            border-color: #17a2b8;
+        }
+        
+        .badge-submitted {
+            background: #6c757d;
+            color: #fff;
+            border-color: #6c757d;
+        }
+        
+        .badge-needs_more_docs {
+            background: #fd7e14;
+            color: #fff;
+            border-color: #fd7e14;
+        }
+        
+        .badge-draft {
+            background: #6c757d;
+            color: #fff;
+            border-color: #6c757d;
+        }
+        
+        .badge-withdrawn {
+            background: #6f42c1;
+            color: #fff;
+            border-color: #6f42c1;
+        }
+        
+        .badge-none, .badge-null {
+            background: #6c757d;
+            color: #fff;
+            border-color: #6c757d;
+        }
+        
+        /* Fallback for any status without specific styling */
+        .badge-status:not([class*="badge-pending"]):not([class*="badge-approved"]):not([class*="badge-rejected"]):not([class*="badge-review"]):not([class*="badge-under_review"]):not([class*="badge-submitted"]):not([class*="badge-needs_more_docs"]):not([class*="badge-draft"]):not([class*="badge-withdrawn"]):not([class*="badge-none"]):not([class*="badge-null"]) {
+            background: #17a2b8;
+            color: #fff;
+            border-color: #17a2b8;
+        }
+        
+        /* Hover effects for better visibility */
+        .badge-status:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        /* Loading Spinner */
+        .spinner-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 3rem;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--background-light);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .slide-in {
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(-100%);
+            }
+            to {
+                transform: translateX(0);
+            }
+        }
+        
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .header-center {
+                display: none;
+            }
+            
+            /* Improve table responsiveness on medium screens */
+            .table-responsive {
+                margin: 0 -1rem;
+                border-radius: 0;
+            }
+            
+            /* Adjust table width when sidebar is collapsed */
+            body.sidebar-collapsed .table-responsive {
+                margin-left: 0;
+                margin-right: 0;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            :root {
+                --sidebar-width: 0;
+                --header-height: 60px;
+            }
+            
+            .admin-sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .admin-sidebar.show {
+                transform: translateX(0);
+                width: 280px;
+            }
+            
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+            
+            /* Mobile table improvements */
+            .table thead th,
+            .table tbody td {
+                padding: 0.75rem 0.5rem;
+                font-size: 0.875rem;
+            }
+            
+            .main-content.expanded {
+                margin-left: 0;
+            }
+            
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .page-title {
+                font-size: 1.5rem;
+            }
+            
+            .stat-card {
+                margin-bottom: 1rem;
+            }
+            
+            .logo-text {
+                display: none;
+            }
+            
+            .user-name {
+                display: none;
+            }
+            
+            .header-btn span {
+                display: none;
+            }
+        }
+        
+        /* Print Styles */
+        @media print {
+            .admin-header,
+            .admin-sidebar,
+            .page-header-right,
+            .btn,
+            .card-actions {
+                display: none !important;
+            }
+            
+            .main-content {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            
+            .card {
+                box-shadow: none !important;
+                border: 1px solid var(--border-color) !important;
+            }
+        }
+        
+        /* Tooltips */
+        .tooltip-inner {
+            background: var(--primary-dark);
+            padding: 0.5rem 0.75rem;
+            border-radius: var(--border-radius-sm);
+            font-size: 0.8125rem;
+        }
+        
+        /* Dropdown Menus */
+        .dropdown-menu {
+            border: none;
+            box-shadow: var(--shadow-lg);
+            border-radius: var(--border-radius);
+            padding: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .dropdown-item {
+            border-radius: var(--border-radius-sm);
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            transition: var(--transition);
+        }
+        
+        .dropdown-item:hover {
+            background: var(--background-light);
+            color: var(--primary-color);
+        }
+        
+        .dropdown-divider {
+            margin: 0.5rem 0;
+            border-color: var(--background-light);
+        }
+        
+        /* Additional styles for application detail page */
+        .info-item {
+            margin-bottom: 1rem;
+        }
+
+        .info-item label {
+            font-weight: 600;
+            color: #6c757d;
+            margin-bottom: 0.25rem;
+            display: block;
+        }
+
+        .info-item p {
+            margin-bottom: 0;
+            color: #212529;
+        }
+
+        .document-item {
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            padding: 1rem;
+            background-color: #f8f9fa;
+        }
+
+        .document-item h6 {
+            margin-bottom: 0.5rem;
+            color: #212529;
+        }
+
+        .commodity-item, .team-member-item, .kin-item, .bank-item {
+            padding: 0.75rem;
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            background-color: #f8f9fa;
+        }
+        
+        .other-commodities {
+            padding: 0.75rem;
+            border: 1px solid #17a2b8;
+            border-radius: 0.375rem;
+            background-color: #f8f9fa;
+            border-left: 3px solid #17a2b8;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0.75rem;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #dee2e6;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .timeline-marker {
+            position: absolute;
+            left: -2rem;
+            top: 0.25rem;
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            box-shadow: 0 0 0 2px #dee2e6;
+        }
+
+        .timeline-content h6 {
+            margin-bottom: 0.25rem;
+            color: #212529;
+        }
+
+        .document-checklist .document-item {
+            border-left: 4px solid #dee2e6;
+        }
+
+        .document-checklist .document-item:has(.fa-check-circle) {
+            border-left-color: #28a745;
+        }
+
+        .document-checklist .document-item:has(.fa-upload) {
+            border-left-color: #ffc107;
+        }
+
+        .document-checklist .document-item:has(.fa-times-circle) {
+            border-left-color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="admin-header">
+        <div class="header-left">
+            <button class="sidebar-toggle" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <a href="/backoffice/" class="header-logo">
+                <div class="logo-icon">
+                    <img src="/media/logo/logo1.png" alt="GCX Logo" style="height: 40px; width: auto;">
+                </div>
+                <div class="logo-text">
+                    <h1>GCX Admin Portal</h1>
+                    <p>Management System</p>
+                </div>
+            </a>
+        </div>
+        
+        <div class="header-center">
+            <div class="search-bar">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" class="search-input" placeholder="Search applications, suppliers, documents...">
+            </div>
+        </div>
+        
+        <div class="header-right">
+            <div class="header-item">
+                <button class="header-btn" data-bs-toggle="tooltip" title="Notifications">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge">3</span>
+                </button>
+            </div>
+            
+            <div class="header-item">
+                <button class="header-btn" data-bs-toggle="tooltip" title="Messages">
+                    <i class="fas fa-envelope"></i>
+                </button>
+            </div>
+            
+            <div class="header-item">
+                <button class="header-btn" data-bs-toggle="tooltip" title="Settings">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+            
+            <div class="header-item dropdown">
+                <div class="user-menu" data-bs-toggle="dropdown">
+                    <div class="user-avatar">
+                        A
+                    </div>
+                    <span class="user-name">Abel</span>
+                    <i class="fas fa-chevron-down" style="font-size: 0.75rem;"></i>
+                </div>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Profile</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Settings</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Sidebar -->
+    <nav class="admin-sidebar" id="sidebar">
+        <div class="sidebar-content">
+            <!-- Main Navigation -->
+            <div class="nav-section">
+                <div class="nav-section-title">Main Navigation</div>
+                
+                <div class="nav-item">
+                    <a href="/backoffice/" class="nav-link ">
+                        <div class="nav-link-content">
+                            <i class="fas fa-home nav-icon"></i>
+                            <span class="nav-label">Dashboard</span>
+                        </div>
+                        
+                    </a>
+                </div>
+                
+                <div class="nav-item">
+                    <a href="/backoffice/applications/" class="nav-link ">
+                        <div class="nav-link-content">
+                            <i class="fas fa-file-alt nav-icon"></i>
+                            <span class="nav-label">Applications</span>
+                        </div>
+                        <span class="nav-badge">12</span>
+                    </a>
+                </div>
+                
+                <div class="nav-item">
+                    <a href="/backoffice/suppliers/" class="nav-link ">
+                        <div class="nav-link-content">
+                            <i class="fas fa-users nav-icon"></i>
+                            <span class="nav-label">Suppliers</span>
+                        </div>
+                    </a>
+                </div>
+                
+                <div class="nav-item">
+                    <a href="/backoffice/documents/" class="nav-link ">
+                        <div class="nav-link-content">
+                            <i class="fas fa-folder-open nav-icon"></i>
+                            <span class="nav-label">Documents</span>
+                        </div>
+                        <span class="nav-badge">5</span>
+                    </a>
+                </div>
+                
+                <div class="nav-item">
+                    <a href="/notifications/" class="nav-link ">
+                        <div class="nav-link-content">
+                            <i class="fas fa-bell nav-icon"></i>
+                            <span class="nav-label">Notifications</span>
+                        </div>
+                        <span class="nav-badge">5</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Analytics Section -->
+            <div class="nav-section">
+                <div class="nav-section-title">Analytics & Reports</div>
+                
+                <div class="nav-item">
+                    <a href="/backoffice/analytics/" class="nav-link ">
+                        <div class="nav-link-content">
+                            <i class="fas fa-chart-line nav-icon"></i>
+                            <span class="nav-label">Analytics</span>
+                        </div>
+                    </a>
+                </div>
+                
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <div class="nav-link-content">
+                            <i class="fas fa-file-export nav-icon"></i>
+                            <span class="nav-label">Reports</span>
+                        </div>
+                    </a>
+                </div>
+                
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <div class="nav-link-content">
+                            <i class="fas fa-history nav-icon"></i>
+                            <span class="nav-label">Audit Log</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Management Section -->
+            <div class="nav-section">
+                <div class="nav-section-title">Management</div>
+                
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <div class="nav-link-content">
+                            <i class="fas fa-user-shield nav-icon"></i>
+                            <span class="nav-label">User Management</span>
+                        </div>
+                    </a>
+                </div>
+                
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <div class="nav-link-content">
+                            <i class="fas fa-cogs nav-icon"></i>
+                            <span class="nav-label">System Settings</span>
+                        </div>
+                    </a>
+                </div>
+                
+                <div class="nav-item">
+                    <a href="/admin/" class="nav-link" target="_blank">
+                        <div class="nav-link-content">
+                            <i class="fas fa-tools nav-icon"></i>
+                            <span class="nav-label">Django Admin</span>
+                        </div>
+                        <i class="fas fa-external-link-alt" style="font-size: 0.75rem;"></i>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Help Section -->
+            <div class="nav-section">
+                <div class="nav-section-title">Support</div>
+                
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <div class="nav-link-content">
+                            <i class="fas fa-question-circle nav-icon"></i>
+                            <span class="nav-label">Help Center</span>
+                        </div>
+                    </a>
+                </div>
+                
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <div class="nav-link-content">
+                            <i class="fas fa-book nav-icon"></i>
+                            <span class="nav-label">Documentation</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <div class="page-header">
+            <div class="page-header-left">
+                
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/backoffice/">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="/backoffice/applications/">Applications</a></li>
+        <li class="breadcrumb-item active">{{ application.tracking_code }}</li>
+    </ol>
+</nav>
+
+                
+                <h1 class="page-title">
+                    <i class="fas fa-file-alt"></i>
+                    {{ application.business_name }}
+                </h1>
+                <p class="page-subtitle">Application #{{ application.tracking_code }} - {{ application.get_status_display }}</p>
+            </div>
+            
+            <div class="page-header-right">
+                
+<div class="d-flex gap-2">
+    <button class="btn btn-outline-primary btn-sm" onclick="printApplication()">
+        <i class="fas fa-print"></i> Print
+    </button>
+    <button class="btn btn-outline-secondary btn-sm" onclick="exportApplication()">
+        <i class="fas fa-download"></i> Export
+    </button>
+    
+    {% if can_approve %}
+    <button class="btn btn-success btn-sm" onclick="showApproveModal()">
+        <i class="fas fa-check"></i> Approve
+    </button>
+    {% endif %}
+    
+    {% if can_reject %}
+    <button class="btn btn-danger btn-sm" onclick="showRejectModal()">
+        <i class="fas fa-times"></i> Reject
+    </button>
+    {% endif %}
+    
+    {% if can_request_docs %}
+    <button class="btn btn-info btn-sm" onclick="showRequestDocumentsModal()">
+        <i class="fas fa-file-upload"></i> Request Documents
+    </button>
+    {% endif %}
+    
+</div>
+
+            </div>
+        </div>
+        
+        
+        
+        <!-- Status Banner -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="alert alert-{% if application.status == 'approved' %}success{% elif application.status == 'rejected' %}danger{% elif application.status == 'submitted' %}primary{% elif application.status == 'under_review' %}warning{% elif application.status == 'needs_more_docs' %}info{% else %}secondary{% endif %} d-flex align-items-center">
+                    <i class="fas fa-{% if application.status == 'approved' %}check-circle{% elif application.status == 'rejected' %}times-circle{% elif application.status == 'submitted' %}paper-plane{% elif application.status == 'under_review' %}clock{% elif application.status == 'needs_more_docs' %}file-upload{% else %}info-circle{% endif %} me-3"></i>
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1">Application Status: {{ application.get_status_display }}</h6>
+                        <small>
+                            {% if application.submitted_at %}
+                                Submitted on {{ application.submitted_at|date:"F d, Y \a\t g:i A" }}
+                            {% else %}
+                                Created on {{ application.created_at|date:"F d, Y \a\t g:i A" }}
+                            {% endif %}
+                            {% if application.reviewed_at %}
+                                | Reviewed on {{ application.reviewed_at|date:"F d, Y \a\t g:i A" }}
+                            {% endif %}
+                            {% if application.decided_at %}
+                                | Decided on {{ application.decided_at|date:"F d, Y \a\t g:i A" }}
+                            {% endif %}
+                        </small>
+                    </div>
+                    {% if gcx_proof_uploaded %}
+                    <div class="text-end">
+                        <span class="badge bg-success">
+                            <i class="fas fa-credit-card"></i> Payment Confirmed
+                        </span>
+                    </div>
+                    {% else %}
+                    <div class="text-end">
+                        <span class="badge bg-warning">
+                            <i class="fas fa-exclamation-triangle"></i> Payment Pending
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Confirmation Section -->
+        {% if gcx_proof_uploaded %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-success">
+                    <div class="card-header bg-success text-white">
+                        <h6 class="mb-0">
+                            <i class="fas fa-credit-card"></i>
+                            Payment Confirmation
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <p class="mb-1"><strong>GCX Registration Proof Received</strong></p>
+                                <small class="text-muted">Application fee payment has been confirmed through GCX Registration Proof document.</small>
+                                {% if gcx_proof_doc %}
+                                <div class="mt-2">
+                                    <span class="badge bg-{% if gcx_proof_doc.verified %}success{% else %}warning{% endif %}">
+                                        <i class="fas fa-{% if gcx_proof_doc.verified %}check{% else %}clock{% endif %}"></i>
+                                        {% if gcx_proof_doc.verified %}Verified{% else %}Pending Verification{% endif %}
+                                    </span>
+                                    {% if gcx_proof_doc.verified %}
+                                    <small class="text-muted ms-2">Verified by {{ gcx_proof_doc.verified_by.get_full_name|default:gcx_proof_doc.verified_by.username }} on {{ gcx_proof_doc.verified_at|date:"M d, Y g:i A" }}</small>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4 text-end">
+                                {% if gcx_proof_doc %}
+                                <div class="btn-group" role="group">
+                                    <a href="{{ gcx_proof_doc.file.url }}" target="_blank" class="btn btn-outline-success btn-sm">
+                                        <i class="fas fa-eye"></i> View Document
+                                    </a>
+                                    {% if not gcx_proof_doc.verified %}
+                                    <button type="button" class="btn btn-success btn-sm" onclick="showVerifyPaymentModal({{ gcx_proof_doc.pk }}, 'GCX Registration Proof')">
+                                        <i class="fas fa-check"></i> Confirm Payment
+                                    </button>
+                                    {% else %}
+                                    <button class="btn btn-success btn-sm" disabled>
+                                        <i class="fas fa-check"></i> Payment Confirmed
+                                    </button>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-warning">
+                    <div class="card-header bg-warning text-dark">
+                        <h6 class="mb-0">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Payment Verification Required
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-1"><strong>GCX Registration Proof Not Received</strong></p>
+                        <small class="text-muted">Application cannot be approved until GCX Registration Proof (payment confirmation) is received.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="row">
+            <!-- Main Content -->
+            <div class="col-lg-8">
+                <!-- Business Information -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <i class="fas fa-building"></i>
+                            Business Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <label>Business Name</label>
+                                    <p>{{ application.business_name }}</p>
+                                </div>
+                                <div class="info-item">
+                                    <label>Business Type</label>
+                                    <p>{{ application.get_business_type_display|default:"--" }}</p>
+                                </div>
+                                <div class="info-item">
+                                    <label>Registration Number</label>
+                                    <p>{{ application.registration_number|default:"--" }}</p>
+                                </div>
+                                <div class="info-item">
+                                    <label>TIN Number</label>
+                                    <p>{{ application.tin_number|default:"--" }}</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <label>Email Address</label>
+                                    <p><a href="mailto:{{ application.email }}">{{ application.email }}</a></p>
+                                </div>
+                                <div class="info-item">
+                                    <label>Phone Number</label>
+                                    <p><a href="tel:{{ application.telephone }}">{{ application.telephone }}</a></p>
+                                </div>
+                                <div class="info-item">
+                                    <label>Physical Address</label>
+                                    <p>{{ application.physical_address|default:"--" }}</p>
+                                </div>
+                                <div class="info-item">
+                                    <label>City</label>
+                                    <p>{{ application.city|default:"--" }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="info-item">
+                                    <label>Region</label>
+                                    <p>{{ application.region.name|default:"--" }}</p>
+                                </div>
+                                <div class="info-item">
+                                    <label>Warehouse Location</label>
+                                    <p>{{ application.warehouse_location|default:"--" }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Commodities -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <i class="fas fa-seedling"></i>
+                            Commodities to Supply
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if application.commodities_to_supply.exists %}
+                        <div class="row">
+                            {% for commodity in application.commodities_to_supply.all %}
+                            <div class="col-md-6 col-lg-4 mb-2">
+                                <div class="commodity-item">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    {{ commodity.name }}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-muted">No commodities specified</p>
+                        {% endif %}
+                        
+                        {% if application.other_commodities %}
+                        <div class="mt-3">
+                            <h6 class="text-muted mb-2">Additional Commodities:</h6>
+                            <div class="other-commodities">
+                                <i class="fas fa-plus-circle text-info me-2"></i>
+                                {{ application.other_commodities }}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Team Members -->
+                {% if team_members %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <i class="fas fa-users"></i>
+                            Team Members
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {% for member in team_members %}
+                            <div class="col-md-6 mb-3">
+                                <div class="team-member-item">
+                                    <h6>{{ member.full_name }}</h6>
+                                    <p class="text-muted mb-1">{{ member.position }}</p>
+                                    <p class="text-muted mb-1">{{ member.telephone }}</p>
+                                    <p class="text-muted mb-0">{{ member.email|default:"--" }}</p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Next of Kin -->
+                {% if next_of_kin %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <i class="fas fa-user-friends"></i>
+                            Next of Kin
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {% for kin in next_of_kin %}
+                            <div class="col-md-6 mb-3">
+                                <div class="kin-item">
+                                    <h6>{{ kin.full_name }}</h6>
+                                    <p class="text-muted mb-1">{{ kin.relationship }}</p>
+                                    <p class="text-muted mb-1">{{ kin.mobile }}</p>
+                                    <p class="text-muted mb-0">{{ kin.address|default:"--" }}</p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Bank Accounts -->
+                {% if bank_accounts %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <i class="fas fa-university"></i>
+                            Bank Accounts
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {% for account in bank_accounts %}
+                            <div class="col-md-6 mb-3">
+                                <div class="bank-item">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h6>{{ account.bank_name }}</h6>
+                                        <span class="badge bg-primary">Option {{ account.account_index }}</span>
+                                    </div>
+                                    <p class="text-muted mb-1"><strong>Account Name:</strong> {{ account.account_name }}</p>
+                                    <p class="text-muted mb-1"><strong>Account Number:</strong> {{ account.account_number }}</p>
+                                    <p class="text-muted mb-0"><strong>Branch:</strong> {{ account.branch }}</p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <!-- Document Review -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <i class="fas fa-file-alt"></i>
+                            Document Review
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="document-checklist">
+                            {% for doc_status in document_status %}
+                            <div class="document-item mb-3">
+                                <div class="d-flex align-items-start">
+                                    <div class="flex-shrink-0 me-3">
+                                        {% if doc_status.is_uploaded %}
+                                            {% if doc_status.is_verified %}
+                                                <i class="fas fa-check-circle text-success"></i>
+                                            {% else %}
+                                                <i class="fas fa-upload text-warning"></i>
+                                            {% endif %}
+                                        {% else %}
+                                            <i class="fas fa-times-circle text-danger"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1">
+                                            {{ doc_status.requirement.label }}
+                                            {% if doc_status.is_gcx_proof %}
+                                                <span class="badge bg-primary ms-2">Payment</span>
+                                            {% endif %}
+                                        </h6>
+                                        <p class="text-muted mb-1 small">{{ doc_status.requirement.description }}</p>
+                                        {% if doc_status.is_uploaded and doc_status.uploaded_doc %}
+                                            <div class="d-flex gap-2">
+                                                <a href="{{ doc_status.uploaded_doc.file.url }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                                    <i class="fas fa-eye"></i> View
+                                                </a>
+                                                {% if not doc_status.is_verified %}
+                                                <button type="button" class="btn btn-success btn-sm" onclick="showVerifyDocumentModal({{ doc_status.uploaded_doc.pk }}, '{{ doc_status.requirement.label|escapejs }}')">
+                                                    <i class="fas fa-check"></i> Verify
+                                                </button>
+                                                {% endif %}
+                                            </div>
+                                        {% else %}
+                                            <span class="text-danger small">Not uploaded</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Missing Documents Alert -->
+                {% if missing_documents %}
+                <div class="card mb-4 border-warning">
+                    <div class="card-header bg-warning text-dark">
+                        <h6 class="mb-0">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Missing Documents
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            {% for doc in missing_documents %}
+                            <li class="mb-1">
+                                <i class="fas fa-times text-danger me-2"></i>
+                                {{ doc.name }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% if application.completion_token %}
+                        <div class="mt-3">
+                            <small class="text-muted">Completion Link:</small>
+                            <div class="input-group input-group-sm">
+                                <input type="text" class="form-control" value="{{ request.scheme }}://{{ request.get_host }}{{ application.get_completion_url }}" readonly>
+                                <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard(this.previousElementSibling)">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Application Actions -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-cogs"></i>
+                            Application Actions
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <!-- Primary Actions -->
+                        <div class="mb-3">
+                            <h6 class="text-muted mb-2">Primary Actions</h6>
+                            <div class="d-grid gap-2">
+                                {% if can_approve %}
+                                <button class="btn btn-success w-100" onclick="showApproveModal()">
+                                    <i class="fas fa-check"></i> Approve Application
+                                </button>
+                                {% else %}
+                                <button class="btn btn-outline-secondary w-100" disabled>
+                                    <i class="fas fa-lock"></i> Cannot Approve - Payment Not Confirmed
+                                </button>
+                                {% endif %}
+                                
+                                {% if can_reject %}
+                                <button class="btn btn-danger w-100" onclick="showRejectModal()">
+                                    <i class="fas fa-times"></i> Reject Application
+                                </button>
+                                {% endif %}
+                                
+                                {% if can_request_docs %}
+                                <button class="btn btn-info w-100" onclick="showRequestDocumentsModal()">
+                                    <i class="fas fa-file-upload"></i> Request Documents
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Secondary Actions -->
+                        <div>
+                            <h6 class="text-muted mb-2">Secondary Actions</h6>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-outline-primary w-100" onclick="sendEmail()">
+                                    <i class="fas fa-envelope"></i> Send Email
+                                </button>
+                                
+                                <button class="btn btn-outline-secondary w-100" onclick="printApplication()">
+                                    <i class="fas fa-print"></i> Print Application
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Status Information -->
+                        <div class="mt-3 pt-3 border-top">
+                            <small class="text-muted">
+                                <strong>Current Status:</strong> {{ application.get_status_display }}<br>
+                                <strong>Payment Status:</strong> 
+                                {% if gcx_proof_uploaded %}
+                                    {% if gcx_proof_verified %}
+                                        <span class="text-success">Confirmed</span>
+                                    {% else %}
+                                        <span class="text-warning">Pending Verification</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-danger">Not Received</span>
+                                {% endif %}
+                            </small>
+                        </div>
+                        
+                        <!-- Debug Information (remove in production) -->
+                        <div class="mt-3 pt-3 border-top">
+                            <small class="text-muted">
+                                <strong>Debug Info:</strong><br>
+                                Can Approve: {{ can_approve|yesno:"Yes,No" }}<br>
+                                GCX Uploaded: {{ gcx_proof_uploaded|yesno:"Yes,No" }}<br>
+                                GCX Verified: {{ gcx_proof_verified|yesno:"Yes,No" }}<br>
+                                App Status: {{ application.status }}<br>
+                                Required Status: SUBMITTED, PENDING_REVIEW, UNDER_REVIEW, NEEDS_MORE_DOCS
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Application Timeline -->
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-history"></i>
+                            Application Timeline
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="timeline">
+                            <div class="timeline-item">
+                                <div class="timeline-marker bg-primary"></div>
+                                <div class="timeline-content">
+                                    <h6 class="mb-1">Application Created</h6>
+                                    <small class="text-muted">{{ application.created_at|date:"M d, Y g:i A" }}</small>
+                                </div>
+                            </div>
+                            
+                            {% if application.submitted_at %}
+                            <div class="timeline-item">
+                                <div class="timeline-marker bg-success"></div>
+                                <div class="timeline-content">
+                                    <h6 class="mb-1">Application Submitted</h6>
+                                    <small class="text-muted">{{ application.submitted_at|date:"M d, Y g:i A" }}</small>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if application.reviewed_at %}
+                            <div class="timeline-item">
+                                <div class="timeline-marker bg-warning"></div>
+                                <div class="timeline-content">
+                                    <h6 class="mb-1">Under Review</h6>
+                                    <small class="text-muted">{{ application.reviewed_at|date:"M d, Y g:i A" }}</small>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if application.decided_at %}
+                            <div class="timeline-item">
+                                <div class="timeline-marker bg-{% if application.status == 'approved' %}success{% else %}danger{% endif %}"></div>
+                                <div class="timeline-content">
+                                    <h6 class="mb-1">{{ application.get_status_display }}</h6>
+                                    <small class="text-muted">{{ application.decided_at|date:"M d, Y g:i A" }}</small>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Approve Application Modal -->
+        <div class="modal fade" id="approveModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Approve Application</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form method="post" action="{% url 'applications:backoffice-approve-application' application.pk %}">
+                        {% csrf_token %}
+                        <div class="modal-body">
+                            <div class="alert alert-success d-flex align-items-center mb-3">
+                                <i class="fas fa-check-circle me-2"></i>
+                                <span>This will create a user account and send login credentials to the supplier.</span>
+                            </div>
+                            
+                            <p><strong>Application Details:</strong></p>
+                            <ul class="list-unstyled">
+                                <li><strong>Business:</strong> {{ application.business_name }}</li>
+                                <li><strong>Contact:</strong> {{ application.email }}</li>
+                                <li><strong>Tracking Code:</strong> {{ application.tracking_code }}</li>
+                            </ul>
+                            
+                            <div class="mb-3">
+                                <label for="approveComment" class="form-label">Approval Comment (Optional)</label>
+                                <textarea class="form-control" id="approveComment" name="comment" rows="3" placeholder="Add any comments about this approval..."></textarea>
+                            </div>
+                            
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="sendCredentials" name="send_credentials" checked>
+                                <label class="form-check-label" for="sendCredentials">
+                                    Send login credentials via email to {{ application.email }}
+                                </label>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-check"></i> Approve & Create Account
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reject Application Modal -->
+        <div class="modal fade" id="rejectModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Reject Application</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form method="post" action="{% url 'applications:backoffice-reject-application' application.pk %}">
+                        {% csrf_token %}
+                        <div class="modal-body">
+                            <p>Please provide a reason for rejecting this application:</p>
+                            <div class="mb-3">
+                                <label for="rejectReason" class="form-label">Rejection Reason</label>
+                                <textarea class="form-control" id="rejectReason" name="comment" rows="4" required></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-danger">Reject Application</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Request Documents Modal -->
+        <div class="modal fade" id="requestDocumentsModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Request Additional Documents</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form method="post" action="{% url 'applications:backoffice-request-documents' application.pk %}">
+                        {% csrf_token %}
+                        <div class="modal-body">
+                            <p>Please specify which additional documents are required:</p>
+                            <div class="mb-3">
+                                <label for="documentRequest" class="form-label">Document Request Details</label>
+                                <textarea class="form-control" id="documentRequest" name="comment" rows="4" required></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-info">Send Request</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Verify Document Modal -->
+        <div class="modal fade" id="verifyDocumentModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Verify Document</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form method="post" id="verifyDocumentForm">
+                        {% csrf_token %}
+                        <div class="modal-body">
+                            <div class="text-center mb-3">
+                                <i class="fas fa-check-circle text-success" style="font-size: 3rem;"></i>
+                            </div>
+                            <p class="text-center mb-3">Are you sure you want to verify this document?</p>
+                            <div class="alert alert-info">
+                                <strong>Document:</strong> <span id="documentName"></span>
+                            </div>
+                            <p class="text-muted small">This action will mark the document as verified and cannot be undone.</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-check"></i> Verify Document
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Verify Payment Modal -->
+        <div class="modal fade" id="verifyPaymentModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Confirm Payment Receipt</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form method="post" id="verifyPaymentForm">
+                        {% csrf_token %}
+                        <div class="modal-body">
+                            <div class="text-center mb-3">
+                                <i class="fas fa-credit-card text-success" style="font-size: 3rem;"></i>
+                            </div>
+                            <p class="text-center mb-3">Confirm payment receipt and verify this GCX Registration Proof document?</p>
+                            <div class="alert alert-warning">
+                                <strong>Document:</strong> <span id="paymentDocumentName"></span>
+                            </div>
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i>
+                                <strong>Important:</strong> This action confirms that the application fee has been paid and the GCX Registration Proof is valid.
+                            </div>
+                            <p class="text-muted small">This action will mark the document as verified and enable application approval.</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-check"></i> Confirm Payment
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        </main>
+        
+        <!-- Bootstrap JS -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        
+        <script>
+            // Initialize tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            });
+            
+            // Sidebar Toggle
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            
+            sidebarToggle.addEventListener('click', function() {
+                // Toggle the collapsed state
+                const isCurrentlyCollapsed = sidebar.classList.contains('collapsed');
+                
+                if (isCurrentlyCollapsed) {
+                    // Expand sidebar
+                    sidebar.classList.remove('collapsed');
+                    mainContent.classList.remove('expanded');
+                    document.body.classList.remove('sidebar-collapsed');
+                } else {
+                    // Collapse sidebar
+                    sidebar.classList.add('collapsed');
+                    mainContent.classList.add('expanded');
+                    document.body.classList.add('sidebar-collapsed');
+                }
+                
+                // Save state to localStorage
+                localStorage.setItem('sidebarCollapsed', !isCurrentlyCollapsed);
+            });
+            
+            // Mobile sidebar toggle
+            if (window.innerWidth <= 768) {
+                sidebarToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('show');
+                });
+                
+                // Close sidebar when clicking outside
+                document.addEventListener('click', function(event) {
+                    if (!sidebar.contains(event.target) && !sidebarToggle.contains(event.target)) {
+                        sidebar.classList.remove('show');
+                    }
+                });
+            }
+            
+            // Restore sidebar state and sync with body class
+            const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+            if (window.innerWidth > 768) {
+                if (sidebarCollapsed) {
+                    sidebar.classList.add('collapsed');
+                    mainContent.classList.add('expanded');
+                    document.body.classList.add('sidebar-collapsed');
+                } else {
+                    sidebar.classList.remove('collapsed');
+                    mainContent.classList.remove('expanded');
+                    document.body.classList.remove('sidebar-collapsed');
+                }
+            }
+            
+            // Enable transitions after initialization
+            setTimeout(() => {
+                sidebar.classList.add('initialized');
+            }, 100);
+            
+            // Search functionality
+            const searchInput = document.querySelector('.search-input');
+            if (searchInput) {
+                searchInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        const searchTerm = this.value.trim();
+                        if (searchTerm) {
+                            window.location.href = `/backoffice/applications/?search=${searchTerm}`;
+                        }
+                    }
+                });
+            }
+            
+            // Auto-hide alerts
+            setTimeout(function() {
+                const alerts = document.querySelectorAll('.alert-dismissible');
+                alerts.forEach(function(alert) {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                });
+            }, 5000);
+            
+            // Add fade-in animation to elements
+            document.addEventListener('DOMContentLoaded', function() {
+                const elements = document.querySelectorAll('.card, .stat-card');
+                elements.forEach(function(element, index) {
+                    setTimeout(function() {
+                        element.classList.add('fade-in');
+                    }, index * 50);
+                });
+            });
+            
+            // Handle active nav item
+            const currentPath = window.location.pathname;
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                if (link.getAttribute('href') === currentPath) {
+                    link.classList.add('active');
+                }
+            });
+        </script>
+        
+        
+        <script>
+        // Debug: Check if functions are being loaded
+        console.log('Loading application detail JavaScript functions...');
+
+        // Ensure functions are available globally
+        window.showApproveModal = function() {
+            console.log('showApproveModal called');
+            const modal = new bootstrap.Modal(document.getElementById('approveModal'));
+            modal.show();
+        }
+
+        window.showRejectModal = function() {
+            console.log('showRejectModal called');
+            const modal = new bootstrap.Modal(document.getElementById('rejectModal'));
+            modal.show();
+        }
+
+        window.showRequestDocumentsModal = function() {
+            const modal = new bootstrap.Modal(document.getElementById('requestDocumentsModal'));
+            modal.show();
+        }
+
+        window.showVerifyDocumentModal = function(documentId, documentName) {
+            console.log('showVerifyDocumentModal called with:', documentId, documentName);
+            try {
+                // Set the document name in the modal
+                const nameElement = document.getElementById('documentName');
+                if (nameElement) {
+                    nameElement.textContent = documentName;
+                }
+                
+                // Set the form action
+                const form = document.getElementById('verifyDocumentForm');
+                if (form) {
+                    form.action = `/backoffice/documents/${documentId}/verify/`;
+                }
+                
+                // Show the modal
+                const modalElement = document.getElementById('verifyDocumentModal');
+                if (modalElement) {
+                    const modal = new bootstrap.Modal(modalElement);
+                    modal.show();
+                }
+            } catch (error) {
+                console.error('Error in showVerifyDocumentModal:', error);
+                alert('Error opening verification modal. Please try again.');
+            }
+        }
+
+        window.showVerifyPaymentModal = function(documentId, documentName) {
+            console.log('showVerifyPaymentModal called with:', documentId, documentName);
+            try {
+                // Set the document name in the modal
+                const nameElement = document.getElementById('paymentDocumentName');
+                if (nameElement) {
+                    nameElement.textContent = documentName;
+                }
+                
+                // Set the form action
+                const form = document.getElementById('verifyPaymentForm');
+                if (form) {
+                    form.action = `/backoffice/documents/${documentId}/verify/`;
+                }
+                
+                // Show the modal
+                const modalElement = document.getElementById('verifyPaymentModal');
+                if (modalElement) {
+                    const modal = new bootstrap.Modal(modalElement);
+                    modal.show();
+                }
+            } catch (error) {
+                console.error('Error in showVerifyPaymentModal:', error);
+                alert('Error opening payment verification modal. Please try again.');
+            }
+        }
+
+        window.printApplication = function() {
+            window.print();
+        }
+
+        window.exportApplication = function() {
+            // TODO: Implement export functionality
+            alert('Export functionality will be implemented soon.');
+        }
+
+        window.sendEmail = function() {
+            // TODO: Implement email functionality
+            alert('Email functionality will be implemented soon.');
+        }
+
+        window.copyToClipboard = function(element) {
+            element.select();
+            element.setSelectionRange(0, 99999); // For mobile devices
+            document.execCommand('copy');
+            
+            // Show feedback
+            const button = element.nextElementSibling;
+            const originalHTML = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-check"></i>';
+            button.classList.remove('btn-outline-secondary');
+            button.classList.add('btn-success');
+            
+            setTimeout(() => {
+                button.innerHTML = originalHTML;
+                button.classList.remove('btn-success');
+                button.classList.add('btn-outline-secondary');
+            }, 2000);
+        }
+
+        // Initialize tooltips
+        document.addEventListener('DOMContentLoaded', function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            });
+            
+            console.log('Application detail page loaded successfully');
+            console.log('Available functions:', {
+                showApproveModal: typeof window.showApproveModal,
+                showRejectModal: typeof window.showRejectModal,
+                showRequestDocumentsModal: typeof window.showRequestDocumentsModal,
+                showVerifyDocumentModal: typeof window.showVerifyDocumentModal,
+                showVerifyPaymentModal: typeof window.showVerifyPaymentModal,
+                printApplication: typeof window.printApplication,
+                exportApplication: typeof window.exportApplication,
+                sendEmail: typeof window.sendEmail,
+                copyToClipboard: typeof window.copyToClipboard
+            });
+        });
+        </script>
+    </body>
+</html>

@@ -1,0 +1,594 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Ghana Commodity Exchange{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1e3a5f;
+            --primary-dark: #0f2847;
+            --primary-light: #2c4f7c;
+            --secondary-color: #e8f0fe;
+            --accent-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --text-color: #2c3e50;
+            --text-muted: #6c757d;
+            --border-color: #dee2e6;
+            --background-light: #f8f9fa;
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.08);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.12);
+            --shadow-lg: 0 8px 24px rgba(0,0,0,0.16);
+            --border-radius: 10px;
+            --border-radius-sm: 6px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+            color: var(--text-color);
+            padding-top: 100px;
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 300px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+            z-index: -1;
+        }
+        
+        /* Enhanced Header */
+        .fixed-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+            box-shadow: var(--shadow-lg);
+            backdrop-filter: blur(10px);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        
+        .logo {
+            width: 65px;
+            height: 65px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            transition: var(--transition);
+        }
+        
+        .logo:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+        
+        .logo i {
+            font-size: 2rem;
+            color: white;
+        }
+        
+        .app-title h1 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: white;
+            margin: 0;
+            letter-spacing: -0.02em;
+        }
+        
+        .app-title p {
+            font-size: 0.875rem;
+            color: rgba(255, 255, 255, 0.85);
+            margin: 0.25rem 0 0 0;
+            font-weight: 400;
+        }
+        
+        .header-info {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            color: white;
+        }
+        
+        .header-info-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: var(--border-radius-sm);
+            backdrop-filter: blur(10px);
+        }
+        
+        .security-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 0.8rem;
+            background: rgba(40, 167, 69, 0.2);
+            border: 1px solid rgba(40, 167, 69, 0.3);
+            border-radius: 20px;
+            font-size: 0.75rem;
+            color: #90EE90;
+            font-weight: 500;
+        }
+        
+        /* Main Container */
+        .main-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        
+        /* Enhanced Cards */
+        .info-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+            transition: var(--transition);
+        }
+        
+        .info-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+        
+        .info-card-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+            color: white;
+            padding: 1rem 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .info-card-body {
+            padding: 1.5rem;
+        }
+        
+        /* Button Styles */
+        .btn {
+            padding: 0.75rem 2rem;
+            border-radius: var(--border-radius-sm);
+            font-weight: 500;
+            font-size: 0.95rem;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: var(--text-color);
+            border: 2px solid var(--border-color);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--background-light);
+            transform: translateY(-2px);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        
+        /* Alert Styles */
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: var(--border-radius-sm);
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .alert-icon {
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+        
+        .alert-info {
+            background: rgba(13, 110, 253, 0.1);
+            border: 1px solid rgba(13, 110, 253, 0.2);
+            color: var(--primary-color);
+        }
+        
+        /* File Upload Styles */
+        .file-upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            text-align: center;
+            background: var(--background-light);
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .file-upload-area:hover {
+            border-color: var(--primary-color);
+            background: rgba(30, 58, 95, 0.02);
+        }
+        
+        .file-upload-area.dragover {
+            border-color: var(--accent-color);
+            background: rgba(40, 167, 69, 0.05);
+        }
+        
+        .file-upload-icon {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        
+        .file-upload-text {
+            color: var(--text-color);
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .file-upload-hint {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+        
+        .file-input-hidden {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+        
+        /* Document Card Styles */
+        .document-card {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .document-card:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .document-card.uploaded {
+            border-color: #28a745;
+            background-color: #f8fff9;
+        }
+        
+        .document-card.required {
+            border-color: #dc3545;
+            background-color: #fff8f8;
+        }
+        
+        .upload-area {
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .upload-area:hover {
+            border-color: #007bff;
+            background-color: #f8f9fa;
+        }
+        
+        .upload-area.dragover {
+            border-color: #007bff;
+            background-color: #e3f2fd;
+        }
+        
+        .file-info {
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        .progress-bar {
+            height: 8px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: #007bff;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status-required {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status-uploaded {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-verified {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        /* Loading Spinner */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                padding-top: 80px;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem;
+            }
+            
+            .header-info {
+                width: 100%;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+        }
+        
+        {% block extra_css %}{% endblock %}
+    </style>
+</head>
+<body>
+    <!-- Enhanced Fixed Header -->
+    <header class="fixed-header">
+        <div class="header-content">
+            <div class="logo-container">
+                <div class="logo">
+                    <img src="/media/logo/logo1.png" alt="GCX Logo" style="height: 50px; width: auto;">
+                </div>
+                <div class="app-title">
+                    <h1>{% block header_title %}Ghana Commodity Exchange{% endblock %}</h1>
+                    <p>{% block header_subtitle %}Official Supplier Registration Portal{% endblock %}</p>
+                </div>
+            </div>
+            <div class="header-info">
+                <div class="header-info-item">
+                    <i class="fas fa-headset"></i>
+                    <span>+233 24 123 4567</span>
+                </div>
+                <div class="security-badge">
+                    <i class="fas fa-shield-check"></i>
+                    <span>Secure Portal</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Footer -->
+    {% block footer %}
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>Ghana Commodity Exchange</h4>
+                <p>The official platform for agricultural commodity trading and supplier registration in Ghana.</p>
+                <p><i class="fas fa-map-marker-alt"></i> 2nd Floor, Africa Trade House, Ridge, Accra</p>
+                <p><i class="fas fa-phone"></i> +233 24 123 4567</p>
+                <p><i class="fas fa-envelope"></i> suppliers@gcx.gov.gh</p>
+            </div>
+            <div class="footer-section">
+                <h4>Quick Links</h4>
+                <ul class="footer-links">
+                    <li><a href="#"><i class="fas fa-angle-right"></i> About GCX</a></li>
+                    <li><a href="#"><i class="fas fa-angle-right"></i> Supplier Guidelines</a></li>
+                    <li><a href="#"><i class="fas fa-angle-right"></i> FAQ</a></li>
+                    <li><a href="#"><i class="fas fa-angle-right"></i> Contact Support</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Legal</h4>
+                <ul class="footer-links">
+                    <li><a href="#"><i class="fas fa-angle-right"></i> Privacy Policy</a></li>
+                    <li><a href="#"><i class="fas fa-angle-right"></i> Terms of Service</a></li>
+                    <li><a href="#"><i class="fas fa-angle-right"></i> Data Protection</a></li>
+                    <li><a href="#"><i class="fas fa-angle-right"></i> Compliance</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 Ghana Commodity Exchange. All rights reserved. | Government of Ghana</p>
+        </div>
+    </footer>
+    {% endblock %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Common JavaScript Functions -->
+    <script>
+        // Common file upload functionality
+        function initializeFileUpload() {
+            document.querySelectorAll('.file-upload-area').forEach(area => {
+                const input = area.querySelector('.file-input-hidden');
+                
+                // Handle click on the upload area
+                area.addEventListener('click', function(e) {
+                    if (e.target === input) return;
+                    input.click();
+                });
+                
+                // Drag and drop handlers
+                area.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    area.classList.add('dragover');
+                });
+                
+                area.addEventListener('dragenter', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    area.classList.add('dragover');
+                });
+                
+                area.addEventListener('dragleave', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    area.classList.remove('dragover');
+                });
+                
+                area.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    area.classList.remove('dragover');
+                    
+                    if (e.dataTransfer.files.length) {
+                        input.files = e.dataTransfer.files;
+                        if (typeof handleFileSelect === 'function') {
+                            handleFileSelect(e.dataTransfer.files[0], input);
+                        }
+                    }
+                });
+                
+                input.addEventListener('change', (e) => {
+                    if (e.target.files.length && typeof handleFileSelect === 'function') {
+                        handleFileSelect(e.target.files[0], input);
+                    }
+                });
+            });
+        }
+        
+        // Common file display update
+        function updateFileDisplay(area, file, input) {
+            const text = area.querySelector('.file-upload-text');
+            const hint = area.querySelector('.file-upload-hint');
+            const icon = area.querySelector('.file-upload-icon');
+            
+            if (text) text.textContent = file.name;
+            if (hint) hint.textContent = `${(file.size / 1024 / 1024).toFixed(2)} MB`;
+            if (icon) {
+                icon.classList.remove('fa-cloud-upload-alt');
+                icon.classList.add('fa-check-circle');
+            }
+            area.style.borderColor = 'var(--accent-color)';
+        }
+        
+        // Show notification
+        function showNotification(message, type = 'info') {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.style.position = 'fixed';
+            alertDiv.style.top = '120px';
+            alertDiv.style.right = '20px';
+            alertDiv.style.zIndex = '9999';
+            alertDiv.style.maxWidth = '400px';
+            alertDiv.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'} alert-icon"></i>
+                <span>${message}</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
+        
+        // Initialize file upload on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeFileUpload();
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
