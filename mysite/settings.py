@@ -45,7 +45,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_filters',
     'corsheaders',
-    'channels',
     'import_export',
     
     # Local apps
@@ -276,13 +275,12 @@ LOGGING = {
 # CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 # CELERY_RESULT_BACKEND_DB = 'django_celery_results'
 
-# Channels Configuration (for WebSockets)
-# Temporarily using in-memory channel layer until Redis is fixed
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels.layers.InMemoryChannelLayer',
-    },
-}
+# Channels Configuration (disabled for Railway deployment)
+# CHANNEL_LAYERS = {
+#     'default': {
+#         'BACKEND': 'channels.layers.InMemoryChannelLayer',
+#     },
+# }
 
 # Redis Configuration
 REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
