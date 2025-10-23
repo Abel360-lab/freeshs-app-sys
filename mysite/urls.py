@@ -27,8 +27,11 @@ urlpatterns = [
     # i18n URL patterns
     path('i18n/', include('django.conf.urls.i18n')),
     
+    # Test redirect to verify Django is working
+    path('', test_views.test_html, name='root-test'),
+    
     # Main application URLs
-    path('', include('applications.urls', namespace='applications')),
+    path('app/', include('applications.urls', namespace='applications')),
     path('accounts/', include('accounts.urls', namespace='accounts')),
     path('documents/', include('documents.urls')),
     path('reviews/', include('reviews.urls')),
