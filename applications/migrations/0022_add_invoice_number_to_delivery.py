@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('applications', '0021_create_waybill_table'),
+        ('applications', '0019_merge_20250925_0041'),
     ]
 
     operations = [
