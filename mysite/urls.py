@@ -9,12 +9,16 @@ from django.conf.urls.static import static
 from django.views.generic import RedirectView
 from django.conf.urls.i18n import i18n_patterns
 from django.views.static import serve
-from . import health_views
+from . import health_views, test_views
 
 # URL patterns
 urlpatterns = [
     # Health check
     path('health/', health_views.health_check, name='health-check'),
+    
+    # Test views
+    path('test/', test_views.test_view, name='test-view'),
+    path('test-html/', test_views.test_html, name='test-html'),
     
     # Admin URLs
     path('admin/', admin.site.urls),
