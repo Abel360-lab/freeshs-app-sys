@@ -11,29 +11,29 @@ from django.conf.urls.i18n import i18n_patterns
 from django.views.static import serve
 from . import health_views
 
-# URL patterns that should be internationalized
+# URL patterns
 urlpatterns = [
-    # Health check (not internationalized)
+    # Health check
     path('health/', health_views.health_check, name='health-check'),
     
-    # Admin URLs (not internationalized)
+    # Admin URLs
     path('admin/', admin.site.urls),
     path('admin/login/', RedirectView.as_view(url='/accounts/admin/login/', permanent=False)),
     
     # i18n URL patterns
     path('i18n/', include('django.conf.urls.i18n')),
-] + i18n_patterns(
-    # Internationalized URL patterns
+    
+    # Main application URLs
     path('', include('applications.urls', namespace='applications')),
     path('accounts/', include('accounts.urls', namespace='accounts')),
     path('documents/', include('documents.urls')),
     path('reviews/', include('reviews.urls')),
     path('notifications/', include('notifications.urls')),
     path('core/', include('core.urls', namespace='core')),
-    # Redirect only the exact root path to backoffice
+    
+    # Redirect root to backoffice
     path('', RedirectView.as_view(url='/backoffice/', permanent=False)),
-    prefix_default_language=False,  # Don't prefix default language URLs
-)
+]
 
 # Serve media files in development
 if settings.DEBUG:
