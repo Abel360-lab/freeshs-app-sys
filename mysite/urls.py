@@ -9,9 +9,13 @@ from django.conf.urls.static import static
 from django.views.generic import RedirectView
 from django.conf.urls.i18n import i18n_patterns
 from django.views.static import serve
+from . import health_views
 
 # URL patterns that should be internationalized
 urlpatterns = [
+    # Health check (not internationalized)
+    path('health/', health_views.health_check, name='health-check'),
+    
     # Admin URLs (not internationalized)
     path('admin/', admin.site.urls),
     path('admin/login/', RedirectView.as_view(url='/accounts/admin/login/', permanent=False)),

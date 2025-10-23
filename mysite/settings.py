@@ -254,15 +254,11 @@ SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 
-# Logging Configuration
+# Logging Configuration - Console only for Railway
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
-            'style': '{',
-        },
         'simple': {
             'format': '{levelname} {message}',
             'style': '{',
@@ -292,19 +288,6 @@ LOGGING = {
         },
     },
 }
-
-# Railway-specific logging (no file logging)
-if os.getenv('RAILWAY_ENVIRONMENT'):
-    LOGGING['handlers'] = {
-        'console': {
-            'level': 'INFO',
-            'class': 'logging.StreamHandler',
-            'formatter': 'simple',
-        },
-    }
-    LOGGING['root']['handlers'] = ['console']
-    LOGGING['loggers']['django']['handlers'] = ['console']
-    LOGGING['loggers']['applications']['handlers'] = ['console']
 
 # Celery Configuration (for background tasks)
 CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
