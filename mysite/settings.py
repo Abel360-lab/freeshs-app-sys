@@ -26,6 +26,11 @@ DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 'yes')
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
 #ALLOWED_HOSTS = ['172.25.221.182', 'localhost']
 
+# Railway specific settings
+if os.getenv('RAILWAY_ENVIRONMENT'):
+    DEBUG = False
+    ALLOWED_HOSTS = ['*']  # Railway handles this
+
 # Application definition
 
 INSTALLED_APPS = [

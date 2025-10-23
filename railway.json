@@ -3,7 +3,10 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "python manage.py runserver 0.0.0.0:$PORT",
-    "healthcheckPath": "/"
+    "startCommand": "chmod +x start.sh && ./start.sh",
+    "healthcheckPath": "/core/health/simple/",
+    "healthcheckTimeout": 300,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 10
   }
 }

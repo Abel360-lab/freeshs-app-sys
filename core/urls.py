@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views
 from . import audit_views
+from . import health_views
 
 app_name = 'core'
 
@@ -10,6 +11,10 @@ urlpatterns = [
     path('settings/test-api/', views.test_notification_api, name='test-notification-api'),
     path('settings/test-sms/', views.test_sms_service, name='test-sms-service'),
     path('settings/export/', views.settings_export, name='settings-export'),
+    
+    # Health Check URLs
+    path('health/', health_views.health_check, name='health-check'),
+    path('health/simple/', health_views.simple_health, name='simple-health'),
     
     # Audit Log URLs
     path('audit-logs/', audit_views.audit_logs, name='audit-logs'),
