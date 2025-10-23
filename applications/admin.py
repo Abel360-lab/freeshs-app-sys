@@ -8,108 +8,108 @@ from django.urls import reverse
 from django.utils import timezone
 from django.contrib import messages
 from django.http import HttpResponseRedirect
-from import_export import resources
-from import_export.admin import ImportExportModelAdmin
-from import_export.fields import Field
+# from import_export import resources
+# from import_export.admin import ImportExportModelAdmin
+# from import_export.fields import Field
 from .models import SupplierApplication, TeamMember, NextOfKin, BankAccount, ContractDocumentRequirement, ContractDocument, ContractDocumentAssignment, ContractSigning, School
 
 
-class RegionNameField(Field):
-    """Custom field to handle region name to region instance conversion during import."""
-    
-    def clean(self, data, **kwargs):
-        """Convert region name to region instance during import."""
-        region_name = data.get(self.column_name)
-        if region_name:
-            from core.models import Region
-            try:
-                region = Region.objects.get(name__iexact=str(region_name).strip())
-                return region  # Return the Region instance, not just the ID
-            except Region.DoesNotExist:
-                # Create a new region if it doesn't exist
-                region = Region.objects.create(
-                    name=str(region_name).strip(),
-                    code=str(region_name).strip().upper()[:10]
-                )
-                return region  # Return the Region instance, not just the ID
-        return None
+# class RegionNameField(Field):
+#     """Custom field to handle region name to region instance conversion during import."""
+#     
+#     def clean(self, data, **kwargs):
+#         """Convert region name to region instance during import."""
+#         region_name = data.get(self.column_name)
+#         if region_name:
+#             from core.models import Region
+#             try:
+#                 region = Region.objects.get(name__iexact=str(region_name).strip())
+#                 return region  # Return the Region instance, not just the ID
+#             except Region.DoesNotExist:
+#                 # Create a new region if it doesn't exist
+#                 region = Region.objects.create(
+#                     name=str(region_name).strip(),
+#                     code=str(region_name).strip().upper()[:10]
+#                 )
+#                 return region  # Return the Region instance, not just the ID
+#         return None
 
-class SchoolResource(resources.ModelResource):
-    """
-    Resource for School import/export.
-    """
-    
-    region_name = Field(attribute='region__name', column_name='Region Name')
-    region = RegionNameField(attribute='region', column_name='Region Name')
-    
-    class Meta:
-        model = School
-        fields = (
-            'id', 'name', 'code', 'region', 'district', 'address',
-            'contact_person', 'contact_phone', 'contact_email', 'is_active'
-        )
-        export_order = (
-            'id', 'name', 'code', 'region_name', 'district', 'address',
-            'contact_person', 'contact_phone', 'contact_email', 'is_active'
-        )
-        import_id_fields = ['code']
-        skip_unchanged = True
-        report_skipped = True
-        
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Map different column name variations for import
-        self.fields['name'] = Field(attribute='name', column_name='Name')
-        self.fields['code'] = Field(attribute='code', column_name='Code')
-        self.fields['district'] = Field(attribute='district', column_name='District')
-        self.fields['address'] = Field(attribute='address', column_name='Address')
-        self.fields['contact_person'] = Field(attribute='contact_person', column_name='Contact Person')
-        self.fields['contact_phone'] = Field(attribute='contact_phone', column_name='Contact Phone')
-        self.fields['contact_email'] = Field(attribute='contact_email', column_name='Contact Email')
-        self.fields['is_active'] = Field(attribute='is_active', column_name='Is Active')
-    
-    def dehydrate_region_name(self, school):
-        """Get region name for export."""
-        try:
-            return school.region.name if school.region else ''
-        except AttributeError:
-            return ''
-    
-    def before_import_row(self, row, **kwargs):
-        """Process row before import."""
-        # Validate required fields
-        name = row.get('Name') or row.get('name')
-        if not name or not str(name).strip():
-            raise ValueError("School name is required")
-        
-        code = row.get('Code') or row.get('code')
-        if not code or not str(code).strip():
-            raise ValueError("School code is required")
-        
-        district = row.get('District') or row.get('district')
-        if not district or not str(district).strip():
-            raise ValueError("District is required")
-        
-        address = row.get('Address') or row.get('address')
-        if not address or not str(address).strip():
-            raise ValueError("Address is required")
-        
-        region_name = row.get('Region Name')
-        if not region_name or not str(region_name).strip():
-            raise ValueError("Region Name is required")
-    
-    def after_import_row(self, row, row_result, **kwargs):
-        """Process row after import."""
-        if row_result.import_type == 'new':
-            # Log successful import
-            pass
-        elif row_result.import_type == 'update':
-            # Log successful update
-            pass
-    
-    def get_import_id_fields(self):
-        """Get the fields used to identify existing records."""
-        return ['code']
+# class SchoolResource(resources.ModelResource):
+#     """
+#     Resource for School import/export.
+#     """
+#     
+#     region_name = Field(attribute='region__name', column_name='Region Name')
+#     region = RegionNameField(attribute='region', column_name='Region Name')
+#     
+#     class Meta:
+#         model = School
+#         fields = (
+#             'id', 'name', 'code', 'region', 'district', 'address',
+#             'contact_person', 'contact_phone', 'contact_email', 'is_active'
+#         )
+#         export_order = (
+#             'id', 'name', 'code', 'region_name', 'district', 'address',
+#             'contact_person', 'contact_phone', 'contact_email', 'is_active'
+#         )
+#         import_id_fields = ['code']
+#         skip_unchanged = True
+#         report_skipped = True
+#         
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         # Map different column name variations for import
+#         self.fields['name'] = Field(attribute='name', column_name='Name')
+#         self.fields['code'] = Field(attribute='code', column_name='Code')
+#         self.fields['district'] = Field(attribute='district', column_name='District')
+#         self.fields['address'] = Field(attribute='address', column_name='Address')
+#         self.fields['contact_person'] = Field(attribute='contact_person', column_name='Contact Person')
+#         self.fields['contact_phone'] = Field(attribute='contact_phone', column_name='Contact Phone')
+#         self.fields['contact_email'] = Field(attribute='contact_email', column_name='Contact Email')
+#         self.fields['is_active'] = Field(attribute='is_active', column_name='Is Active')
+#     
+#     def dehydrate_region_name(self, school):
+#         """Get region name for export."""
+#         try:
+#             return school.region.name if school.region else ''
+#         except AttributeError:
+#             return ''
+#     
+#     def before_import_row(self, row, **kwargs):
+#         """Process row before import."""
+#         # Validate required fields
+#         name = row.get('Name') or row.get('name')
+#         if not name or not str(name).strip():
+#             raise ValueError("School name is required")
+#         
+#         code = row.get('Code') or row.get('code')
+#         if not code or not str(code).strip():
+#             raise ValueError("School code is required")
+#         
+#         district = row.get('District') or row.get('district')
+#         if not district or not str(district).strip():
+#             raise ValueError("District is required")
+#         
+#         address = row.get('Address') or row.get('address')
+#         if not address or not str(address).strip():
+#             raise ValueError("Address is required")
+#         
+#         region_name = row.get('Region Name')
+#         if not region_name or not str(region_name).strip():
+#             raise ValueError("Region Name is required")
+#     
+#     def after_import_row(self, row, row_result, **kwargs):
+#         """Process row after import."""
+#         if row_result.import_type == 'new':
+#             # Log successful import
+#             pass
+#         elif row_result.import_type == 'update':
+#             # Log successful update
+#             pass
+#     
+#     def get_import_id_fields(self):
+#         """Get the fields used to identify existing records."""
+#         return ['code']
 
 
 class TeamMemberInline(admin.TabularInline):
@@ -573,12 +573,12 @@ class ContractSigningAdmin(admin.ModelAdmin):
 
 
 @admin.register(School)
-class SchoolAdmin(ImportExportModelAdmin):
+class SchoolAdmin(admin.ModelAdmin):
     """
-    Admin interface for School model with import/export functionality.
+    Admin interface for School model.
     """
     
-    resource_class = SchoolResource
+    # resource_class = SchoolResource  # Commented out for Railway deployment
     
     list_display = [
         'name', 'code', 'region', 'district', 'contact_person', 
