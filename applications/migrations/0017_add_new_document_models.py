@@ -130,8 +130,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='invoice',
             name='quantity',
-            field=models.DecimalField(decimal_places=2, default='N/A', help_text='Quantity of commodity', max_digits=10),
-            preserve_default=False,
+            field=models.DecimalField(decimal_places=2, help_text='Quantity of commodity', max_digits=10, null=True),
         ),
         migrations.AddField(
             model_name='invoice',
@@ -141,14 +140,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='invoice',
             name='unit_of_measure',
-            field=models.CharField(default='N/A', help_text='Unit of measure', max_length=50),
-            preserve_default=False,
+            field=models.CharField(help_text='Unit of measure', max_length=50, null=True),
         ),
         migrations.AddField(
             model_name='invoice',
             name='unit_price',
-            field=models.DecimalField(decimal_places=2, default='N/A', help_text='Unit price', max_digits=10),
-            preserve_default=False,
+            field=models.DecimalField(decimal_places=2, help_text='Unit price', max_digits=10, null=True),
         ),
         migrations.AddField(
             model_name='storereceiptvoucher',
@@ -178,20 +175,17 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='storereceiptvoucher',
             name='quantity',
-            field=models.DecimalField(decimal_places=2, default='N/A', help_text='Quantity of commodity delivered', max_digits=10),
-            preserve_default=False,
+            field=models.DecimalField(decimal_places=2, help_text='Quantity of commodity delivered', max_digits=10, null=True),
         ),
         migrations.AddField(
             model_name='storereceiptvoucher',
             name='received_by',
-            field=models.CharField(default='N/A', help_text='Name of person who received the goods', max_length=200),
-            preserve_default=False,
+            field=models.CharField(help_text='Name of person who received the goods', max_length=200, null=True),
         ),
         migrations.AddField(
             model_name='storereceiptvoucher',
             name='received_by_designation',
-            field=models.CharField(default='N/A', help_text='Designation of person who received the goods', max_length=100),
-            preserve_default=False,
+            field=models.CharField(help_text='Designation of person who received the goods', max_length=100, null=True),
         ),
         migrations.AddField(
             model_name='storereceiptvoucher',
