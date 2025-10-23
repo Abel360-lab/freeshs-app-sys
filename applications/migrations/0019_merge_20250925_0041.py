@@ -7,7 +7,6 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('applications', '0017_add_new_document_models'),
-        ('applications', '0018_fix_document_models'),
     ]
 
     operations = [
