@@ -5,6 +5,8 @@
   "deploy": {
     "startCommand": "mkdir -p logs && export RAILWAY_ENVIRONMENT=true && python manage.py migrate --noinput && python manage.py collectstatic --noinput && python manage.py runserver 0.0.0.0:$PORT",
     "healthcheckPath": "/health/",
-    "healthcheckTimeout": 60
+    "healthcheckTimeout": 60,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 3
   }
 }
