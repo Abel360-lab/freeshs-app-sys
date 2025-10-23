@@ -72,11 +72,11 @@ class Migration(migrations.Migration):
             name='quantity',
             field=models.DecimalField(decimal_places=2, help_text='Quantity of commodity delivered', max_digits=10, null=True),
         ),
-        migrations.AddField(
-            model_name='storereceiptvoucher',
-            name='unit_price',
-            field=models.DecimalField(decimal_places=2, help_text='Unit price of the commodity', max_digits=10, null=True),
-        ),
+        # migrations.AddField(
+        #     model_name='storereceiptvoucher',
+        #     name='unit_price',
+        #     field=models.DecimalField(decimal_places=2, help_text='Unit price of the commodity', max_digits=10, null=True),
+        # ),
         migrations.AddField(
             model_name='storereceiptvoucher',
             name='received_by',
@@ -129,11 +129,11 @@ class Migration(migrations.Migration):
             name='unit_of_measure',
             field=models.CharField(help_text='Unit of measure', max_length=50, null=True),
         ),
-        migrations.AddField(
-            model_name='invoice',
-            name='unit_price',
-            field=models.DecimalField(decimal_places=2, help_text='Unit price', max_digits=10, null=True),
-        ),
+        # migrations.AddField(
+        #     model_name='invoice',
+        #     name='unit_price',
+        #     field=models.DecimalField(decimal_places=2, help_text='Unit price', max_digits=10, null=True),
+        # ),
         migrations.AddField(
             model_name='invoice',
             name='document',
