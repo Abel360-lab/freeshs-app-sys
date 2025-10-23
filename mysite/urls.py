@@ -16,10 +16,6 @@ urlpatterns = [
     # Health check
     path('health/', health_views.health_check, name='health-check'),
     
-    # Test views
-    path('test/', test_views.test_view, name='test-view'),
-    path('test-html/', test_views.test_html, name='test-html'),
-    
     # Admin URLs
     path('admin/', admin.site.urls),
     path('admin/login/', RedirectView.as_view(url='/accounts/admin/login/', permanent=False)),
