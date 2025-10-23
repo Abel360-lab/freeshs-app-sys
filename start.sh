@@ -5,6 +5,9 @@ set -e
 
 echo "🚀 Starting Django application..."
 
+# Create logs directory if it doesn't exist
+mkdir -p logs
+
 # Wait for database to be ready
 echo "⏳ Waiting for database..."
 python manage.py migrate --noinput
