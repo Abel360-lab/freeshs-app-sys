@@ -100,20 +100,17 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='invoice',
             name='client_region',
-            field=models.ForeignKey(default='N/A', help_text='Client region', on_delete=django.db.models.deletion.PROTECT, to='core.region'),
-            preserve_default=False,
+            field=models.ForeignKey(help_text='Client region', on_delete=django.db.models.deletion.PROTECT, to='core.region', null=True),
         ),
         migrations.AddField(
             model_name='invoice',
             name='client_school',
-            field=models.ForeignKey(default='N/A', help_text='Client school', on_delete=django.db.models.deletion.PROTECT, to='applications.school'),
-            preserve_default=False,
+            field=models.ForeignKey(help_text='Client school', on_delete=django.db.models.deletion.PROTECT, to='applications.school', null=True),
         ),
         migrations.AddField(
             model_name='invoice',
             name='commodity',
-            field=models.ForeignKey(default='N/A', help_text='Commodity invoiced', on_delete=django.db.models.deletion.PROTECT, to='core.commodity'),
-            preserve_default=False,
+            field=models.ForeignKey(help_text='Commodity invoiced', on_delete=django.db.models.deletion.PROTECT, to='core.commodity', null=True),
         ),
         migrations.AddField(
             model_name='invoice',
@@ -139,8 +136,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='invoice',
             name='supplier',
-            field=models.ForeignKey(default='N/A', help_text='Supplier who created the invoice', on_delete=django.db.models.deletion.CASCADE, related_name='created_invoices', to=settings.AUTH_USER_MODEL),
-            preserve_default=False,
+            field=models.ForeignKey(help_text='Supplier who created the invoice', on_delete=django.db.models.deletion.CASCADE, related_name='created_invoices', to=settings.AUTH_USER_MODEL, null=True),
         ),
         migrations.AddField(
             model_name='invoice',
@@ -157,20 +153,17 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='storereceiptvoucher',
             name='commodity',
-            field=models.ForeignKey(default='N/A', help_text='Commodity delivered', on_delete=django.db.models.deletion.PROTECT, to='core.commodity'),
-            preserve_default=False,
+            field=models.ForeignKey(help_text='Commodity delivered', on_delete=django.db.models.deletion.PROTECT, to='core.commodity', null=True),
         ),
         migrations.AddField(
             model_name='storereceiptvoucher',
             name='delivery_region',
-            field=models.ForeignKey(default='N/A', help_text='Region where goods were delivered', on_delete=django.db.models.deletion.PROTECT, to='core.region'),
-            preserve_default=False,
+            field=models.ForeignKey(help_text='Region where goods were delivered', on_delete=django.db.models.deletion.PROTECT, to='core.region', null=True),
         ),
         migrations.AddField(
             model_name='storereceiptvoucher',
             name='delivery_school',
-            field=models.ForeignKey(default='N/A', help_text='School where goods were delivered', on_delete=django.db.models.deletion.PROTECT, to='applications.school'),
-            preserve_default=False,
+            field=models.ForeignKey(help_text='School where goods were delivered', on_delete=django.db.models.deletion.PROTECT, to='applications.school', null=True),
         ),
         migrations.AddField(
             model_name='storereceiptvoucher',
@@ -203,8 +196,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='storereceiptvoucher',
             name='supplier',
-            field=models.ForeignKey(default='N/A', help_text='Supplier who created the SRV', on_delete=django.db.models.deletion.CASCADE, related_name='created_srvs', to=settings.AUTH_USER_MODEL),
-            preserve_default=False,
+            field=models.ForeignKey(help_text='Supplier who created the SRV', on_delete=django.db.models.deletion.CASCADE, related_name='created_srvs', to=settings.AUTH_USER_MODEL, null=True),
         ),
         migrations.AlterField(
             model_name='deliverytracking',
