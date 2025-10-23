@@ -1,0 +1,945 @@
+{% extends 'backoffice/base.html' %}
+
+{% block page_icon %}<i class="fas fa-truck"></i>{% endblock %}
+{% block page_title %}Contract Deliveries{% endblock %}
+
+{% block page_header_container %}
+<div class="page-header-container">
+    <div class="page-header-content">
+        <div class="page-header-info">
+            <div class="page-header-breadcrumb">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'applications:backoffice-dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'applications:backoffice-documents' %}">Delivery Receipts</a></li>
+                        <li class="breadcrumb-item active">{{ contract.contract_number }}</li>
+                    </ol>
+                </nav>
+            </div>
+            <h1 class="page-header-title">Contract Deliveries</h1>
+            <p class="page-header-subtitle">{{ contract.contract_number }} - {{ contract.application.business_name }}</p>
+        </div>
+        <div class="page-header-actions">
+            <button class="btn btn-primary" onclick="exportDeliveries()">
+                <i class="fas fa-download"></i> Export CSV
+            </button>
+            <a href="{% url 'applications:backoffice-supplier-detail' contract.application.pk %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Supplier
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Contract Information Card -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-contract me-2"></i>Contract Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="contract-info-grid">
+                        <div class="contract-info-item">
+                            <div class="info-label">
+                                <i class="fas fa-hashtag"></i>
+                                Contract Number
+                            </div>
+                            <div class="info-value">
+                                <span class="contract-number-badge">{{ contract.contract_number }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="contract-info-item">
+                            <div class="info-label">
+                                <i class="fas fa-building"></i>
+                                Supplier
+                            </div>
+                            <div class="info-value">{{ contract.application.business_name }}</div>
+                        </div>
+                        
+                        <div class="contract-info-item">
+                            <div class="info-label">
+                                <i class="fas fa-info-circle"></i>
+                                Status
+                            </div>
+                            <div class="info-value">
+                                <span class="status-badge status-{{ contract.status|lower }}">
+                                    <i class="fas fa-{% if contract.status == 'ACTIVE' %}check-circle{% elif contract.status == 'EXPIRED' %}times-circle{% else %}clock{% endif %}"></i>
+                                    {{ contract.get_status_display }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="contract-info-item">
+                            <div class="info-label">
+                                <i class="fas fa-calendar-alt"></i>
+                                Contract Period
+                            </div>
+                            <div class="info-value">
+                                {{ contract.start_date|date:"M d, Y" }} - {{ contract.end_date|date:"M d, Y" }}
+                            </div>
+                        </div>
+                        
+                        {% if contract.contract_value %}
+                        <div class="contract-info-item">
+                            <div class="info-label">
+                                <i class="fas fa-money-bill-wave"></i>
+                                Contract Value
+                            </div>
+                            <div class="info-value">
+                                <span class="contract-value">{{ contract.currency }} {{ contract.contract_value|floatformat:2 }}</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="contract-info-item">
+                            <div class="info-label">
+                                <i class="fas fa-truck"></i>
+                                Total Deliveries
+                            </div>
+                            <div class="info-value">
+                                <span class="delivery-count">{{ total_deliveries }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="modern-stat-card stat-total">
+                <div class="stat-header">
+                    <div class="stat-icon-wrapper">
+                        <i class="fas fa-truck"></i>
+                    </div>
+                    <div class="stat-trend">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                </div>
+                <div class="stat-value-wrapper">
+                    <div class="stat-value-main">{{ total_deliveries }}</div>
+                    <div class="stat-label-main">Total Deliveries</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="modern-stat-card stat-pending">
+                <div class="stat-header">
+                    <div class="stat-icon-wrapper">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-trend">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                </div>
+                <div class="stat-value-wrapper">
+                    <div class="stat-value-main">{{ pending_deliveries }}</div>
+                    <div class="stat-label-main">Pending Review</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="modern-stat-card stat-delivered">
+                <div class="stat-header">
+                    <div class="stat-icon-wrapper">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-trend">
+                        <i class="fas fa-arrow-up"></i>
+                    </div>
+                </div>
+                <div class="stat-value-wrapper">
+                    <div class="stat-value-main">{{ delivered }}</div>
+                    <div class="stat-label-main">Delivered</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="modern-stat-card stat-verified">
+                <div class="stat-header">
+                    <div class="stat-icon-wrapper">
+                        <i class="fas fa-shield-check"></i>
+                    </div>
+                    <div class="stat-trend">
+                        <i class="fas fa-star"></i>
+                    </div>
+                </div>
+                <div class="stat-value-wrapper">
+                    <div class="stat-value-main">{{ verified }}</div>
+                    <div class="stat-label-main">Verified</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deliveries Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>Delivery Receipts
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Search and Filter Controls -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="search-box">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="deliverySearch" placeholder="Search deliveries..." class="form-control">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <select id="statusFilter" class="form-select">
+                                <option value="">All Statuses</option>
+                                <option value="PENDING">Pending</option>
+                                <option value="DELIVERED">Delivered</option>
+                                <option value="VERIFIED">Verified</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select id="regionFilter" class="form-select">
+                                <option value="">All Regions</option>
+                                {% for delivery in deliveries %}
+                                    <option value="{{ delivery.delivery_region.name }}">{{ delivery.delivery_region.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    {% if deliveries %}
+                    <div class="table-responsive">
+                        <table class="table modern-table" id="deliveriesTable">
+                            <thead>
+                                <tr>
+                                    <th>Delivery Number</th>
+                                    <th>Delivery Date</th>
+                                    <th>Region</th>
+                                    <th>School</th>
+                                    <th>Commodities</th>
+                                    <th>SRV Number</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for delivery in deliveries %}
+                                <tr class="delivery-row" data-status="{{ delivery.status }}" data-region="{{ delivery.delivery_region.name }}">
+                                    <td>
+                                        <div class="delivery-number">
+                                            <strong>{{ delivery.serial_number }}</strong>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="delivery-date">
+                                            <i class="fas fa-calendar me-1"></i>
+                                            {{ delivery.delivery_date|date:"M d, Y" }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="delivery-region">
+                                            <i class="fas fa-map-marker-alt me-1"></i>
+                                            {{ delivery.delivery_region.name }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="delivery-school">
+                                            <i class="fas fa-school me-1"></i>
+                                            {{ delivery.delivery_school.name }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="commodities-list">
+                                            {% if delivery.commodities.exists %}
+                                                {% for commodity in delivery.commodities.all %}
+                                                    <div class="commodity-item">
+                                                        <span class="commodity-name">{{ commodity.commodity.name }}</span>
+                                                        <span class="commodity-quantity">{{ commodity.quantity }} {{ commodity.unit_of_measure }}</span>
+                                                    </div>
+                                                {% endfor %}
+                                            {% else %}
+                                                <span class="text-muted">No commodities</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="srv-number">
+                                            <i class="fas fa-receipt me-1"></i>
+                                            {{ delivery.srv_number }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge status-{{ delivery.status|lower }}">
+                                            <i class="fas fa-{% if delivery.status == 'PENDING' %}clock{% elif delivery.status == 'DELIVERED' %}check{% elif delivery.status == 'VERIFIED' %}shield-check{% else %}question{% endif %}"></i>
+                                            {{ delivery.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <a href="{% url 'applications:backoffice-delivery-detail' delivery.pk %}" class="btn btn-sm btn-outline-primary" title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            {% if delivery.status == 'PENDING' %}
+                                            <button class="btn btn-sm btn-success" onclick="verifyDelivery({{ delivery.pk }})" title="Verify Delivery">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <i class="fas fa-truck"></i>
+                        </div>
+                        <h5>No Deliveries Found</h5>
+                        <p>This contract doesn't have any delivery receipts yet.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Contract Info Grid - Dashboard Style */
+.contract-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.contract-info-item {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.2s ease;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.contract-info-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--primary-color);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+}
+
+.contract-info-item:hover::before {
+    transform: scaleX(1);
+}
+
+.contract-info-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
+}
+
+.info-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    margin-bottom: 0.75rem;
+}
+
+.info-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #111827;
+    line-height: 1.4;
+}
+
+.contract-number-badge {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.contract-value {
+    font-weight: 700;
+    color: #059669;
+    font-size: 1.125rem;
+}
+
+.delivery-count {
+    font-weight: 700;
+    color: #667eea;
+    font-size: 1.125rem;
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.status-active {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-expired {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.status-draft {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-delivered {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.status-verified {
+    background: #dcfce7;
+    color: #166534;
+}
+
+/* Modern Stat Cards - Dashboard Style */
+.modern-stat-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.2s ease;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.modern-stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--primary-color);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+}
+
+.modern-stat-card:hover::before {
+    transform: scaleX(1);
+}
+
+.modern-stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
+}
+
+.stat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.stat-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.stat-total .stat-icon-wrapper {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.stat-pending .stat-icon-wrapper {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+}
+
+.stat-delivered .stat-icon-wrapper {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+
+.stat-verified .stat-icon-wrapper {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: white;
+}
+
+.stat-value-wrapper {
+    margin-top: 0.75rem;
+}
+
+.stat-value-main {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #111827;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label-main {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.stat-trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: 6px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    background: #e5e7eb;
+    color: #374151;
+}
+
+/* Search and Filter Controls - Dashboard Style */
+.search-box {
+    position: relative;
+}
+
+.search-box i {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    z-index: 2;
+    font-size: 0.875rem;
+}
+
+.search-box input {
+    padding: 0.75rem 1rem 0.75rem 2.5rem;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    transition: all 0.2s ease;
+    font-size: 0.875rem;
+    background: white;
+    width: 100%;
+}
+
+.search-box input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    outline: none;
+}
+
+.form-select {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    transition: all 0.2s ease;
+    font-size: 0.875rem;
+    background: white;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.75rem center;
+    background-repeat: no-repeat;
+    background-size: 0.875rem;
+    appearance: none;
+}
+
+.form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    outline: none;
+}
+
+/* Modern Table - Dashboard Style */
+.modern-table {
+    border: none;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    background: white;
+}
+
+.modern-table thead th {
+    background: #f8fafc;
+    border: none;
+    font-weight: 600;
+    color: #374151;
+    padding: 1rem;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.modern-table tbody tr {
+    border: none;
+    transition: all 0.2s ease;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.modern-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+.modern-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.modern-table tbody td {
+    border: none;
+    padding: 1rem;
+    vertical-align: middle;
+    font-size: 0.875rem;
+}
+
+.delivery-number strong {
+    color: #111827;
+    font-size: 0.875rem;
+}
+
+.delivery-date,
+.delivery-region,
+.delivery-school,
+.srv-number {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.commodities-list {
+    max-width: 200px;
+}
+
+.commodity-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.25rem 0;
+    font-size: 0.75rem;
+}
+
+.commodity-name {
+    font-weight: 500;
+    color: #374151;
+}
+
+.commodity-quantity {
+    color: #6b7280;
+    font-weight: 600;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.action-buttons .btn {
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    font-weight: 500;
+    font-size: 0.8125rem;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.action-buttons .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.action-buttons .btn-outline-primary {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    background: white;
+}
+
+.action-buttons .btn-outline-primary:hover {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.action-buttons .btn-success {
+    background: #10b981;
+    border-color: #10b981;
+    color: white;
+}
+
+.action-buttons .btn-success:hover {
+    background: #059669;
+    border-color: #059669;
+    color: white;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+}
+
+.empty-state-icon {
+    width: 80px;
+    height: 80px;
+    background: #f3f4f6;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    font-size: 2rem;
+    color: #9ca3af;
+}
+
+.empty-state h5 {
+    color: #6b7280;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    color: #9ca3af;
+    margin: 0;
+}
+
+/* Dark Mode */
+[data-theme="dark"] .modern-stat-card {
+    background: var(--card-bg);
+    border-color: var(--border-primary);
+}
+
+[data-theme="dark"] .modern-table thead th {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .modern-table tbody tr:hover {
+    background: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .info-label {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .info-value {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .delivery-number strong {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .delivery-date,
+[data-theme="dark"] .delivery-region,
+[data-theme="dark"] .delivery-school,
+[data-theme="dark"] .srv-number {
+    color: var(--text-muted);
+}
+
+[data-theme="dark"] .commodity-name {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .commodity-quantity {
+    color: var(--text-muted);
+}
+
+[data-theme="dark"] .empty-state-icon {
+    background: var(--bg-tertiary);
+    color: var(--text-muted);
+}
+
+[data-theme="dark"] .empty-state h5 {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .empty-state p {
+    color: var(--text-muted);
+}
+
+/* Additional Enhancements - Dashboard Style */
+.container-fluid {
+    padding: 0 1.5rem;
+}
+
+.card {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.card-header {
+    background: #f8fafc;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 1rem 1.5rem;
+}
+
+.card-header h5 {
+    margin: 0;
+    font-weight: 600;
+    color: #111827;
+    font-size: 1rem;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .contract-info-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .modern-stat-card {
+        padding: 1.5rem;
+        min-height: 120px;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+    }
+    
+    .modern-table {
+        font-size: 0.8rem;
+    }
+    
+    .modern-table thead th,
+    .modern-table tbody td {
+        padding: 0.75rem 0.5rem;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .action-buttons .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Search functionality
+    const searchInput = document.getElementById('deliverySearch');
+    const statusFilter = document.getElementById('statusFilter');
+    const regionFilter = document.getElementById('regionFilter');
+    const table = document.getElementById('deliveriesTable');
+    const rows = table.querySelectorAll('.delivery-row');
+
+    function filterDeliveries() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const statusValue = statusFilter.value;
+        const regionValue = regionFilter.value;
+
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            const status = row.dataset.status;
+            const region = row.dataset.region;
+
+            const matchesSearch = text.includes(searchTerm);
+            const matchesStatus = !statusValue || status === statusValue;
+            const matchesRegion = !regionValue || region === regionValue;
+
+            if (matchesSearch && matchesStatus && matchesRegion) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    searchInput.addEventListener('input', filterDeliveries);
+    statusFilter.addEventListener('change', filterDeliveries);
+    regionFilter.addEventListener('change', filterDeliveries);
+
+    // Export functionality
+    window.exportDeliveries = function() {
+        // Create CSV content
+        let csvContent = "Delivery Number,Delivery Date,Region,School,SRV Number,Status\n";
+        
+        rows.forEach(row => {
+            if (row.style.display !== 'none') {
+                const cells = row.querySelectorAll('td');
+                const deliveryNumber = cells[0].textContent.trim();
+                const deliveryDate = cells[1].textContent.trim();
+                const region = cells[2].textContent.trim();
+                const school = cells[3].textContent.trim();
+                const srvNumber = cells[5].textContent.trim();
+                const status = cells[6].textContent.trim();
+                
+                csvContent += `"${deliveryNumber}","${deliveryDate}","${region}","${school}","${srvNumber}","${status}"\n`;
+            }
+        });
+
+        // Download CSV
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'contract_deliveries.csv';
+        a.click();
+        window.URL.revokeObjectURL(url);
+    };
+
+    // Verify delivery function
+    window.verifyDelivery = function(deliveryId) {
+        if (confirm('Are you sure you want to verify this delivery?')) {
+            // Here you would typically make an AJAX request to verify the delivery
+            console.log('Verifying delivery:', deliveryId);
+            // You can implement the actual verification logic here
+        }
+    };
+});
+</script>
+{% endblock %}

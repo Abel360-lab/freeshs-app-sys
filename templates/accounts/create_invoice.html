@@ -1,0 +1,351 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+
+{% block title %}Create Invoice - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-left">
+                <h1 class="page-title">
+                    <i class="fas fa-file-invoice-dollar me-2"></i>
+                    Create Invoice
+                </h1>
+                <p class="page-subtitle">Create a new invoice for commodity supply</p>
+            </div>
+            <div class="header-right">
+                <a href="{% url 'applications:supplier-invoices' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Invoices
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Section -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-file-alt me-2"></i>
+                        Invoice Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" id="invoiceForm">
+                        {% csrf_token %}
+                        
+                        <!-- Basic Information -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="{{ form.invoice_number.id_for_label }}" class="form-label">
+                                    Invoice Number <span class="text-danger">*</span>
+                                </label>
+                                {{ form.invoice_number }}
+                                {% if form.invoice_number.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.invoice_number.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.invoice_date.id_for_label }}" class="form-label">
+                                    Invoice Date <span class="text-danger">*</span>
+                                </label>
+                                {{ form.invoice_date }}
+                                {% if form.invoice_date.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.invoice_date.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Client Information -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="{{ form.client_region.id_for_label }}" class="form-label">
+                                    Client Region <span class="text-danger">*</span>
+                                </label>
+                                {{ form.client_region }}
+                                {% if form.client_region.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.client_region.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.client_school.id_for_label }}" class="form-label">
+                                    Client School <span class="text-danger">*</span>
+                                </label>
+                                {{ form.client_school }}
+                                {% if form.client_school.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.client_school.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Commodity Information -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="{{ form.commodity.id_for_label }}" class="form-label">
+                                    Commodity <span class="text-danger">*</span>
+                                </label>
+                                {{ form.commodity }}
+                                {% if form.commodity.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.commodity.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.quantity.id_for_label }}" class="form-label">
+                                    Quantity <span class="text-danger">*</span>
+                                </label>
+                                {{ form.quantity }}
+                                {% if form.quantity.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.quantity.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Pricing Information -->
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <label for="{{ form.unit_of_measure.id_for_label }}" class="form-label">
+                                    Unit of Measure <span class="text-danger">*</span>
+                                </label>
+                                {{ form.unit_of_measure }}
+                                {% if form.unit_of_measure.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.unit_of_measure.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="{{ form.unit_price.id_for_label }}" class="form-label">
+                                    Unit Price (GHS) <span class="text-danger">*</span>
+                                </label>
+                                {{ form.unit_price }}
+                                {% if form.unit_price.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.unit_price.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="{{ form.tax_rate.id_for_label }}" class="form-label">
+                                    Tax Rate (%) <span class="text-danger">*</span>
+                                </label>
+                                {{ form.tax_rate }}
+                                {% if form.tax_rate.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.tax_rate.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Amount Calculations -->
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label">Subtotal</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">GHS</span>
+                                    <input type="text" class="form-control" id="subtotal" readonly value="0.00">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Tax Amount</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">GHS</span>
+                                    <input type="text" class="form-control" id="taxAmount" readonly value="0.00">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Total Amount</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">GHS</span>
+                                    <input type="text" class="form-control" id="totalAmount" readonly value="0.00">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Payment Terms -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="{{ form.due_date.id_for_label }}" class="form-label">
+                                    Payment Due Date <span class="text-danger">*</span>
+                                </label>
+                                {{ form.due_date }}
+                                {% if form.due_date.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.due_date.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Document Upload -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <label for="{{ form.document.id_for_label }}" class="form-label">
+                                    Invoice Document
+                                </label>
+                                {{ form.document }}
+                                <div class="form-text">Upload invoice document (PDF, JPG, PNG)</div>
+                                {% if form.document.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.document.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <label for="{{ form.notes.id_for_label }}" class="form-label">
+                                    Additional Notes
+                                </label>
+                                {{ form.notes }}
+                                {% if form.notes.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.notes.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Create Invoice
+                            </button>
+                            <a href="{% url 'applications:supplier-invoices' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Help Panel -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Help & Guidelines
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <h6>Creating an Invoice</h6>
+                    <ul class="list-unstyled small">
+                        <li><i class="fas fa-check text-success me-2"></i>Ensure all required fields are filled</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Select the correct client region and school</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Enter accurate quantity and pricing information</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Set appropriate payment due date</li>
+                    </ul>
+                    
+                    <hr>
+                    
+                    <h6>Invoice Number Format</h6>
+                    <p class="small text-muted">
+                        Use a consistent numbering format, e.g., INV-2025-001, INV-2025-002, etc.
+                    </p>
+                    
+                    <h6>Tax Rate</h6>
+                    <p class="small text-muted">
+                        Default tax rate is 15%. Adjust as needed for your business requirements.
+                    </p>
+                    
+                    <h6>Payment Terms</h6>
+                    <p class="small text-muted">
+                        Set a reasonable due date, typically 30 days from invoice date.
+                    </p>
+                    
+                    <h6>Document Upload</h6>
+                    <p class="small text-muted">
+                        Supported formats: PDF, JPG, JPEG, PNG. Maximum file size: 10MB.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const regionSelect = document.getElementById('invoice_region');
+    const schoolSelect = document.getElementById('invoice_school');
+    const quantityInput = document.getElementById('id_quantity');
+    const unitPriceInput = document.getElementById('id_unit_price');
+    const taxRateInput = document.getElementById('id_tax_rate');
+    const subtotalInput = document.getElementById('subtotal');
+    const taxAmountInput = document.getElementById('taxAmount');
+    const totalAmountInput = document.getElementById('totalAmount');
+    
+    // Handle region change
+    regionSelect.addEventListener('change', function() {
+        const regionId = this.value;
+        
+        if (regionId) {
+            // Fetch schools for selected region
+            fetch(`{% url 'applications:schools-by-region' %}?region_id=${regionId}`)
+                .then(response => response.json())
+                .then(data => {
+                    schoolSelect.innerHTML = '<option value="">Select School</option>';
+                    
+                    if (data.schools) {
+                        data.schools.forEach(school => {
+                            const option = document.createElement('option');
+                            option.value = school.id;
+                            option.textContent = `${school.name} (${school.code})`;
+                            schoolSelect.appendChild(option);
+                        });
+                    }
+                    
+                    schoolSelect.disabled = false;
+                })
+                .catch(error => {
+                    console.error('Error fetching schools:', error);
+                });
+        } else {
+            schoolSelect.innerHTML = '<option value="">Select School</option>';
+            schoolSelect.disabled = true;
+        }
+    });
+    
+    // Calculate amounts
+    function calculateAmounts() {
+        const quantity = parseFloat(quantityInput.value) || 0;
+        const unitPrice = parseFloat(unitPriceInput.value) || 0;
+        const taxRate = parseFloat(taxRateInput.value) || 0;
+        
+        const subtotal = quantity * unitPrice;
+        const taxAmount = subtotal * (taxRate / 100);
+        const total = subtotal + taxAmount;
+        
+        subtotalInput.value = subtotal.toFixed(2);
+        taxAmountInput.value = taxAmount.toFixed(2);
+        totalAmountInput.value = total.toFixed(2);
+    }
+    
+    quantityInput.addEventListener('input', calculateAmounts);
+    unitPriceInput.addEventListener('input', calculateAmounts);
+    taxRateInput.addEventListener('input', calculateAmounts);
+    
+    // Initialize calculation
+    calculateAmounts();
+});
+</script>
+{% endblock %}
+

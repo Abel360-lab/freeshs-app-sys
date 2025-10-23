@@ -1,0 +1,477 @@
+{% extends 'backoffice/base.html' %}
+{% load static %}
+
+{% block title %}Notification Dashboard{% endblock %}
+
+{% block breadcrumb_current %}Notifications{% endblock %}
+
+{% block page_icon %}<i class="fas fa-bell"></i>{% endblock %}
+{% block page_title %}Notification Dashboard{% endblock %}
+{% block page_subtitle %}Monitor and manage notification performance and delivery{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'notifications:logs' %}" class="btn btn-outline-primary btn-sm">
+    <i class="fas fa-list"></i> View Logs
+</a>
+<a href="{% url 'notifications:analytics' %}" class="btn btn-outline-primary btn-sm">
+    <i class="fas fa-chart-bar"></i> Detailed Analytics
+</a>
+<a href="#" class="btn btn-primary btn-sm">
+    <i class="fas fa-plus"></i> Send Notification
+</a>
+{% endblock %}
+
+{% block extrahead %}
+<style>
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        box-shadow: var(--shadow-sm);
+        border-left: 4px solid var(--primary-color);
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100px;
+        height: 100px;
+        background: linear-gradient(135deg, transparent 0%, rgba(30, 58, 95, 0.05) 100%);
+        border-radius: 50%;
+        transform: translate(30px, -30px);
+    }
+    
+    .stat-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-5px);
+    }
+    
+    .stat-card.success {
+        border-left-color: var(--accent-color);
+    }
+    
+    .stat-card.warning {
+        border-left-color: var(--warning-color);
+    }
+    
+    .stat-card.danger {
+        border-left-color: var(--danger-color);
+    }
+    
+    .stat-card.info {
+        border-left-color: var(--info-color);
+    }
+    
+    .stat-icon {
+        position: absolute;
+        top: 1.5rem;
+        right: 1.5rem;
+        font-size: 2.5rem;
+        opacity: 0.1;
+    }
+    
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin: 0;
+        line-height: 1;
+    }
+    
+    .stat-label {
+        color: var(--text-muted);
+        font-size: 0.875rem;
+        margin: 0.5rem 0 0 0;
+        font-weight: 500;
+    }
+    
+    .stat-change {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-top: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 20px;
+    }
+    
+    .stat-change.positive {
+        color: var(--accent-color);
+        background: rgba(40, 167, 69, 0.1);
+    }
+    
+    .stat-change.negative {
+        color: var(--danger-color);
+        background: rgba(220, 53, 69, 0.1);
+    }
+    
+    .content-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 2rem;
+    }
+    
+    .performance-chart {
+        height: 300px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--background-light);
+        border-radius: var(--border-radius-sm);
+        color: var(--text-muted);
+    }
+    
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    
+    .quick-action {
+        background: white;
+        border: 2px solid var(--background-light);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        text-align: center;
+        transition: var(--transition);
+        cursor: pointer;
+        text-decoration: none;
+        color: inherit;
+    }
+    
+    .quick-action:hover {
+        border-color: var(--primary-color);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-sm);
+        color: inherit;
+        text-decoration: none;
+    }
+    
+    .quick-action i {
+        font-size: 2rem;
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+    }
+    
+    .quick-action h6 {
+        font-weight: 600;
+        margin: 0;
+        color: var(--text-color);
+    }
+    
+    .quick-action p {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin: 0.5rem 0 0 0;
+    }
+    
+    .fade-in {
+        animation: fadeIn 0.5s ease;
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .content-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Statistics Overview -->
+<div class="stats-grid">
+    <!-- Email Statistics -->
+    <div class="stat-card success">
+        <i class="fas fa-envelope stat-icon"></i>
+        <div class="stat-value">{{ email_stats.sent|default:0 }}</div>
+        <div class="stat-label">Emails Sent</div>
+        <div class="stat-change positive">
+            <i class="fas fa-arrow-up"></i>
+            {{ email_stats.delivery_rate|default:0 }}% delivery rate
+        </div>
+    </div>
+    
+    <div class="stat-card info">
+        <i class="fas fa-envelope-open stat-icon"></i>
+        <div class="stat-value">{{ email_stats.delivered|default:0 }}</div>
+        <div class="stat-label">Emails Delivered</div>
+        <div class="stat-change positive">
+            <i class="fas fa-check"></i>
+            {{ email_stats.open_rate|default:0 }}% open rate
+        </div>
+    </div>
+    
+    <div class="stat-card warning">
+        <i class="fas fa-exclamation-triangle stat-icon"></i>
+        <div class="stat-value">{{ email_stats.failed|default:0 }}</div>
+        <div class="stat-label">Email Failures</div>
+        <div class="stat-change {% if email_stats.failure_rate > 5 %}negative{% else %}positive{% endif %}">
+            <i class="fas fa-{% if email_stats.failure_rate > 5 %}arrow-down{% else %}arrow-up{% endif %}"></i>
+            {{ email_stats.failure_rate|default:0 }}% failure rate
+        </div>
+    </div>
+    
+    <!-- SMS Statistics -->
+    <div class="stat-card success">
+        <i class="fas fa-sms stat-icon"></i>
+        <div class="stat-value">{{ sms_stats.sent|default:0 }}</div>
+        <div class="stat-label">SMS Sent</div>
+        <div class="stat-change positive">
+            <i class="fas fa-arrow-up"></i>
+            {{ sms_stats.delivery_rate|default:0 }}% delivery rate
+        </div>
+    </div>
+    
+    <div class="stat-card info">
+        <i class="fas fa-mobile-alt stat-icon"></i>
+        <div class="stat-value">{{ sms_stats.delivered|default:0 }}</div>
+        <div class="stat-label">SMS Delivered</div>
+        <div class="stat-change positive">
+            <i class="fas fa-check"></i>
+            {{ sms_stats.opened|default:0 }} opened
+        </div>
+    </div>
+    
+    <div class="stat-card danger">
+        <i class="fas fa-times-circle stat-icon"></i>
+        <div class="stat-value">{{ sms_stats.failed|default:0 }}</div>
+        <div class="stat-label">SMS Failures</div>
+        <div class="stat-change {% if sms_stats.failure_rate > 5 %}negative{% else %}positive{% endif %}">
+            <i class="fas fa-{% if sms_stats.failure_rate > 5 %}arrow-down{% else %}arrow-up{% endif %}"></i>
+            {{ sms_stats.failure_rate|default:0 }}% failure rate
+        </div>
+    </div>
+</div>
+
+<!-- Main Content Grid -->
+<div class="content-grid">
+    <!-- Recent Notifications -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-history"></i>
+                Recent Notifications
+            </h3>
+            <div class="card-actions">
+                <a href="{% url 'notifications:logs' %}" class="btn btn-outline-primary btn-sm">
+                    View All
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Recipient</th>
+                            <th>Status</th>
+                            <th>Sent At</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for notification in recent_notifications %}
+                        <tr>
+                            <td>
+                                <span class="badge {% if notification.channel == 'EMAIL' %}badge-info{% else %}badge-success{% endif %}">
+                                    <i class="fas fa-{% if notification.channel == 'EMAIL' %}envelope{% else %}sms{% endif %}"></i>
+                                    {{ notification.channel }}
+                                </span>
+                            </td>
+                            <td>
+                                <div>
+                                    <strong>{{ notification.recipient_name|default:"Unknown" }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ notification.recipient_email|default:notification.recipient_phone }}</small>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge-status badge-{{ notification.status|lower }}">
+                                    {{ notification.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <small>{{ notification.created_at|date:"M d, Y H:i" }}</small>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">
+                                <i class="fas fa-inbox fa-2x mb-2"></i>
+                                <br>No notifications found
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions & Performance -->
+    <div>
+        <!-- Quick Actions -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-bolt"></i>
+                    Quick Actions
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="quick-actions">
+                    <a href="{% url 'notifications:logs' %}" class="quick-action">
+                        <i class="fas fa-list"></i>
+                        <h6>View Logs</h6>
+                        <p>Check all notification logs</p>
+                    </a>
+                    
+                    <a href="{% url 'notifications:analytics' %}" class="quick-action">
+                        <i class="fas fa-chart-bar"></i>
+                        <h6>Analytics</h6>
+                        <p>Detailed performance metrics</p>
+                    </a>
+                    
+                    <a href="#" class="quick-action">
+                        <i class="fas fa-paper-plane"></i>
+                        <h6>Send Email</h6>
+                        <p>Send immediate email</p>
+                    </a>
+                    
+                    <a href="#" class="quick-action">
+                        <i class="fas fa-sms"></i>
+                        <h6>Send SMS</h6>
+                        <p>Send immediate SMS</p>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Performance Overview -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-chart-line"></i>
+                    Performance Overview
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="performance-chart">
+                    <div class="text-center">
+                        <i class="fas fa-chart-pie fa-3x mb-3"></i>
+                        <h5>Performance Metrics</h5>
+                        <p class="text-muted">Overall delivery performance</p>
+                        <div class="row text-center mt-3">
+                            <div class="col-6">
+                                <h4 class="text-success">{{ overall_stats.delivery_rate|default:0 }}%</h4>
+                                <small>Delivery Rate</small>
+                            </div>
+                            <div class="col-6">
+                                <h4 class="text-info">{{ overall_stats.success_rate|default:0 }}%</h4>
+                                <small>Success Rate</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top Templates -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">
+            <i class="fas fa-star"></i>
+            Top Notification Templates
+        </h3>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Template Name</th>
+                        <th>Type</th>
+                        <th>Sent Count</th>
+                        <th>Success Rate</th>
+                        <th>Last Used</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for template in top_templates %}
+                    <tr>
+                        <td>
+                            <strong>{{ template.name }}</strong>
+                        </td>
+                        <td>
+                            <span class="badge {% if template.notification_type == 'APPLICATION_SUBMITTED' %}badge-info{% elif template.notification_type == 'DOCUMENT_REQUEST' %}badge-warning{% else %}badge-secondary{% endif %}">
+                                {{ template.notification_type }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge badge-primary">{{ template.sent_count|default:0 }}</span>
+                        </td>
+                        <td>
+                            <span class="badge badge-success">{{ template.success_rate|default:0 }}%</span>
+                        </td>
+                        <td>
+                            <small>{{ template.last_used|date:"M d, Y" }}</small>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">
+                            <i class="fas fa-file-alt fa-2x mb-2"></i>
+                            <br>No templates found
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extrajs %}
+<script>
+    // Add fade-in animation to elements
+    document.addEventListener('DOMContentLoaded', function() {
+        const elements = document.querySelectorAll('.stat-card, .card');
+        elements.forEach(function(element, index) {
+            setTimeout(function() {
+                element.classList.add('fade-in');
+            }, index * 100);
+        });
+    });
+</script>
+{% endblock %}

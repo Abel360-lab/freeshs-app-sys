@@ -1,0 +1,429 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+
+{% block title %}Contract Documents{% endblock %}
+{% block page_title %}Contract Documents{% endblock %}
+{% block page_subtitle %}Review and sign your contract documents{% endblock %}
+
+{% block extra_css %}
+<style>
+.contract-card {
+    transition: all 0.3s ease;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.contract-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border-color: #007bff;
+}
+
+.status-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+.status-pending {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.status-reviewed {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+.status-signed {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.status-rejected {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.stats-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stats-card h3 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.stats-card p {
+    margin: 0.5rem 0 0 0;
+    opacity: 0.9;
+}
+
+.document-count {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-top: 0.5rem;
+}
+
+.action-buttons .btn {
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.contract-meta {
+    background-color: #f8f9fa;
+    padding: 0.75rem;
+    border-radius: 6px;
+    margin-top: 1rem;
+}
+
+.contract-meta small {
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #6c757d;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <h3>{{ total_contracts }}</h3>
+                <p>Total Contracts</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <h3>{{ pending_contracts }}</h3>
+                <p>Pending Review</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <h3>{{ reviewed_contracts }}</h3>
+                <p>Reviewed</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                <h3>{{ signed_contracts }}</h3>
+                <p>Signed</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contract Documents List -->
+    <div class="row">
+        {% if contract_signings %}
+            {% for signing in contract_signings %}
+            <div class="col-lg-6 col-xl-4 mb-4">
+                <div class="card contract-card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-file-contract me-2"></i>
+                            {{ signing.contract.contract_number }}
+                        </h6>
+                        <span class="status-badge status-{{ signing.status|lower }}">
+                            {{ signing.get_status_display }}
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="card-title">{{ signing.contract.title }}</h6>
+                        <p class="card-text text-muted small">
+                            {{ signing.contract.description|truncatechars:100 }}
+                        </p>
+                        
+                        <div class="contract-meta">
+                            <small><strong>Contract Value:</strong> {{ signing.contract.currency }} {{ signing.contract.contract_value|floatformat:2 }}</small>
+                            <small><strong>Start Date:</strong> {{ signing.contract.start_date|date:"M d, Y" }}</small>
+                            <small><strong>End Date:</strong> {{ signing.contract.end_date|date:"M d, Y" }}</small>
+                            <small><strong>Created:</strong> {{ signing.created_at|date:"M d, Y" }}</small>
+                            
+                            {% if signing.reviewed_at %}
+                            <small><strong>Reviewed:</strong> {{ signing.reviewed_at|date:"M d, Y H:i" }}</small>
+                            {% endif %}
+                            
+                            {% if signing.signed_at %}
+                            <small><strong>Signed:</strong> {{ signing.signed_at|date:"M d, Y H:i" }}</small>
+                            {% endif %}
+                            
+                            {% if signing.rejection_reason %}
+                            <small class="text-danger"><strong>Rejection Reason:</strong> {{ signing.rejection_reason|truncatechars:50 }}</small>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="document-count">
+                            <i class="fas fa-file me-1"></i>
+                            Documents assigned to this contract
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="action-buttons">
+                            <a href="{% url 'applications:contract-document-detail' signing.pk %}" 
+                               class="btn btn-primary btn-sm">
+                                <i class="fas fa-eye me-1"></i>View Documents
+                            </a>
+                            
+                            {% if signing.status == 'PENDING' %}
+                            <button class="btn btn-info btn-sm" 
+                                    onclick="reviewContract({{ signing.pk }})">
+                                <i class="fas fa-check-circle me-1"></i>Mark as Reviewed
+                            </button>
+                            {% endif %}
+                            
+                            {% if signing.status == 'REVIEWED' %}
+                            <button class="btn btn-success btn-sm" 
+                                    onclick="signContract({{ signing.pk }})">
+                                <i class="fas fa-signature me-1"></i>Sign Contract
+                            </button>
+                            <button class="btn btn-danger btn-sm" 
+                                    onclick="rejectContract({{ signing.pk }})">
+                                <i class="fas fa-times me-1"></i>Reject
+                            </button>
+                            {% endif %}
+                            
+                            {% if signing.status == 'SIGNED' and signing.signature_file %}
+                            <a href="{{ signing.signature_file.url }}" 
+                               class="btn btn-outline-success btn-sm" target="_blank">
+                                <i class="fas fa-download me-1"></i>Download Signature
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="col-12">
+            <div class="empty-state">
+                <i class="fas fa-file-contract"></i>
+                <h4>No Contract Documents</h4>
+                <p>You don't have any contract documents to review at the moment.</p>
+                <p class="text-muted">Contract documents will appear here once they are assigned to you by the admin.</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Sign Contract Modal -->
+<div class="modal fade" id="signContractModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-signature me-2"></i>Sign Contract
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="signContractForm" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Important:</strong> By signing this contract, you agree to all terms and conditions. 
+                        This action cannot be undone.
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="signature_file" class="form-label">Digital Signature File (Optional)</label>
+                        <input type="file" class="form-control" id="signature_file" name="signature_file" accept=".pdf,.png,.jpg,.jpeg">
+                        <div class="form-text">Upload a digital signature file if you have one</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="signing_notes" class="form-label">Notes (Optional)</label>
+                        <textarea class="form-control" id="signing_notes" name="notes" rows="3" 
+                                  placeholder="Any additional notes or comments..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-signature me-2"></i>Sign Contract
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Reject Contract Modal -->
+<div class="modal fade" id="rejectContractModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-times me-2"></i>Reject Contract
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="rejectContractForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Warning:</strong> Rejecting this contract will notify the admin and may affect your business relationship.
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="rejection_reason" class="form-label">Reason for Rejection *</label>
+                        <textarea class="form-control" id="rejection_reason" name="rejection_reason" rows="4" 
+                                  placeholder="Please provide a detailed reason for rejecting this contract..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-times me-2"></i>Reject Contract
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentSigningId = null;
+
+function reviewContract(signingId) {
+    if (confirm('Are you sure you want to mark this contract as reviewed?')) {
+        fetch(`{% url 'applications:review-contract-documents' 0 %}`.replace('0', signingId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('success', data.message);
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showAlert('danger', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('danger', 'An error occurred while processing your request.');
+        });
+    }
+}
+
+function signContract(signingId) {
+    currentSigningId = signingId;
+    const modal = new bootstrap.Modal(document.getElementById('signContractModal'));
+    modal.show();
+}
+
+function rejectContract(signingId) {
+    currentSigningId = signingId;
+    const modal = new bootstrap.Modal(document.getElementById('rejectContractModal'));
+    modal.show();
+}
+
+// Sign Contract Form Submission
+document.getElementById('signContractForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    fetch(`{% url 'applications:sign-contract-documents' 0 %}`.replace('0', currentSigningId), {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', data.message);
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showAlert('danger', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('danger', 'An error occurred while processing your request.');
+    });
+});
+
+// Reject Contract Form Submission
+document.getElementById('rejectContractForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    fetch(`{% url 'applications:reject-contract-documents' 0 %}`.replace('0', currentSigningId), {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', data.message);
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showAlert('danger', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('danger', 'An error occurred while processing your request.');
+    });
+});
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    // Insert at the top of the content
+    const content = document.querySelector('.container-fluid');
+    content.insertBefore(alertDiv, content.firstChild);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

@@ -69,7 +69,8 @@ class TemplateNotificationService:
                     upload_token = signer.sign(application.tracking_code)
                     upload_url = f"{settings.FRONTEND_PUBLIC_URL}/submit/{upload_token}/"
                 
-                context.update({
+                # Only add temporary_password if it's not already in context_data
+                default_context = {
                     'application': application,
                     'tracking_code': application.tracking_code,
                     'business_name': application.business_name,
@@ -79,8 +80,17 @@ class TemplateNotificationService:
                     'submitted_at': application.submitted_at,
                     'status': application.status,
                     'status_url': f"{settings.FRONTEND_PUBLIC_URL}/applications/{application.tracking_code}/status/",
-                    'upload_url': upload_url  # Add upload URL for document submission
-                })
+                    'upload_url': upload_url,  # Add upload URL for document submission
+                    'user_created': application.user is not None,
+                    'user_email': application.user.email if application.user else None,
+                    'login_url': f"{settings.FRONTEND_PUBLIC_URL}/accounts/login/"
+                }
+                
+                # Only add temporary_password if it's not already provided in context_data
+                if 'temporary_password' not in context_data:
+                    default_context['temporary_password'] = '******'  # Don't include actual password in email for security
+                
+                context.update(default_context)
             
             # Render template
             if channel == 'EMAIL':

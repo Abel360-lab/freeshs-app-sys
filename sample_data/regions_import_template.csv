@@ -1,0 +1,17 @@
+name,code,is_active
+"Greater Accra Region","GA",True
+"Ashanti Region","AR",True
+"Western Region","WR",True
+"Central Region","CR",True
+"Volta Region","VR",True
+"Eastern Region","ER",True
+"Northern Region","NR",True
+"Upper East Region","UE",True
+"Upper West Region","UW",True
+"Ahafo Region","AH",True
+"Western North Region","WN",True
+"Bono Region","BR",True
+"Bono East Region","BE",True
+"Oti Region","OR",True
+"North East Region","NE",True
+"Savannah Region","SR",True

@@ -1,0 +1,796 @@
+{% extends 'backoffice/base.html' %}
+{% load static %}
+
+{% block title %}Create Bulk Campaign - GCX Admin Portal{% endblock %}
+
+{% block breadcrumb_current %}Create Bulk Campaign{% endblock %}
+
+{% block page_icon %}<i class="fas fa-bullhorn"></i>{% endblock %}
+{% block page_title %}Create Bulk Campaign{% endblock %}
+{% block page_subtitle %}Send notifications to multiple recipients at once{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'notifications:bulk-campaigns' %}" class="btn btn-outline-primary btn-sm">
+    <i class="fas fa-arrow-left"></i> Back to Campaigns
+</a>
+<button type="button" class="btn btn-outline-info btn-sm" onclick="previewCampaign()">
+    <i class="fas fa-eye"></i> Preview
+</button>
+{% endblock %}
+
+{% block extrahead %}
+<style>
+    :root {
+        --primary-color: #1a472a;
+        --accent-color: #d4af37;
+        --success-color: #28a745;
+        --warning-color: #ffc107;
+        --danger-color: #dc3545;
+        --info-color: #17a2b8;
+        --light-color: #f8f9fa;
+        --dark-color: #343a40;
+        --border-radius: 8px;
+        --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
+        --shadow-md: 0 4px 8px rgba(0,0,0,0.15);
+        --transition: all 0.3s ease;
+    }
+
+    .campaign-form {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: 2rem;
+        box-shadow: var(--shadow-sm);
+        margin-bottom: 2rem;
+    }
+
+    .form-section {
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .form-section:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+
+    .section-title {
+        color: var(--primary-color);
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: var(--dark-color);
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .form-control, .form-select, .form-check-input {
+        border-radius: var(--border-radius);
+        border: 1px solid #dee2e6;
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+        transition: var(--transition);
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(26, 71, 42, 0.25);
+    }
+
+    .form-check {
+        margin-bottom: 1rem;
+    }
+
+    .form-check-label {
+        font-weight: 500;
+        margin-left: 0.5rem;
+    }
+
+    .help-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+
+    .recipient-section {
+        background: var(--light-color);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .recipient-tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .recipient-tab {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        background: none;
+        color: #6c757d;
+        font-weight: 500;
+        cursor: pointer;
+        transition: var(--transition);
+        border-bottom: 2px solid transparent;
+    }
+
+    .recipient-tab.active {
+        color: var(--primary-color);
+        border-bottom-color: var(--primary-color);
+    }
+
+    .recipient-tab:hover {
+        color: var(--primary-color);
+    }
+
+    .recipient-content {
+        display: none;
+    }
+
+    .recipient-content.active {
+        display: block;
+    }
+
+    .recipient-list {
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid #dee2e6;
+        border-radius: var(--border-radius);
+        padding: 1rem;
+        background: white;
+    }
+
+    .recipient-item {
+        display: flex;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #f8f9fa;
+    }
+
+    .recipient-item:last-child {
+        border-bottom: none;
+    }
+
+    .recipient-checkbox {
+        margin-right: 0.75rem;
+    }
+
+    .recipient-info {
+        flex-grow: 1;
+    }
+
+    .recipient-name {
+        font-weight: 500;
+        color: var(--dark-color);
+    }
+
+    .recipient-email {
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+
+    .priority-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .priority-urgent { background: rgba(220, 53, 69, 0.1); color: var(--danger-color); }
+    .priority-high { background: rgba(255, 193, 7, 0.1); color: var(--warning-color); }
+    .priority-normal { background: rgba(23, 162, 184, 0.1); color: var(--info-color); }
+    .priority-low { background: rgba(108, 117, 125, 0.1); color: #6c757d; }
+
+    .preview-section {
+        background: var(--light-color);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        margin-top: 2rem;
+        display: none;
+    }
+
+    .preview-section.show {
+        display: block;
+    }
+
+    .preview-header {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: 1rem;
+        margin-bottom: 1rem;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .preview-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .preview-stat {
+        text-align: center;
+        padding: 1rem;
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .preview-stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin: 0;
+    }
+
+    .preview-stat-label {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin: 0.25rem 0 0 0;
+    }
+
+    .btn-create {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+        border: none;
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: var(--border-radius);
+        font-weight: 600;
+        font-size: 1.1rem;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0 auto;
+    }
+
+    .btn-create:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+        color: white;
+    }
+
+    .btn-create:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .loading-spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .fade-in {
+        animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 768px) {
+        .campaign-form {
+            padding: 1rem;
+        }
+        
+        .recipient-tabs {
+            flex-direction: column;
+        }
+        
+        .preview-stats {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<form method="post" id="campaignForm" class="campaign-form">
+    {% csrf_token %}
+    
+    <!-- Campaign Information -->
+    <div class="form-section">
+        <h3 class="section-title">
+            <i class="fas fa-info-circle"></i>
+            Campaign Information
+        </h3>
+        
+        <div class="row">
+            <div class="col-md-8">
+                <div class="form-group">
+                    <label for="name" class="form-label">Campaign Name *</label>
+                    <input type="text" class="form-control" id="name" name="name" required>
+                    <div class="help-text">A descriptive name for this campaign</div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label for="priority" class="form-label">Priority</label>
+                    <select class="form-select" id="priority" name="priority">
+                        <option value="NORMAL">Normal</option>
+                        <option value="HIGH">High</option>
+                        <option value="URGENT">Urgent</option>
+                        <option value="LOW">Low</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="description" class="form-label">Description</label>
+            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+            <div class="help-text">Optional description of the campaign purpose</div>
+        </div>
+    </div>
+
+    <!-- Template Selection -->
+    <div class="form-section">
+        <h3 class="section-title">
+            <i class="fas fa-file-alt"></i>
+            Template & Channel
+        </h3>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="template" class="form-label">Notification Template *</label>
+                    <select class="form-select" id="template" name="template" required>
+                        <option value="">Select a template...</option>
+                        {% for template in templates %}
+                        <option value="{{ template.id }}">{{ template.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="help-text">Choose the notification template to use</div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="channel" class="form-label">Channel *</label>
+                    <select class="form-select" id="channel" name="channel" required>
+                        <option value="">Select a channel...</option>
+                        <option value="EMAIL">Email</option>
+                        <option value="SMS">SMS</option>
+                        <option value="PUSH">Push Notification</option>
+                    </select>
+                    <div class="help-text">Choose the delivery channel</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recipients -->
+    <div class="form-section">
+        <h3 class="section-title">
+            <i class="fas fa-users"></i>
+            Recipients
+        </h3>
+        
+        <div class="recipient-section">
+            <div class="recipient-tabs">
+                <button type="button" class="recipient-tab active" onclick="switchRecipientTab('users')">
+                    <i class="fas fa-user"></i> Users
+                </button>
+                <button type="button" class="recipient-tab" onclick="switchRecipientTab('emails')">
+                    <i class="fas fa-envelope"></i> Email List
+                </button>
+                <button type="button" class="recipient-tab" onclick="switchRecipientTab('phones')">
+                    <i class="fas fa-phone"></i> Phone List
+                </button>
+                <button type="button" class="recipient-tab" onclick="switchRecipientTab('applications')">
+                    <i class="fas fa-file-alt"></i> Applications
+                </button>
+            </div>
+            
+            <!-- Users Tab -->
+            <div id="users-content" class="recipient-content active">
+                <div class="form-group">
+                    <label class="form-label">Select Users</label>
+                    <div class="recipient-list">
+                        {% for user in users %}
+                        <div class="recipient-item">
+                            <input type="checkbox" class="form-check-input recipient-checkbox" 
+                                   name="recipient_users" value="{{ user.id }}" id="user_{{ user.id }}">
+                            <div class="recipient-info">
+                                <div class="recipient-name">{{ user.get_full_name|default:user.username }}</div>
+                                <div class="recipient-email">{{ user.email }}</div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center text-muted py-3">
+                            <i class="fas fa-users fa-2x mb-2"></i>
+                            <br>No users found
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Email List Tab -->
+            <div id="emails-content" class="recipient-content">
+                <div class="form-group">
+                    <label for="recipient_emails" class="form-label">Email Addresses</label>
+                    <textarea class="form-control" id="recipient_emails" name="recipient_emails" 
+                              rows="5" placeholder="Enter email addresses, one per line"></textarea>
+                    <div class="help-text">Enter email addresses, one per line</div>
+                </div>
+            </div>
+            
+            <!-- Phone List Tab -->
+            <div id="phones-content" class="recipient-content">
+                <div class="form-group">
+                    <label for="recipient_phones" class="form-label">Phone Numbers</label>
+                    <textarea class="form-control" id="recipient_phones" name="recipient_phones" 
+                              rows="5" placeholder="Enter phone numbers, one per line"></textarea>
+                    <div class="help-text">Enter phone numbers, one per line (include country code)</div>
+                </div>
+            </div>
+            
+            <!-- Applications Tab -->
+            <div id="applications-content" class="recipient-content">
+                <div class="form-group">
+                    <label class="form-label">Select Applications</label>
+                    <div class="recipient-list">
+                        {% for application in applications %}
+                        <div class="recipient-item">
+                            <input type="checkbox" class="form-check-input recipient-checkbox" 
+                                   name="recipient_applications" value="{{ application.id }}" id="app_{{ application.id }}">
+                            <div class="recipient-info">
+                                <div class="recipient-name">{{ application.user.get_full_name|default:application.user.username }}</div>
+                                <div class="recipient-email">{{ application.user.email }}</div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center text-muted py-3">
+                            <i class="fas fa-file-alt fa-2x mb-2"></i>
+                            <br>No applications found
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scheduling -->
+    <div class="form-section">
+        <h3 class="section-title">
+            <i class="fas fa-clock"></i>
+            Scheduling
+        </h3>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="send_immediately" class="form-label">Send Immediately</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="send_immediately" name="send_immediately" checked>
+                        <label class="form-check-label" for="send_immediately">
+                            Send campaign immediately
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="form-group" id="schedule_group" style="display: none;">
+                    <label for="scheduled_at" class="form-label">Schedule Date & Time</label>
+                    <input type="datetime-local" class="form-control" id="scheduled_at" name="scheduled_at">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Campaign Settings -->
+    <div class="form-section">
+        <h3 class="section-title">
+            <i class="fas fa-cogs"></i>
+            Campaign Settings
+        </h3>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="batch_size" class="form-label">Batch Size</label>
+                    <input type="number" class="form-control" id="batch_size" name="batch_size" 
+                           value="100" min="1" max="1000">
+                    <div class="help-text">Number of notifications to send per batch</div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="delay_between_batches" class="form-label">Delay Between Batches (seconds)</label>
+                    <input type="number" class="form-control" id="delay_between_batches" name="delay_between_batches" 
+                           value="5" min="1" max="300">
+                    <div class="help-text">Delay between sending batches</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="require_approval" name="require_approval">
+                <label class="form-check-label" for="require_approval">
+                    Require approval before sending
+                </label>
+                <div class="help-text">Campaign will be created in pending status and require admin approval</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preview Section -->
+    <div id="previewSection" class="preview-section">
+        <h3 class="section-title">
+            <i class="fas fa-eye"></i>
+            Campaign Preview
+        </h3>
+        
+        <div class="preview-header">
+            <h4 id="previewName">Campaign Name</h4>
+            <p id="previewDescription" class="text-muted">Campaign description</p>
+        </div>
+        
+        <div class="preview-stats">
+            <div class="preview-stat">
+                <div class="preview-stat-value" id="previewRecipients">0</div>
+                <div class="preview-stat-label">Recipients</div>
+            </div>
+            <div class="preview-stat">
+                <div class="preview-stat-value" id="previewBatches">0</div>
+                <div class="preview-stat-label">Batches</div>
+            </div>
+            <div class="preview-stat">
+                <div class="preview-stat-value" id="previewDuration">0m</div>
+                <div class="preview-stat-label">Duration</div>
+            </div>
+            <div class="preview-stat">
+                <div class="preview-stat-value" id="previewPriority">Normal</div>
+                <div class="preview-stat-label">Priority</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Submit Button -->
+    <div class="text-center">
+        <button type="submit" class="btn-create" id="createButton">
+            <i class="fas fa-rocket"></i>
+            Create Campaign
+        </button>
+    </div>
+</form>
+{% endblock %}
+
+{% block extrajs %}
+<script>
+    function switchRecipientTab(tabName) {
+        // Hide all content
+        document.querySelectorAll('.recipient-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        
+        // Remove active class from all tabs
+        document.querySelectorAll('.recipient-tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        
+        // Show selected content
+        document.getElementById(tabName + '-content').classList.add('active');
+        
+        // Add active class to clicked tab
+        event.target.classList.add('active');
+        
+        // Update preview
+        updatePreview();
+    }
+    
+    function updatePreview() {
+        const name = document.getElementById('name').value;
+        const description = document.getElementById('description').value;
+        const priority = document.getElementById('priority').value;
+        const batchSize = parseInt(document.getElementById('batch_size').value) || 100;
+        const delay = parseInt(document.getElementById('delay_between_batches').value) || 5;
+        
+        // Count recipients
+        let recipientCount = 0;
+        
+        // Count selected users
+        const selectedUsers = document.querySelectorAll('input[name="recipient_users"]:checked');
+        recipientCount += selectedUsers.length;
+        
+        // Count email addresses
+        const emails = document.getElementById('recipient_emails').value.trim();
+        if (emails) {
+            const emailList = emails.split('\n').filter(email => email.trim());
+            recipientCount += emailList.length;
+        }
+        
+        // Count phone numbers
+        const phones = document.getElementById('recipient_phones').value.trim();
+        if (phones) {
+            const phoneList = phones.split('\n').filter(phone => phone.trim());
+            recipientCount += phoneList.length;
+        }
+        
+        // Count selected applications
+        const selectedApps = document.querySelectorAll('input[name="recipient_applications"]:checked');
+        recipientCount += selectedApps.length;
+        
+        // Calculate batches and duration
+        const batches = Math.ceil(recipientCount / batchSize);
+        const duration = Math.ceil((batches - 1) * delay / 60);
+        
+        // Update preview
+        document.getElementById('previewName').textContent = name || 'Untitled Campaign';
+        document.getElementById('previewDescription').textContent = description || 'No description provided';
+        document.getElementById('previewRecipients').textContent = recipientCount;
+        document.getElementById('previewBatches').textContent = batches;
+        document.getElementById('previewDuration').textContent = duration + 'm';
+        document.getElementById('previewPriority').textContent = priority.charAt(0).toUpperCase() + priority.slice(1);
+        
+        // Show/hide preview section
+        const previewSection = document.getElementById('previewSection');
+        if (recipientCount > 0) {
+            previewSection.classList.add('show');
+        } else {
+            previewSection.classList.remove('show');
+        }
+    }
+    
+    function previewCampaign() {
+        updatePreview();
+        const previewSection = document.getElementById('previewSection');
+        previewSection.scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    // Event listeners
+    document.addEventListener('DOMContentLoaded', function() {
+        // Send immediately checkbox
+        const sendImmediately = document.getElementById('send_immediately');
+        const scheduleGroup = document.getElementById('schedule_group');
+        
+        sendImmediately.addEventListener('change', function() {
+            if (this.checked) {
+                scheduleGroup.style.display = 'none';
+            } else {
+                scheduleGroup.style.display = 'block';
+            }
+        });
+        
+        // Form inputs
+        const formInputs = document.querySelectorAll('#name, #description, #priority, #batch_size, #delay_between_batches, #recipient_emails, #recipient_phones');
+        formInputs.forEach(input => {
+            input.addEventListener('input', updatePreview);
+        });
+        
+        // Checkboxes
+        const checkboxes = document.querySelectorAll('input[name="recipient_users"], input[name="recipient_applications"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updatePreview);
+        });
+        
+        // Form submission
+        const form = document.getElementById('campaignForm');
+        const createButton = document.getElementById('createButton');
+        
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Validate form
+            if (!validateForm()) {
+                return;
+            }
+            
+            // Show loading state
+            createButton.innerHTML = '<span class="loading-spinner"></span> Creating Campaign...';
+            createButton.disabled = true;
+            
+            // Submit form
+            fetch('{% url "notifications:create-bulk-campaign" %}', {
+                method: 'POST',
+                body: new FormData(form)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Campaign created successfully!', 'success');
+                    setTimeout(() => {
+                        window.location.href = '{% url "notifications:bulk-campaigns" %}';
+                    }, 1500);
+                } else {
+                    showNotification(data.message || 'Failed to create campaign', 'error');
+                    createButton.innerHTML = '<i class="fas fa-rocket"></i> Create Campaign';
+                    createButton.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Network error occurred', 'error');
+                createButton.innerHTML = '<i class="fas fa-rocket"></i> Create Campaign';
+                createButton.disabled = false;
+            });
+        });
+    });
+    
+    function validateForm() {
+        const name = document.getElementById('name').value.trim();
+        const template = document.getElementById('template').value;
+        const channel = document.getElementById('channel').value;
+        
+        if (!name) {
+            showNotification('Please enter a campaign name', 'error');
+            return false;
+        }
+        
+        if (!template) {
+            showNotification('Please select a template', 'error');
+            return false;
+        }
+        
+        if (!channel) {
+            showNotification('Please select a channel', 'error');
+            return false;
+        }
+        
+        // Check if at least one recipient is selected
+        const hasRecipients = 
+            document.querySelectorAll('input[name="recipient_users"]:checked').length > 0 ||
+            document.querySelectorAll('input[name="recipient_applications"]:checked').length > 0 ||
+            document.getElementById('recipient_emails').value.trim() ||
+            document.getElementById('recipient_phones').value.trim();
+        
+        if (!hasRecipients) {
+            showNotification('Please select at least one recipient', 'error');
+            return false;
+        }
+        
+        return true;
+    }
+    
+    function showNotification(message, type) {
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        notification.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 5000);
+    }
+</script>
+{% endblock %}

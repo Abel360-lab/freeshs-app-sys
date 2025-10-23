@@ -1,0 +1,312 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+
+{% block title %}Create SRV - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-left">
+                <h1 class="page-title">
+                    <i class="fas fa-file-invoice me-2"></i>
+                    Create Store Receipt Voucher
+                </h1>
+                <p class="page-subtitle">Create a new SRV to confirm commodity delivery</p>
+            </div>
+            <div class="header-right">
+                <a href="{% url 'applications:supplier-srvs' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to SRVs
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Section -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-file-alt me-2"></i>
+                        SRV Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" id="srvForm">
+                        {% csrf_token %}
+                        
+                        <!-- Basic Information -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="{{ form.srv_number.id_for_label }}" class="form-label">
+                                    SRV Number <span class="text-danger">*</span>
+                                </label>
+                                {{ form.srv_number }}
+                                {% if form.srv_number.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.srv_number.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.delivery_date.id_for_label }}" class="form-label">
+                                    Delivery Date <span class="text-danger">*</span>
+                                </label>
+                                {{ form.delivery_date }}
+                                {% if form.delivery_date.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.delivery_date.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Delivery Location -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="{{ form.delivery_region.id_for_label }}" class="form-label">
+                                    Delivery Region <span class="text-danger">*</span>
+                                </label>
+                                {{ form.delivery_region }}
+                                {% if form.delivery_region.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.delivery_region.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.delivery_school.id_for_label }}" class="form-label">
+                                    Delivery School <span class="text-danger">*</span>
+                                </label>
+                                {{ form.delivery_school }}
+                                {% if form.delivery_school.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.delivery_school.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Commodity Information -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="{{ form.commodity.id_for_label }}" class="form-label">
+                                    Commodity <span class="text-danger">*</span>
+                                </label>
+                                {{ form.commodity }}
+                                {% if form.commodity.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.commodity.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.quantity.id_for_label }}" class="form-label">
+                                    Quantity <span class="text-danger">*</span>
+                                </label>
+                                {{ form.quantity }}
+                                {% if form.quantity.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.quantity.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Pricing Information -->
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <label for="{{ form.unit_of_measure.id_for_label }}" class="form-label">
+                                    Unit of Measure <span class="text-danger">*</span>
+                                </label>
+                                {{ form.unit_of_measure }}
+                                {% if form.unit_of_measure.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.unit_of_measure.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="{{ form.unit_price.id_for_label }}" class="form-label">
+                                    Unit Price (GHS) <span class="text-danger">*</span>
+                                </label>
+                                {{ form.unit_price }}
+                                {% if form.unit_price.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.unit_price.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Total Amount</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">GHS</span>
+                                    <input type="text" class="form-control" id="totalAmount" readonly value="0.00">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Receiver Information -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="{{ form.received_by.id_for_label }}" class="form-label">
+                                    Received By <span class="text-danger">*</span>
+                                </label>
+                                {{ form.received_by }}
+                                {% if form.received_by.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.received_by.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.received_by_designation.id_for_label }}" class="form-label">
+                                    Designation <span class="text-danger">*</span>
+                                </label>
+                                {{ form.received_by_designation }}
+                                {% if form.received_by_designation.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.received_by_designation.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Document Upload -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <label for="{{ form.document.id_for_label }}" class="form-label">
+                                    SRV Document
+                                </label>
+                                {{ form.document }}
+                                <div class="form-text">Upload SRV document (PDF, JPG, PNG)</div>
+                                {% if form.document.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.document.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <label for="{{ form.notes.id_for_label }}" class="form-label">
+                                    Additional Notes
+                                </label>
+                                {{ form.notes }}
+                                {% if form.notes.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.notes.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Create SRV
+                            </button>
+                            <a href="{% url 'applications:supplier-srvs' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Help Panel -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Help & Guidelines
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <h6>Creating an SRV</h6>
+                    <ul class="list-unstyled small">
+                        <li><i class="fas fa-check text-success me-2"></i>Ensure all required fields are filled</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Select the correct delivery region and school</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Enter accurate quantity and pricing information</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Upload supporting documents if available</li>
+                    </ul>
+                    
+                    <hr>
+                    
+                    <h6>SRV Number Format</h6>
+                    <p class="small text-muted">
+                        Use a consistent numbering format, e.g., SRV-2025-001, SRV-2025-002, etc.
+                    </p>
+                    
+                    <h6>Document Upload</h6>
+                    <p class="small text-muted">
+                        Supported formats: PDF, JPG, JPEG, PNG. Maximum file size: 10MB.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const regionSelect = document.getElementById('srv_region');
+    const schoolSelect = document.getElementById('srv_school');
+    const quantityInput = document.getElementById('id_quantity');
+    const unitPriceInput = document.getElementById('id_unit_price');
+    const totalAmountInput = document.getElementById('totalAmount');
+    
+    // Handle region change
+    regionSelect.addEventListener('change', function() {
+        const regionId = this.value;
+        
+        if (regionId) {
+            // Fetch schools for selected region
+            fetch(`{% url 'applications:schools-by-region' %}?region_id=${regionId}`)
+                .then(response => response.json())
+                .then(data => {
+                    schoolSelect.innerHTML = '<option value="">Select School</option>';
+                    
+                    if (data.schools) {
+                        data.schools.forEach(school => {
+                            const option = document.createElement('option');
+                            option.value = school.id;
+                            option.textContent = `${school.name} (${school.code})`;
+                            schoolSelect.appendChild(option);
+                        });
+                    }
+                    
+                    schoolSelect.disabled = false;
+                })
+                .catch(error => {
+                    console.error('Error fetching schools:', error);
+                });
+        } else {
+            schoolSelect.innerHTML = '<option value="">Select School</option>';
+            schoolSelect.disabled = true;
+        }
+    });
+    
+    // Calculate total amount
+    function calculateTotal() {
+        const quantity = parseFloat(quantityInput.value) || 0;
+        const unitPrice = parseFloat(unitPriceInput.value) || 0;
+        const total = quantity * unitPrice;
+        totalAmountInput.value = total.toFixed(2);
+    }
+    
+    quantityInput.addEventListener('input', calculateTotal);
+    unitPriceInput.addEventListener('input', calculateTotal);
+    
+    // Initialize calculation
+    calculateTotal();
+});
+</script>
+{% endblock %}
+

@@ -1,0 +1,938 @@
+{% extends 'backoffice/base.html' %}
+{% load static %}
+
+{% block title %}Notification Management Center - GCX Admin Portal{% endblock %}
+
+{% block breadcrumb_current %}Notifications{% endblock %}
+
+{% block page_icon %}<i class="fas fa-bell"></i>{% endblock %}
+{% block page_title %}Notification Management Center{% endblock %}
+{% block page_subtitle %}Advanced notification system with service management and bulk campaigns{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'notifications:service-monitoring' %}" class="btn btn-outline-info btn-sm">
+    <i class="fas fa-heartbeat"></i> Service Monitoring
+</a>
+<a href="{% url 'notifications:bulk-campaigns' %}" class="btn btn-outline-success btn-sm">
+    <i class="fas fa-bullhorn"></i> Bulk Campaigns
+</a>
+<a href="{% url 'notifications:queue-dashboard' %}" class="btn btn-outline-warning btn-sm">
+    <i class="fas fa-list-alt"></i> Queue Dashboard
+</a>
+<a href="{% url 'notifications:create-bulk-campaign' %}" class="btn btn-primary btn-sm">
+    <i class="fas fa-plus"></i> Create Campaign
+</a>
+{% endblock %}
+
+{% block extrahead %}
+<style>
+    :root {
+        --primary-color: #1a472a;
+        --primary-light: #2d5a3d;
+        --accent-color: #d4af37;
+        --success-color: #28a745;
+        --warning-color: #ffc107;
+        --danger-color: #dc3545;
+        --info-color: #17a2b8;
+        --light-color: #f8f9fa;
+        --dark-color: #343a40;
+        --border-radius: 8px;
+        --border-radius-sm: 4px;
+        --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
+        --shadow-md: 0 4px 8px rgba(0,0,0,0.15);
+        --shadow-lg: 0 8px 16px rgba(0,0,0,0.2);
+        --transition: all 0.3s ease;
+    }
+
+    .modern-card {
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-sm);
+        border: 1px solid #e9ecef;
+        transition: var(--transition);
+        overflow: hidden;
+    }
+
+    .modern-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+    }
+
+    .service-card {
+        position: relative;
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .service-card.running {
+        border-left-color: var(--success-color);
+        background: linear-gradient(135deg, #ffffff 0%, #f0fff4 100%);
+    }
+
+    .service-card.stopped {
+        border-left-color: var(--danger-color);
+        background: linear-gradient(135deg, #ffffff 0%, #fff5f5 100%);
+    }
+
+    .service-card.paused {
+        border-left-color: var(--warning-color);
+        background: linear-gradient(135deg, #ffffff 0%, #fffbf0 100%);
+    }
+
+    .service-card.error {
+        border-left-color: var(--danger-color);
+        background: linear-gradient(135deg, #ffffff 0%, #fff5f5 100%);
+        animation: pulse-error 2s infinite;
+    }
+
+    @keyframes pulse-error {
+        0%, 100% { box-shadow: var(--shadow-sm); }
+        50% { box-shadow: 0 0 0 4px rgba(220, 53, 69, 0.1); }
+    }
+
+    .service-status {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-running { background: rgba(40, 167, 69, 0.1); color: var(--success-color); }
+    .status-stopped { background: rgba(220, 53, 69, 0.1); color: var(--danger-color); }
+    .status-paused { background: rgba(255, 193, 7, 0.1); color: var(--warning-color); }
+    .status-error { background: rgba(220, 53, 69, 0.1); color: var(--danger-color); }
+
+    .service-controls {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .service-btn {
+        padding: 0.375rem 0.75rem;
+        border-radius: var(--border-radius-sm);
+        font-size: 0.875rem;
+        font-weight: 500;
+        border: none;
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .service-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .btn-start { background: var(--success-color); color: white; }
+    .btn-stop { background: var(--danger-color); color: white; }
+    .btn-pause { background: var(--warning-color); color: white; }
+    .btn-restart { background: var(--info-color); color: white; }
+    .btn-health { background: var(--primary-color); color: white; }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        box-shadow: var(--shadow-sm);
+        border-left: 4px solid var(--primary-color);
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100px;
+        height: 100px;
+        background: linear-gradient(135deg, transparent 0%, rgba(26, 71, 42, 0.05) 100%);
+        border-radius: 50%;
+        transform: translate(30px, -30px);
+    }
+
+    .stat-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-3px);
+    }
+
+    .stat-card.success { border-left-color: var(--success-color); }
+    .stat-card.warning { border-left-color: var(--warning-color); }
+    .stat-card.danger { border-left-color: var(--danger-color); }
+    .stat-card.info { border-left-color: var(--info-color); }
+
+    .stat-icon {
+        position: absolute;
+        top: 1.5rem;
+        right: 1.5rem;
+        font-size: 2.5rem;
+        opacity: 0.1;
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin: 0;
+        line-height: 1;
+    }
+
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.875rem;
+        margin: 0.5rem 0 0 0;
+        font-weight: 500;
+    }
+
+    .stat-change {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-top: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 20px;
+    }
+
+    .stat-change.positive {
+        color: var(--success-color);
+        background: rgba(40, 167, 69, 0.1);
+    }
+
+    .stat-change.negative {
+        color: var(--danger-color);
+        background: rgba(220, 53, 69, 0.1);
+    }
+
+    .content-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .campaign-card {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--info-color);
+        transition: var(--transition);
+    }
+
+    .campaign-card:hover {
+        box-shadow: var(--shadow-sm);
+        transform: translateX(5px);
+    }
+
+    .campaign-progress {
+        background: #e9ecef;
+        border-radius: 10px;
+        height: 8px;
+        overflow: hidden;
+        margin: 0.5rem 0;
+    }
+
+    .campaign-progress-bar {
+        background: linear-gradient(90deg, var(--success-color), var(--accent-color));
+        height: 100%;
+        transition: width 0.3s ease;
+    }
+
+    .queue-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem;
+        background: white;
+        border-radius: var(--border-radius-sm);
+        margin-bottom: 0.5rem;
+        border-left: 3px solid var(--info-color);
+        transition: var(--transition);
+    }
+
+    .queue-item:hover {
+        box-shadow: var(--shadow-sm);
+        transform: translateX(3px);
+    }
+
+    .queue-item.pending { border-left-color: var(--warning-color); }
+    .queue-item.processing { border-left-color: var(--info-color); }
+    .queue-item.completed { border-left-color: var(--success-color); }
+    .queue-item.failed { border-left-color: var(--danger-color); }
+
+    .priority-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .priority-urgent { background: rgba(220, 53, 69, 0.1); color: var(--danger-color); }
+    .priority-high { background: rgba(255, 193, 7, 0.1); color: var(--warning-color); }
+    .priority-normal { background: rgba(23, 162, 184, 0.1); color: var(--info-color); }
+    .priority-low { background: rgba(108, 117, 125, 0.1); color: #6c757d; }
+
+    .real-time-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--success-color);
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .pulse-dot {
+        width: 8px;
+        height: 8px;
+        background: var(--success-color);
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    .modern-table {
+        background: white;
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .modern-table th {
+        background: var(--light-color);
+        border: none;
+        padding: 1rem;
+        font-weight: 600;
+        color: var(--dark-color);
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+    }
+
+    .modern-table td {
+        border: none;
+        padding: 1rem;
+        border-bottom: 1px solid #e9ecef;
+        vertical-align: middle;
+    }
+
+    .modern-table tbody tr:hover {
+        background: rgba(26, 71, 42, 0.02);
+    }
+
+    .notification-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .badge-email { background: rgba(23, 162, 184, 0.1); color: var(--info-color); }
+    .badge-sms { background: rgba(40, 167, 69, 0.1); color: var(--success-color); }
+    .badge-sent { background: rgba(40, 167, 69, 0.1); color: var(--success-color); }
+    .badge-failed { background: rgba(220, 53, 69, 0.1); color: var(--danger-color); }
+    .badge-pending { background: rgba(255, 193, 7, 0.1); color: var(--warning-color); }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-action {
+        padding: 0.375rem 0.75rem;
+        border-radius: var(--border-radius-sm);
+        font-size: 0.875rem;
+        border: none;
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .btn-action:hover {
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .fade-in {
+        animation: fadeIn 0.6s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .loading-spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid var(--primary-color);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 768px) {
+        .content-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .service-controls {
+            flex-direction: column;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Service Status Overview -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="modern-card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-server"></i>
+                    Background Services Status
+                    <span class="real-time-indicator float-end">
+                        <span class="pulse-dot"></span>
+                        Live
+                    </span>
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="row g-0">
+                    {% for service in services %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="service-card {{ service.status|lower }} p-3 h-100">
+                            <div class="service-status status-{{ service.status|lower }}">
+                                {{ service.get_status_display }}
+                            </div>
+                            <h6 class="mb-1">{{ service.name }}</h6>
+                            <small class="text-muted">{{ service.get_service_type_display }}</small>
+                            
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-clock"></i>
+                                    Uptime: {{ service.uptime|floatformat:0 }}s
+                                </small>
+                            </div>
+                            
+                            <div class="service-controls">
+                                {% if service.status == 'STOPPED' or service.status == 'ERROR' %}
+                                <button class="service-btn btn-start" onclick="controlService({{ service.id }}, 'start')">
+                                    <i class="fas fa-play"></i> Start
+                                </button>
+                                {% endif %}
+                                
+                                {% if service.status == 'RUNNING' %}
+                                <button class="service-btn btn-pause" onclick="controlService({{ service.id }}, 'pause')">
+                                    <i class="fas fa-pause"></i> Pause
+                                </button>
+                                <button class="service-btn btn-stop" onclick="controlService({{ service.id }}, 'stop')">
+                                    <i class="fas fa-stop"></i> Stop
+                                </button>
+                                {% endif %}
+                                
+                                {% if service.status == 'PAUSED' %}
+                                <button class="service-btn btn-start" onclick="controlService({{ service.id }}, 'resume')">
+                                    <i class="fas fa-play"></i> Resume
+                                </button>
+                                {% endif %}
+                                
+                                <button class="service-btn btn-restart" onclick="controlService({{ service.id }}, 'restart')">
+                                    <i class="fas fa-redo"></i> Restart
+                                </button>
+                                
+                                <button class="service-btn btn-health" onclick="checkHealth({{ service.id }})">
+                                    <i class="fas fa-heartbeat"></i> Health
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12 text-center py-4">
+                        <i class="fas fa-server fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No Services Configured</h5>
+                        <p class="text-muted">Configure notification services to get started.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Overview -->
+<div class="stats-grid">
+    <!-- Email Statistics -->
+    <div class="stat-card success">
+        <i class="fas fa-envelope stat-icon"></i>
+        <div class="stat-value">{{ email_stats.total|default:0 }}</div>
+        <div class="stat-label">Emails Sent</div>
+        <div class="stat-change positive">
+            <i class="fas fa-arrow-up"></i>
+            {{ email_stats.delivery_rate|default:0|floatformat:1 }}% delivery rate
+        </div>
+    </div>
+    
+    <div class="stat-card info">
+        <i class="fas fa-envelope-open stat-icon"></i>
+        <div class="stat-value">{{ email_stats.delivered|default:0 }}</div>
+        <div class="stat-label">Emails Delivered</div>
+        <div class="stat-change positive">
+            <i class="fas fa-check"></i>
+            {{ email_stats.open_rate|default:0|floatformat:1 }}% open rate
+        </div>
+    </div>
+    
+    <div class="stat-card warning">
+        <i class="fas fa-exclamation-triangle stat-icon"></i>
+        <div class="stat-value">{{ email_stats.failed|default:0 }}</div>
+        <div class="stat-label">Email Failures</div>
+        <div class="stat-change {% if email_stats.failure_rate > 5 %}negative{% else %}positive{% endif %}">
+            <i class="fas fa-{% if email_stats.failure_rate > 5 %}arrow-down{% else %}arrow-up{% endif %}"></i>
+            {{ email_stats.failure_rate|default:0|floatformat:1 }}% failure rate
+        </div>
+    </div>
+    
+    <!-- SMS Statistics -->
+    <div class="stat-card success">
+        <i class="fas fa-sms stat-icon"></i>
+        <div class="stat-value">{{ sms_stats.total|default:0 }}</div>
+        <div class="stat-label">SMS Sent</div>
+        <div class="stat-change positive">
+            <i class="fas fa-arrow-up"></i>
+            {{ sms_stats.delivery_rate|default:0|floatformat:1 }}% delivery rate
+        </div>
+    </div>
+    
+    <!-- Queue Statistics -->
+    <div class="stat-card info">
+        <i class="fas fa-list-alt stat-icon"></i>
+        <div class="stat-value">{{ queue_stats.pending|default:0 }}</div>
+        <div class="stat-label">Queue Pending</div>
+        <div class="stat-change {% if queue_stats.pending > 100 %}negative{% else %}positive{% endif %}">
+            <i class="fas fa-{% if queue_stats.pending > 100 %}exclamation-triangle{% else %}check{% endif %}"></i>
+            {{ queue_stats.completed_today|default:0 }} completed today
+        </div>
+    </div>
+    
+    <!-- Campaign Statistics -->
+    <div class="stat-card warning">
+        <i class="fas fa-bullhorn stat-icon"></i>
+        <div class="stat-value">{{ bulk_campaigns|length }}</div>
+        <div class="stat-label">Active Campaigns</div>
+        <div class="stat-change positive">
+            <i class="fas fa-chart-line"></i>
+            Campaign performance
+        </div>
+    </div>
+</div>
+
+<!-- Main Content Grid -->
+<div class="content-grid">
+    <!-- Recent Notifications -->
+    <div class="modern-card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-history"></i>
+                Recent Notifications
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="modern-table">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Recipient</th>
+                            <th>Status</th>
+                            <th>Sent At</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for notification in recent_notifications %}
+                        <tr class="fade-in">
+                            <td>
+                                <span class="notification-badge badge-{{ notification.channel|lower }}">
+                                    <i class="fas fa-{% if notification.channel == 'EMAIL' %}envelope{% else %}sms{% endif %}"></i>
+                                    {{ notification.channel }}
+                                </span>
+                            </td>
+                            <td>
+                                <div>
+                                    <strong>{{ notification.recipient_name|default:"Unknown" }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ notification.recipient_email|default:notification.recipient_phone }}</small>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="notification-badge badge-{{ notification.status|lower }}">
+                                    {{ notification.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <small>{{ notification.created_at|date:"M d, Y H:i" }}</small>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-4">
+                                <i class="fas fa-inbox fa-2x mb-2"></i>
+                                <br>No notifications found
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Campaigns and Queue -->
+    <div>
+        <!-- Active Campaigns -->
+        <div class="modern-card mb-3">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-bullhorn"></i>
+                    Active Campaigns
+                </h6>
+            </div>
+            <div class="card-body">
+                {% for campaign in bulk_campaigns %}
+                <div class="campaign-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="mb-1">{{ campaign.name }}</h6>
+                            <small class="text-muted">{{ campaign.get_status_display }}</small>
+                        </div>
+                        <span class="badge badge-{{ campaign.status|lower }}">{{ campaign.get_priority_display }}</span>
+                    </div>
+                    
+                    <div class="campaign-progress">
+                        <div class="campaign-progress-bar" style="width: {{ campaign.get_progress_percentage }}%"></div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">{{ campaign.processed_count }}/{{ campaign.total_recipients }} sent</small>
+                        <small class="text-muted">{{ campaign.get_progress_percentage|floatformat:1 }}%</small>
+                    </div>
+                    
+                    {% if campaign.is_active %}
+                    <div class="action-buttons mt-2">
+                        {% if campaign.status == 'RUNNING' %}
+                        <button class="btn-action" style="background: var(--warning-color); color: white;" 
+                                onclick="controlCampaign({{ campaign.id }}, 'pause')">
+                            <i class="fas fa-pause"></i> Pause
+                        </button>
+                        {% elif campaign.status == 'PAUSED' %}
+                        <button class="btn-action" style="background: var(--success-color); color: white;" 
+                                onclick="controlCampaign({{ campaign.id }}, 'resume')">
+                            <i class="fas fa-play"></i> Resume
+                        </button>
+                        {% endif %}
+                        <button class="btn-action" style="background: var(--danger-color); color: white;" 
+                                onclick="controlCampaign({{ campaign.id }}, 'cancel')">
+                            <i class="fas fa-stop"></i> Cancel
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-3">
+                    <i class="fas fa-bullhorn fa-2x mb-2"></i>
+                    <br>No active campaigns
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Queue Overview -->
+        <div class="modern-card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-list-alt"></i>
+                    Queue Overview
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center mb-3">
+                    <div class="col-3">
+                        <div class="text-warning">
+                            <strong>{{ queue_stats.pending|default:0 }}</strong>
+                            <br><small>Pending</small>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="text-info">
+                            <strong>{{ queue_stats.processing|default:0 }}</strong>
+                            <br><small>Processing</small>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="text-success">
+                            <strong>{{ queue_stats.completed_today|default:0 }}</strong>
+                            <br><small>Completed</small>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="text-danger">
+                            <strong>{{ queue_stats.failed|default:0 }}</strong>
+                            <br><small>Failed</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <a href="{% url 'notifications:queue-dashboard' %}" class="btn btn-outline-primary btn-sm w-100">
+                    <i class="fas fa-list"></i> View Queue Details
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="modern-card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">
+            <i class="fas fa-bolt"></i>
+            Quick Actions
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3 col-sm-6 mb-3">
+                <a href="{% url 'notifications:create-bulk-campaign' %}" class="btn btn-primary w-100">
+                    <i class="fas fa-plus"></i> Create Campaign
+                </a>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+                <a href="{% url 'notifications:bulk-campaigns' %}" class="btn btn-outline-success w-100">
+                    <i class="fas fa-bullhorn"></i> Manage Campaigns
+                </a>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+                <a href="{% url 'notifications:queue-dashboard' %}" class="btn btn-outline-warning w-100">
+                    <i class="fas fa-list-alt"></i> Queue Management
+                </a>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+                <a href="{% url 'notifications:service-monitoring' %}" class="btn btn-outline-info w-100">
+                    <i class="fas fa-heartbeat"></i> Service Monitoring
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extrajs %}
+<script>
+    // Service control functions
+    function controlService(serviceId, action) {
+        const button = event.target;
+        const originalText = button.innerHTML;
+        
+        // Show loading state
+        button.innerHTML = '<span class="loading-spinner"></span> Processing...';
+        button.disabled = true;
+        
+        fetch(`{% url 'notifications:service-control' service_id=1 action='start' %}`.replace('1', serviceId).replace('start', action), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification(data.message, 'success');
+                // Reload page to update service status
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                showNotification(data.message || 'Action failed', 'error');
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Network error occurred', 'error');
+            button.innerHTML = originalText;
+            button.disabled = false;
+        });
+    }
+    
+    // Health check function
+    function checkHealth(serviceId) {
+        const button = event.target;
+        const originalText = button.innerHTML;
+        
+        button.innerHTML = '<span class="loading-spinner"></span> Checking...';
+        button.disabled = true;
+        
+        fetch(`{% url 'notifications:service-health-check' service_id=1 %}`.replace('1', serviceId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const message = data.is_healthy ? 'Service is healthy' : 'Service health check failed';
+                const type = data.is_healthy ? 'success' : 'warning';
+                showNotification(message, type);
+            } else {
+                showNotification('Health check failed', 'error');
+            }
+            button.innerHTML = originalText;
+            button.disabled = false;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Health check failed', 'error');
+            button.innerHTML = originalText;
+            button.disabled = false;
+        });
+    }
+    
+    // Campaign control function
+    function controlCampaign(campaignId, action) {
+        const button = event.target;
+        const originalText = button.innerHTML;
+        
+        button.innerHTML = '<span class="loading-spinner"></span> Processing...';
+        button.disabled = true;
+        
+        fetch(`{% url 'notifications:bulk-campaign-control' campaign_id=1 action='start' %}`.replace('1', campaignId).replace('start', action), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification(data.message, 'success');
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                showNotification(data.message || 'Action failed', 'error');
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Network error occurred', 'error');
+            button.innerHTML = originalText;
+            button.disabled = false;
+        });
+    }
+    
+    // Utility functions
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    function showNotification(message, type) {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        notification.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 5000);
+    }
+    
+    // Add fade-in animation to elements
+    document.addEventListener('DOMContentLoaded', function() {
+        const elements = document.querySelectorAll('.modern-card, .stat-card');
+        elements.forEach(function(element, index) {
+            setTimeout(function() {
+                element.classList.add('fade-in');
+            }, index * 100);
+        });
+    });
+    
+    // Auto-refresh every 30 seconds
+    setInterval(function() {
+        // Only refresh if no modals are open and user is not interacting
+        if (!document.querySelector('.modal.show')) {
+            // Update real-time indicators
+            const indicators = document.querySelectorAll('.real-time-indicator');
+            indicators.forEach(indicator => {
+                indicator.style.opacity = '0.5';
+                setTimeout(() => {
+                    indicator.style.opacity = '1';
+                }, 500);
+            });
+        }
+    }, 30000);
+</script>
+{% endblock %}

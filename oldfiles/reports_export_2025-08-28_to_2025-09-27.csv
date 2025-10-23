@@ -1,0 +1,16 @@
+Application_id,Application_business_name,Application_contact_person,Application_email,Application_phone,Application_status,Application_created_at,Delivery_serial_number,Delivery_supplier_user__username,Delivery_delivery_school__name,Delivery_delivery_region__name,Delivery_status,Delivery_delivery_date,Contract_contract_number,Contract_application__business_name,Contract_status,Contract_created_at,Supplier_username,Supplier_email,Supplier_first_name,Supplier_last_name,Supplier_date_joined
+151,Good is Good,,aokudjeto5@gmail.com,,UNDER_REVIEW,2025-09-24 18:03:08,,,,,,,,,,,,,,,
+150,Good is Good,,obrelated@gmail.com,,APPROVED,2025-09-23 11:30:33,,,,,,,,,,,,,,,
+,,,,,,,12324,obrelated@gmail.com,BOMAA COMM. SENIOR HIGH SCHOOL,Ahafo Region,PENDING,2025-09-28,,,,,,,,,
+,,,,,,,12324,obrelated@gmail.com,BOMAA COMM. SENIOR HIGH SCHOOL,Ahafo Region,PENDING,2025-09-28,,,,,,,,,
+,,,,,,,12322,obrelated@gmail.com,SAMUEL OTU PRESBY SENIOR HIGH SCHOOL,Ahafo Region,VERIFIED,2025-09-27,,,,,,,,,
+,,,,,,,hgdgefd,obrelated@gmail.com,BECHEM PRESBY SENIOR HIGH SCHOOL,Ahafo Region,PENDING,2025-09-25,,,,,,,,,
+,,,,,,,,,,,,,12222,Good is Good,ACTIVE,2025-09-27 11:21:03,,,,,
+,,,,,,,,,,,,,11111,Good is Good,ACTIVE,2025-09-27 08:53:33,,,,,
+,,,,,,,,,,,,,12345,Good is Good,ACTIVE,2025-09-27 08:42:40,,,,,
+,,,,,,,,,,,,,1225,Good is Good,ACTIVE,2025-09-27 08:34:04,,,,,
+,,,,,,,,,,,,,100,Good is Good,ACTIVE,2025-09-27 08:28:28,,,,,
+,,,,,,,,,,,,,122333,Good is Good,ACTIVE,2025-09-27 07:32:10,,,,,
+,,,,,,,,,,,,,5756865,Good is Good,DRAFT,2025-09-24 13:06:05,,,,,
+,,,,,,,,,,,,,,,,,obrelated@gmail.com,obrelated@gmail.com,lskdjfsajk,,2025-09-23 11:30:33
+,,,,,,,,,,,,,,,,,aokudjeto5@gmail.com,aokudjeto5@gmail.com,gbtdddfg,,2025-09-24 18:03:09

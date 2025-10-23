@@ -1,0 +1,1085 @@
+{% extends "backoffice/base.html" %}
+
+{% block title %}Award Contract - {{ application.business_name }} - GCX Admin Portal{% endblock %}
+
+{% block page_icon %}<i class="fas fa-award"></i>{% endblock %}
+{% block page_title %}Award Contract{% endblock %}
+
+{% block page_header_container %}
+<div class="page-header-container">
+    <div class="page-header-content">
+        <div class="page-header-info">
+            <div class="page-header-breadcrumb">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'applications:backoffice-dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'applications:backoffice-suppliers' %}">Suppliers</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'applications:backoffice-supplier-detail' application.pk %}">{{ application.business_name }}</a></li>
+                        <li class="breadcrumb-item active">Award Contract</li>
+                    </ol>
+                </nav>
+            </div>
+            <h1 class="page-header-title">Award Contract to {{ application.business_name }}</h1>
+            <p class="page-header-subtitle">Create a new contract and assign documents to the supplier</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<style>
+    /* Enhanced Contract Award Page Styles */
+    .modern-form-card {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        transition: all 0.2s ease;
+    }
+    
+    .modern-form-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+    
+    .modern-card-header {
+        padding: 1.25rem 1.5rem;
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border-bottom: 2px solid #e5e7eb;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .modern-card-header .icon {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, var(--gcx-primary) 0%, var(--gcx-primary-light) 100%);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.125rem;
+    }
+    
+    .modern-card-header h5 {
+        margin: 0;
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: #111827;
+        flex: 1;
+    }
+    
+    .step-indicator {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: #f0f6fc;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #0969da;
+    }
+    
+    .modern-card-body {
+        padding: 2rem 1.5rem;
+    }
+    
+    .form-section {
+        margin-bottom: 2.5rem;
+        padding-bottom: 2rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .form-section:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+    
+    .form-section-title {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #f3f4f6;
+    }
+    
+    .form-section-title .icon-badge {
+        width: 32px;
+        height: 32px;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.875rem;
+    }
+    
+    .form-section-title h6 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 700;
+        color: #111827;
+        flex: 1;
+    }
+    
+    .enhanced-form-control {
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        font-size: 0.9375rem;
+        transition: all 0.2s ease;
+    }
+    
+    .enhanced-form-control:focus {
+        border-color: var(--gcx-primary);
+        box-shadow: 0 0 0 3px rgba(26, 71, 42, 0.1);
+    }
+    
+    .enhanced-form-control:hover:not(:focus) {
+        border-color: #d1d5db;
+    }
+    
+    .form-label-enhanced {
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: #374151;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .required-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px;
+        height: 18px;
+        background: #ef4444;
+        color: white;
+        border-radius: 4px;
+        font-size: 0.625rem;
+        font-weight: 700;
+    }
+    
+    .form-hint {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+        font-size: 0.8125rem;
+        color: #6b7280;
+    }
+    
+    .form-hint i {
+        color: #9ca3af;
+    }
+    
+    .enhanced-file-upload {
+        border: 2px dashed #d1d5db;
+        border-radius: 8px;
+        padding: 1.5rem;
+        text-align: center;
+        background: #f9fafb;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        position: relative;
+    }
+    
+    .enhanced-file-upload:hover {
+        border-color: var(--gcx-primary);
+        background: #f0fdf4;
+    }
+    
+    .enhanced-file-upload.has-file {
+        border-color: var(--gcx-primary);
+        background: #f0fdf4;
+    }
+    
+    .file-upload-icon {
+        font-size: 2rem;
+        color: #9ca3af;
+        margin-bottom: 0.5rem;
+    }
+    
+    .enhanced-file-upload:hover .file-upload-icon {
+        color: var(--gcx-primary);
+    }
+    
+    .file-upload-text {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.25rem;
+    }
+    
+    .file-upload-subtext {
+        font-size: 0.8125rem;
+        color: #6b7280;
+    }
+    
+    .file-upload-input {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        opacity: 0;
+        cursor: pointer;
+    }
+    
+    .selected-file {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        margin-top: 0.75rem;
+    }
+    
+    .selected-file-icon {
+        width: 36px;
+        height: 36px;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.875rem;
+    }
+    
+    .selected-file-info {
+        flex: 1;
+    }
+    
+    .selected-file-name {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #111827;
+        margin-bottom: 0.125rem;
+    }
+    
+    .selected-file-size {
+        font-size: 0.75rem;
+        color: #6b7280;
+    }
+    
+    .action-buttons {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding-top: 1.5rem;
+        margin-top: 1.5rem;
+        border-top: 2px solid #f3f4f6;
+    }
+    
+    .btn-enhanced {
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.9375rem;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-enhanced:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+    }
+    
+    .input-group-enhanced {
+        position: relative;
+    }
+    
+    .input-group-enhanced .input-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9ca3af;
+        z-index: 10;
+    }
+    
+    .input-group-enhanced input {
+        padding-left: 2.75rem;
+    }
+    
+    /* Dark mode support */
+    [data-theme="dark"] .modern-form-card {
+        background: var(--card-bg);
+        border-color: var(--border-primary);
+    }
+    
+    [data-theme="dark"] .modern-card-header {
+        background: var(--bg-tertiary);
+        border-bottom-color: var(--border-primary);
+    }
+    
+    [data-theme="dark"] .modern-card-header h5,
+    [data-theme="dark"] .form-section-title h6 {
+        color: var(--text-primary);
+    }
+    
+    [data-theme="dark"] .enhanced-form-control {
+        background: var(--input-bg);
+        border-color: var(--border-primary);
+        color: var(--text-primary);
+    }
+    
+    [data-theme="dark"] .enhanced-file-upload {
+        background: var(--bg-tertiary);
+        border-color: var(--border-primary);
+    }
+    
+    [data-theme="dark"] .selected-file {
+        background: var(--bg-tertiary);
+        border-color: var(--border-primary);
+    }
+    
+    /* Supplier Info Grid */
+    .supplier-info-grid {
+        display: grid;
+        gap: 1.25rem;
+    }
+    
+    .supplier-info-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        padding-bottom: 1.25rem;
+        border-bottom: 1px solid #f3f4f6;
+    }
+    
+    .supplier-info-item:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+    
+    .info-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+    }
+    
+    .info-label i {
+        color: #9ca3af;
+        font-size: 0.875rem;
+    }
+    
+    .info-value {
+        font-size: 0.9375rem;
+        font-weight: 600;
+        color: #111827;
+        word-break: break-word;
+    }
+    
+    [data-theme="dark"] .supplier-info-item {
+        border-bottom-color: var(--border-primary);
+    }
+    
+    [data-theme="dark"] .info-label {
+        color: var(--text-secondary);
+    }
+    
+    [data-theme="dark"] .info-value {
+        color: var(--text-primary);
+    }
+    
+    /* Documents Grid */
+    .documents-grid {
+        display: grid;
+        gap: 1rem;
+        max-height: 400px;
+        overflow-y: auto;
+        padding-right: 8px;
+    }
+    
+    .documents-grid::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .documents-grid::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 3px;
+    }
+    
+    .documents-grid::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 3px;
+    }
+    
+    .documents-grid::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+    
+    .document-card {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        transition: all 0.2s ease;
+    }
+    
+    .document-card:hover {
+        background: white;
+        border-color: var(--gcx-primary);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        transform: translateX(4px);
+    }
+    
+    .document-icon {
+        width: 44px;
+        height: 44px;
+        background: white;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    .document-info {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .document-title {
+        font-size: 0.9375rem;
+        font-weight: 600;
+        color: #111827;
+        margin-bottom: 0.25rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .document-subtitle {
+        font-size: 0.8125rem;
+        color: #6b7280;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .document-action {
+        width: 36px;
+        height: 36px;
+        background: var(--gcx-primary);
+        color: white;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+    }
+    
+    .document-action:hover {
+        background: var(--gcx-primary-dark);
+        color: white;
+        transform: scale(1.1);
+        box-shadow: 0 4px 12px rgba(26, 71, 42, 0.3);
+    }
+    
+    [data-theme="dark"] .document-card {
+        background: var(--bg-tertiary);
+        border-color: var(--border-primary);
+    }
+    
+    [data-theme="dark"] .document-card:hover {
+        background: var(--card-bg);
+        border-color: #3fb950;
+    }
+    
+    [data-theme="dark"] .document-icon {
+        background: var(--bg-primary);
+    }
+    
+    [data-theme="dark"] .document-title {
+        color: var(--text-primary);
+    }
+    
+    [data-theme="dark"] .document-subtitle {
+        color: var(--text-muted);
+    }
+    
+    [data-theme="dark"] .documents-grid::-webkit-scrollbar-track {
+        background: var(--bg-tertiary);
+    }
+    
+    [data-theme="dark"] .documents-grid::-webkit-scrollbar-thumb {
+        background: var(--border-primary);
+    }
+    
+    [data-theme="dark"] .documents-grid::-webkit-scrollbar-thumb:hover {
+        background: var(--text-muted);
+    }
+</style>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Contract Form -->
+        <div class="modern-form-card">
+            <div class="modern-card-header">
+                <div class="icon">
+                    <i class="fas fa-file-contract"></i>
+                </div>
+                <h5>Contract Details</h5>
+                <div class="step-indicator">
+                    <i class="fas fa-clipboard-check"></i>
+                    Step 1 of 2
+                </div>
+            </div>
+            <div class="modern-card-body">
+                <form method="post" action="{% url 'applications:backoffice-award-contract' application.pk %}" enctype="multipart/form-data" id="contractForm">
+                    {% csrf_token %}
+                    
+                    <!-- Basic Information Section -->
+                    <div class="form-section">
+                        <div class="form-section-title">
+                            <div class="icon-badge">
+                                <i class="fas fa-info-circle"></i>
+                            </div>
+                            <h6>Basic Information</h6>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="contract_number" class="form-label-enhanced">
+                                    Contract Number
+                                    <span class="required-badge">*</span>
+                                </label>
+                                <div class="input-group-enhanced">
+                                    <i class="fas fa-hashtag input-icon"></i>
+                                    <input type="text" 
+                                           class="form-control enhanced-form-control" 
+                                           id="contract_number" 
+                                           name="contract_number" 
+                                           placeholder="e.g., GCX-2025-001"
+                                           required>
+                                </div>
+                                <div class="form-hint">
+                                    <i class="fas fa-lightbulb"></i>
+                                    Enter a unique identifier for this contract
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="contract_type" class="form-label-enhanced">
+                                    Contract Type
+                                    <span class="required-badge">*</span>
+                                </label>
+                                <select class="form-select enhanced-form-control" id="contract_type" name="contract_type" required>
+                                    <option value="">Select Contract Type</option>
+                                    <option value="SUPPLY_AGREEMENT">📦 Supply Agreement</option>
+                                    <option value="SERVICE_AGREEMENT">🛠️ Service Agreement</option>
+                                    <option value="FRAMEWORK_AGREEMENT">📋 Framework Agreement</option>
+                                    <option value="OTHER">📄 Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                    </div>
+                    
+                    <!-- Duration Section -->
+                    <div class="form-section">
+                        <div class="form-section-title">
+                            <div class="icon-badge">
+                                <i class="fas fa-calendar-alt"></i>
+                            </div>
+                            <h6>Contract Duration</h6>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="start_date" class="form-label-enhanced">
+                                    Start Date
+                                    <span class="required-badge">*</span>
+                                </label>
+                                <div class="input-group-enhanced">
+                                    <i class="fas fa-calendar-check input-icon"></i>
+                                    <input type="date" 
+                                           class="form-control enhanced-form-control" 
+                                           id="start_date" 
+                                           name="start_date" 
+                                           required>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="end_date" class="form-label-enhanced">
+                                    End Date
+                                    <span class="required-badge">*</span>
+                                </label>
+                                <div class="input-group-enhanced">
+                                    <i class="fas fa-calendar-times input-icon"></i>
+                                    <input type="date" 
+                                           class="form-control enhanced-form-control" 
+                                           id="end_date" 
+                                           name="end_date" 
+                                           required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="duration-display" class="alert alert-info d-none">
+                            <i class="fas fa-clock me-2"></i>
+                            <strong>Contract Duration:</strong> <span id="duration-text"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Description Section -->
+                    <div class="form-section">
+                        <div class="form-section-title">
+                            <div class="icon-badge">
+                                <i class="fas fa-align-left"></i>
+                            </div>
+                            <h6>Contract Description</h6>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label-enhanced">
+                                Description
+                            </label>
+                            <textarea class="form-control enhanced-form-control" 
+                                      id="description" 
+                                      name="description" 
+                                      rows="4" 
+                                      placeholder="Provide a detailed description of the contract terms, deliverables, and expectations..."></textarea>
+                            <div class="form-hint">
+                                <i class="fas fa-info-circle"></i>
+                                Include scope of work, deliverables, and any special conditions
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Dynamic Documents Section -->
+                    {% if dynamic_documents %}
+                    <div class="form-section">
+                        <div class="form-section-title">
+                            <div class="icon-badge">
+                                <i class="fas fa-file-signature"></i>
+                            </div>
+                            <h6>Templates for Signing</h6>
+                            <div class="step-indicator ms-auto">
+                                <i class="fas fa-clipboard-check"></i>
+                                Step 2 of 2
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info mb-4" style="border-left: 4px solid #0969da;">
+                            <div class="d-flex align-items-start gap-3">
+                                <i class="fas fa-info-circle" style="font-size: 1.25rem; margin-top: 0.125rem;"></i>
+                                <div>
+                                    <strong>Upload templates:</strong> These documents will be sent to the supplier for signing. Upload the blank templates that suppliers need to download, sign, and upload back.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% for doc in dynamic_documents %}
+                        <div class="mb-4">
+                            <label for="dynamic_doc_{{ doc.id }}" class="form-label-enhanced">
+                                {{ doc.title }} Template
+                                {% if doc.requirement and doc.requirement.is_required %}
+                                    <span class="required-badge">*</span>
+                                {% endif %}
+                            </label>
+                            {% if doc.description %}
+                                <div class="form-hint mb-2">
+                                    <i class="fas fa-info-circle"></i>
+                                    {{ doc.description }}
+                                </div>
+                            {% endif %}
+                            
+                            <div class="enhanced-file-upload">
+                                <div class="file-upload-icon">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                </div>
+                                <div class="file-upload-text">Click to upload or drag and drop</div>
+                                <div class="file-upload-subtext">
+                                    {% if doc.requirement %}
+                                        {% for ext in doc.requirement.get_allowed_extensions %}{{ ext }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                                        (Max {{ doc.requirement.max_file_size_mb }}MB)
+                                    {% else %}
+                                        PDF, DOC, DOCX (Max 10MB)
+                                    {% endif %}
+                                </div>
+                                <input type="file" 
+                                       class="file-upload-input" 
+                                       id="dynamic_doc_{{ doc.id }}" 
+                                       name="dynamic_doc_{{ doc.id }}"
+                                       {% if doc.requirement and doc.requirement.is_required %}required{% endif %}
+                                       accept="{% for ext in doc.requirement.get_allowed_extensions %}{{ ext }}{% if not forloop.last %},{% endif %}{% endfor %}"
+                                       onchange="handleFileSelect(this, '{{ doc.id }}')">
+                            </div>
+                            
+                            <div id="file-preview-{{ doc.id }}" class="d-none"></div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="action-buttons">
+                        <button type="submit" class="btn btn-primary btn-enhanced">
+                            <i class="fas fa-award"></i>
+                            Award Contract
+                        </button>
+                        <a href="{% url 'applications:backoffice-supplier-detail' application.pk %}" class="btn btn-secondary btn-enhanced">
+                            <i class="fas fa-times"></i>
+                            Cancel
+                        </a>
+                        <button type="button" class="btn btn-outline-secondary btn-enhanced ms-auto" onclick="window.print()">
+                            <i class="fas fa-print"></i>
+                            Print
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Supplier Information -->
+        <div class="modern-form-card">
+            <div class="modern-card-header">
+                <div class="icon" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">
+                    <i class="fas fa-building"></i>
+                </div>
+                <h5>Supplier Information</h5>
+            </div>
+            <div class="modern-card-body">
+                <div class="supplier-info-grid">
+                    <div class="supplier-info-item">
+                        <div class="info-label">
+                            <i class="fas fa-briefcase"></i>
+                            Business Name
+                        </div>
+                        <div class="info-value">{{ application.business_name }}</div>
+                    </div>
+                    
+                    {% if application.contact_person %}
+                    <div class="supplier-info-item">
+                        <div class="info-label">
+                            <i class="fas fa-user"></i>
+                            Contact Person
+                        </div>
+                        <div class="info-value">{{ application.contact_person }}</div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if application.user.email %}
+                    <div class="supplier-info-item">
+                        <div class="info-label">
+                            <i class="fas fa-envelope"></i>
+                            Email
+                        </div>
+                        <div class="info-value">
+                            <a href="mailto:{{ application.user.email }}" class="text-primary" style="text-decoration: none;">
+                                {{ application.user.email }}
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if application.phone_number %}
+                    <div class="supplier-info-item">
+                        <div class="info-label">
+                            <i class="fas fa-phone"></i>
+                            Phone
+                        </div>
+                        <div class="info-value">
+                            <a href="tel:{{ application.phone_number }}" class="text-primary" style="text-decoration: none;">
+                                {{ application.phone_number }}
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="supplier-info-item">
+                        <div class="info-label">
+                            <i class="fas fa-info-circle"></i>
+                            Status
+                        </div>
+                        <div class="info-value">
+                            <span class="badge badge-status badge-{{ application.status|lower }}">
+                                {{ application.get_status_display }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="supplier-info-item">
+                        <div class="info-label">
+                            <i class="fas fa-calendar"></i>
+                            Applied On
+                        </div>
+                        <div class="info-value">{{ application.created_at|date:"M d, Y" }}</div>
+                    </div>
+                </div>
+                
+                <div class="mt-4 pt-3 border-top">
+                    <a href="{% url 'applications:backoffice-supplier-detail' application.pk %}" 
+                       class="btn btn-outline-primary btn-enhanced w-100">
+                        <i class="fas fa-eye"></i>
+                        View Full Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Static Documents -->
+        {% if static_documents %}
+        <div class="modern-form-card">
+            <div class="modern-card-header">
+                <div class="icon" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <h5>Other Documents</h5>
+            </div>
+            <div class="modern-card-body">
+                <div class="alert alert-success mb-4" style="border-left: 4px solid #10b981;">
+                    <div class="d-flex align-items-start gap-3">
+                        <i class="fas fa-check-circle" style="font-size: 1.25rem; margin-top: 0.125rem;"></i>
+                        <div>
+                            These documents will be automatically assigned to the contract.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="documents-grid">
+                    {% for doc in static_documents %}
+                    <div class="document-card">
+                        <div class="document-icon">
+                            {% if doc.document_file %}
+                                {% with file_ext=doc.document_file.url|slice:"-4:"|lower %}
+                                    {% if file_ext == ".pdf" or file_ext == "pdf" %}
+                                        <i class="fas fa-file-pdf" style="color: #dc3545;"></i>
+                                    {% elif file_ext == ".doc" or file_ext == "docx" %}
+                                        <i class="fas fa-file-word" style="color: #2b5797;"></i>
+                                    {% elif file_ext == ".xls" or file_ext == "xlsx" %}
+                                        <i class="fas fa-file-excel" style="color: #1d6f42;"></i>
+                                    {% elif file_ext == ".png" or file_ext == ".jpg" or file_ext == "jpeg" %}
+                                        <i class="fas fa-file-image" style="color: #6c757d;"></i>
+                                    {% else %}
+                                        <i class="fas fa-file" style="color: #6c757d;"></i>
+                                    {% endif %}
+                                {% endwith %}
+                            {% else %}
+                                <i class="fas fa-file" style="color: #6c757d;"></i>
+                            {% endif %}
+                        </div>
+                        <div class="document-info">
+                            <div class="document-title">{{ doc.title }}</div>
+                            {% if doc.requirement %}
+                                <div class="document-subtitle">{{ doc.requirement.label }}</div>
+                            {% endif %}
+                        </div>
+                        {% if doc.document_file %}
+                            <a href="{{ doc.document_file.url }}" class="document-action" target="_blank" title="Download">
+                                <i class="fas fa-download"></i>
+                            </a>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// File Upload Handler
+function handleFileSelect(input, docId) {
+    const file = input.files[0];
+    const previewDiv = document.getElementById('file-preview-' + docId);
+    const uploadDiv = input.closest('.enhanced-file-upload');
+    
+    if (file) {
+        // Add has-file class to upload div
+        uploadDiv.classList.add('has-file');
+        
+        // Create file preview
+        const fileSize = (file.size / (1024 * 1024)).toFixed(2);
+        const fileExt = file.name.split('.').pop().toUpperCase();
+        
+        previewDiv.innerHTML = `
+            <div class="selected-file">
+                <div class="selected-file-icon">
+                    <i class="fas fa-file"></i>
+                </div>
+                <div class="selected-file-info">
+                    <div class="selected-file-name">${file.name}</div>
+                    <div class="selected-file-size">${fileSize} MB • ${fileExt}</div>
+                </div>
+                <button type="button" class="btn btn-sm btn-danger" onclick="clearFile('${docId}')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+        previewDiv.classList.remove('d-none');
+        
+        // Update upload div text
+        uploadDiv.querySelector('.file-upload-text').textContent = 'File selected';
+        uploadDiv.querySelector('.file-upload-icon i').className = 'fas fa-check-circle';
+    }
+}
+
+// Clear File Selection
+function clearFile(docId) {
+    const input = document.getElementById('dynamic_doc_' + docId);
+    const previewDiv = document.getElementById('file-preview-' + docId);
+    const uploadDiv = input.closest('.enhanced-file-upload');
+    
+    input.value = '';
+    previewDiv.innerHTML = '';
+    previewDiv.classList.add('d-none');
+    uploadDiv.classList.remove('has-file');
+    
+    // Reset upload div
+    uploadDiv.querySelector('.file-upload-text').textContent = 'Click to upload or drag and drop';
+    uploadDiv.querySelector('.file-upload-icon i').className = 'fas fa-cloud-upload-alt';
+}
+
+// Calculate Contract Duration
+function calculateDuration() {
+    const startDate = document.getElementById('start_date').value;
+    const endDate = document.getElementById('end_date').value;
+    const durationDisplay = document.getElementById('duration-display');
+    const durationText = document.getElementById('duration-text');
+    
+    if (startDate && endDate) {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        
+        // Calculate difference
+        const diffTime = end - start;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays < 0) {
+            durationDisplay.classList.remove('alert-info');
+            durationDisplay.classList.add('alert-danger');
+            durationText.textContent = 'End date must be after start date!';
+            durationDisplay.classList.remove('d-none');
+            document.getElementById('end_date').setCustomValidity('End date must be after start date');
+        } else {
+            durationDisplay.classList.remove('alert-danger');
+            durationDisplay.classList.add('alert-info');
+            
+            const years = Math.floor(diffDays / 365);
+            const months = Math.floor((diffDays % 365) / 30);
+            const days = diffDays % 30;
+            
+            let durationStr = '';
+            if (years > 0) durationStr += years + (years === 1 ? ' year ' : ' years ');
+            if (months > 0) durationStr += months + (months === 1 ? ' month ' : ' months ');
+            if (days > 0 || durationStr === '') durationStr += days + (days === 1 ? ' day' : ' days');
+            
+            durationText.textContent = durationStr.trim() + ` (${diffDays} days total)`;
+            durationDisplay.classList.remove('d-none');
+            document.getElementById('end_date').setCustomValidity('');
+        }
+    } else {
+        durationDisplay.classList.add('d-none');
+    }
+}
+
+// Add event listeners when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Date validation
+    const startDateInput = document.getElementById('start_date');
+    const endDateInput = document.getElementById('end_date');
+    
+    if (startDateInput && endDateInput) {
+        startDateInput.addEventListener('change', calculateDuration);
+        endDateInput.addEventListener('change', calculateDuration);
+        
+        // Set minimum date to today
+        const today = new Date().toISOString().split('T')[0];
+        startDateInput.setAttribute('min', today);
+    }
+    
+    // Auto-generate contract number suggestion
+    const contractNumberInput = document.getElementById('contract_number');
+    if (contractNumberInput && !contractNumberInput.value) {
+        const year = new Date().getFullYear();
+        const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+        contractNumberInput.placeholder = `GCX-${year}-${random}`;
+    }
+    
+    // Form validation
+    const form = document.getElementById('contractForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            // Check if dates are valid
+            const startDate = document.getElementById('start_date').value;
+            const endDate = document.getElementById('end_date').value;
+            
+            if (startDate && endDate) {
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                
+                if (end <= start) {
+                    e.preventDefault();
+                    alert('End date must be after start date');
+                    document.getElementById('end_date').focus();
+                    return false;
+                }
+            }
+            
+            // Show loading state
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Awarding Contract...';
+            }
+        });
+    }
+    
+    // Drag and drop support
+    const fileUploads = document.querySelectorAll('.enhanced-file-upload');
+    fileUploads.forEach(function(upload) {
+        upload.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('has-file');
+        });
+        
+        upload.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            if (!this.querySelector('input').files.length) {
+                this.classList.remove('has-file');
+            }
+        });
+        
+        upload.addEventListener('drop', function(e) {
+            e.preventDefault();
+            const input = this.querySelector('input[type="file"]');
+            if (e.dataTransfer.files.length) {
+                input.files = e.dataTransfer.files;
+                input.dispatchEvent(new Event('change'));
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,1403 @@
+{% extends "accounts/base.html" %}
+
+{% block title %}{{ contract.title }} - GCX Supplier Portal{% endblock %}
+
+{% block page_title %}Contract Details{% endblock %}
+{% block page_subtitle %}{{ contract.contract_number }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Page Header Modern */
+    .page-header-modern {
+        background: linear-gradient(135deg, rgba(26, 71, 42, 0.9) 0%, rgba(45, 90, 61, 0.9) 100%), 
+                    url('/media/logo/Untitled-1.jpg');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        color: white;
+        border-radius: var(--border-radius-lg);
+        padding: 2rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .page-header-modern::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 200px;
+        height: 200px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        transform: translate(50%, -50%);
+    }
+
+    .page-header-modern::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 150px;
+        height: 150px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 50%;
+        transform: translate(-50%, 50%);
+    }
+
+    .header-content {
+        position: relative;
+        z-index: 2;
+    }
+
+    .header-title {
+        font-size: 2rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .header-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+    }
+
+    .breadcrumb-modern {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 0.75rem 1rem;
+        border-radius: var(--border-radius-sm);
+        margin-top: 1rem;
+    }
+
+    .breadcrumb-modern a {
+        color: white;
+        text-decoration: none;
+        opacity: 0.8;
+    }
+
+    .breadcrumb-modern a:hover {
+        opacity: 1;
+    }
+
+    .breadcrumb-modern .active {
+        color: white;
+        opacity: 1;
+    }
+
+    /* Alert Modern */
+    .alert-modern {
+        border: none;
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        position: relative;
+        border-left: 4px solid;
+        display: flex;
+        align-items: start;
+        gap: 1rem;
+    }
+
+    .alert-modern-icon {
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+
+    .alert-success-modern {
+        background: rgba(25, 135, 84, 0.1);
+        color: #0f5132;
+        border-left-color: #198754;
+    }
+
+    .alert-success-modern .alert-modern-icon {
+        color: #198754;
+    }
+
+    .alert-danger-modern {
+        background: rgba(220, 53, 69, 0.1);
+        color: #842029;
+        border-left-color: #dc3545;
+    }
+
+    .alert-danger-modern .alert-modern-icon {
+        color: #dc3545;
+    }
+
+    .alert-warning-modern {
+        background: rgba(253, 126, 20, 0.1);
+        color: #996300;
+        border-left-color: #fd7e14;
+    }
+
+    .alert-warning-modern .alert-modern-icon {
+        color: #fd7e14;
+    }
+
+    .alert-info-modern {
+        background: rgba(13, 202, 240, 0.1);
+        color: #055160;
+        border-left-color: #0dcaf0;
+    }
+
+    .alert-info-modern .alert-modern-icon {
+        color: #0dcaf0;
+    }
+
+    /* Card Modern */
+    .card-modern {
+        background: var(--white);
+        border: 1px solid var(--gray-200);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-sm);
+        margin-bottom: 2rem;
+        transition: all var(--transition);
+    }
+
+    .card-modern:hover {
+        box-shadow: var(--shadow);
+    }
+
+    .card-header-modern {
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--gray-200);
+        background: var(--white);
+    }
+
+    .card-title-modern {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--gray-900);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .card-body-modern {
+        padding: 1.5rem;
+    }
+
+    /* Info Item */
+    .info-item {
+        margin-bottom: 1.5rem;
+    }
+
+    .info-label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--gray-600);
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .info-value {
+        font-size: 1rem;
+        color: var(--gray-900);
+        font-weight: 500;
+    }
+
+    /* Status Badge */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.375rem 0.875rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-badge.status-active {
+        background: rgba(25, 135, 84, 0.1);
+        color: #198754;
+        border: 1px solid rgba(25, 135, 84, 0.2);
+    }
+
+    .status-badge.status-draft {
+        background: rgba(253, 126, 20, 0.1);
+        color: #fd7e14;
+        border: 1px solid rgba(253, 126, 20, 0.2);
+    }
+
+    .status-badge.status-expired {
+        background: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+        border: 1px solid rgba(220, 53, 69, 0.2);
+    }
+
+    .status-badge.status-pending {
+        background: rgba(253, 126, 20, 0.1);
+        color: #fd7e14;
+        border: 1px solid rgba(253, 126, 20, 0.2);
+    }
+
+    .status-badge.status-accepted {
+        background: rgba(25, 135, 84, 0.1);
+        color: #198754;
+        border: 1px solid rgba(25, 135, 84, 0.2);
+    }
+
+    .status-badge.status-rejected {
+        background: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+        border: 1px solid rgba(220, 53, 69, 0.2);
+    }
+
+    .status-badge.status-verified {
+        background: rgba(25, 135, 84, 0.1);
+        color: #198754;
+        border: 1px solid rgba(25, 135, 84, 0.2);
+    }
+
+    .status-badge.status-delivered {
+        background: rgba(13, 202, 240, 0.1);
+        color: #0dcaf0;
+        border: 1px solid rgba(13, 202, 240, 0.2);
+    }
+
+    /* Summary Card */
+    .summary-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--gray-100);
+    }
+
+    .summary-item:last-child {
+        border-bottom: none;
+    }
+
+    .summary-label {
+        color: var(--gray-600);
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .summary-value {
+        font-weight: 700;
+        font-size: 1.125rem;
+    }
+
+    .summary-value.text-success {
+        color: #198754;
+    }
+
+    .summary-value.text-warning {
+        color: #fd7e14;
+    }
+
+    /* Document Card */
+    .document-card {
+        background: var(--white);
+        border: 1px solid var(--gray-200);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        transition: all var(--transition);
+        height: 100%;
+    }
+
+    .document-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow);
+    }
+
+    .document-card.border-primary {
+        border-left: 4px solid #667eea;
+    }
+
+    .document-card.border-warning {
+        border-left: 4px solid #fd7e14;
+    }
+
+    .document-card.border-success {
+        border-left: 4px solid #198754;
+    }
+
+    .document-title {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: var(--gray-900);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .document-description {
+        font-size: 0.875rem;
+        color: var(--gray-600);
+        margin-bottom: 1rem;
+    }
+
+    .document-meta {
+        font-size: 0.75rem;
+        color: var(--gray-500);
+        margin-bottom: 1rem;
+    }
+
+    .document-actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    /* Button Styles */
+    .btn-modern {
+        padding: 0.5rem 1rem;
+        border-radius: var(--border-radius-sm);
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: all var(--transition);
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-primary-modern {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+    }
+
+    .btn-primary-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow);
+        color: white;
+    }
+
+    .btn-success-modern {
+        background: linear-gradient(135deg, #43e97b, #38f9d7);
+        color: white;
+    }
+
+    .btn-success-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow);
+        color: white;
+    }
+
+    .btn-warning-modern {
+        background: linear-gradient(135deg, #ffecd2, #fcb69f);
+        color: #996300;
+    }
+
+    .btn-warning-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow);
+    }
+
+    .btn-danger-modern {
+        background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+        color: white;
+    }
+
+    .btn-danger-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow);
+        color: white;
+    }
+
+    .btn-outline-modern {
+        background: transparent;
+        border: 1px solid var(--gray-300);
+        color: var(--gray-700);
+    }
+
+    .btn-outline-modern:hover {
+        background: var(--gray-50);
+        border-color: var(--gcx-primary);
+        color: var(--gcx-primary);
+    }
+
+    /* Table Styles */
+    .table-modern {
+        border: none;
+        margin-bottom: 0;
+    }
+
+    .table-modern thead th {
+        border: none;
+        background: var(--gray-50);
+        color: var(--gray-700);
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 1rem 0.75rem;
+    }
+
+    .table-modern tbody td {
+        border: none;
+        border-bottom: 1px solid var(--gray-100);
+        padding: 1rem 0.75rem;
+        vertical-align: middle;
+    }
+
+    .table-modern tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .table-modern tbody tr:hover {
+        background: var(--gray-25);
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+    }
+
+    .empty-state-icon {
+        width: 80px;
+        height: 80px;
+        background: var(--gray-100);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        font-size: 2rem;
+        color: var(--gray-400);
+    }
+
+    .empty-state-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--gray-900);
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state-description {
+        color: var(--gray-600);
+        margin-bottom: 0;
+    }
+
+    /* Section Header */
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid var(--gray-200);
+    }
+
+    .section-header h6 {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: var(--gray-900);
+        margin: 0;
+    }
+
+    .section-header.text-primary {
+        border-bottom-color: #667eea;
+    }
+
+    .section-header.text-primary h6 {
+        color: #667eea;
+    }
+
+    .section-header.text-warning {
+        border-bottom-color: #fd7e14;
+    }
+
+    .section-header.text-warning h6 {
+        color: #fd7e14;
+    }
+
+    .section-header.text-success {
+        border-bottom-color: #198754;
+    }
+
+    .section-header.text-success h6 {
+        color: #198754;
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+        .info-item {
+            margin-bottom: 1rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .page-header-modern {
+            padding: 1.5rem;
+        }
+
+        .header-title {
+            font-size: 1.5rem;
+        }
+
+        .header-subtitle {
+            font-size: 1rem;
+        }
+
+        .card-header-modern,
+        .card-body-modern {
+            padding: 1rem;
+        }
+
+        .card-title-modern {
+            font-size: 1.125rem;
+        }
+
+        .alert-modern {
+            padding: 1rem;
+            flex-direction: column;
+        }
+
+        .document-card {
+            padding: 1rem;
+        }
+
+        .document-actions {
+            flex-direction: column;
+        }
+
+        .document-actions .btn-modern {
+            width: 100%;
+            justify-content: center;
+        }
+
+        /* Mobile table */
+        .table-responsive {
+            border: none;
+            box-shadow: none;
+        }
+
+        .table-modern {
+            font-size: 0.875rem;
+        }
+
+        .table-modern thead {
+            display: none;
+        }
+
+        .table-modern tbody tr {
+            display: block;
+            margin-bottom: 1rem;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            background: var(--white);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .table-modern tbody td {
+            display: block;
+            text-align: left;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .table-modern tbody td:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+            padding-top: 1rem;
+        }
+
+        .table-modern tbody td::before {
+            content: attr(data-label);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            color: var(--gray-600);
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .table-modern tbody td:first-child::before {
+            display: none;
+        }
+
+        .table-modern tbody td .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .table-modern tbody td .btn-group .btn {
+            width: 100%;
+        }
+
+        .empty-state {
+            padding: 2rem 1rem;
+        }
+
+        .empty-state-icon {
+            width: 60px;
+            height: 60px;
+            font-size: 1.5rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .page-header-modern {
+            padding: 1rem;
+        }
+
+        .header-title {
+            font-size: 1.25rem;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .header-subtitle {
+            font-size: 0.875rem;
+        }
+
+        .btn-modern {
+            font-size: 0.8rem;
+            padding: 0.375rem 0.75rem;
+        }
+    }
+
+    /* Animations */
+    .fade-in-up {
+        animation: fadeInUp 0.6s ease-out;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .stagger-animation > * {
+        animation: fadeInUp 0.6s ease-out;
+    }
+
+    .stagger-animation > *:nth-child(1) { animation-delay: 0.1s; }
+    .stagger-animation > *:nth-child(2) { animation-delay: 0.2s; }
+    .stagger-animation > *:nth-child(3) { animation-delay: 0.3s; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header-modern fade-in-up">
+    <div class="header-content">
+        <h1 class="header-title">
+            <i class="fas fa-file-contract"></i>
+            {{ contract.title }}
+        </h1>
+        <p class="header-subtitle">
+            Contract #{{ contract.contract_number }}
+        </p>
+        <nav class="breadcrumb-modern" aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{% url 'accounts:dashboard' %}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'applications:supplier-contracts' %}">Contracts</a></li>
+                <li class="breadcrumb-item active">{{ contract.contract_number }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<!-- Contract Status Alert -->
+{% if acceptance %}
+    {% if acceptance.status == 'ACCEPTED' %}
+    <div class="alert-modern alert-success-modern fade-in-up">
+        <div class="alert-modern-icon">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <div>
+            <strong>Contract Accepted!</strong><br>
+            You have accepted this contract on {{ acceptance.acceptance_date|date:"M d, Y" }}.
+        </div>
+    </div>
+    {% elif acceptance.status == 'REJECTED' %}
+    <div class="alert-modern alert-danger-modern fade-in-up">
+        <div class="alert-modern-icon">
+            <i class="fas fa-times-circle"></i>
+        </div>
+        <div>
+            <strong>Contract Rejected</strong><br>
+            You rejected this contract. Reason: {{ acceptance.rejection_reason }}
+        </div>
+    </div>
+    {% endif %}
+{% else %}
+<div class="alert-modern alert-warning-modern fade-in-up">
+    <div class="alert-modern-icon">
+        <i class="fas fa-exclamation-triangle"></i>
+    </div>
+    <div>
+        <strong>Action Required!</strong><br>
+        Please review and accept or reject this contract.
+    </div>
+</div>
+{% endif %}
+
+<!-- Contract Information -->
+<div class="row stagger-animation">
+    <div class="col-lg-8 mb-4">
+        <div class="card-modern">
+            <div class="card-header-modern">
+                <h3 class="card-title-modern">
+                    <i class="fas fa-info-circle"></i>
+                    Contract Details
+                </h3>
+            </div>
+            <div class="card-body-modern">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-item">
+                            <span class="info-label">Contract Number</span>
+                            <div class="info-value">{{ contract.contract_number }}</div>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Contract Type</span>
+                            <div class="info-value">{{ contract.get_contract_type_display }}</div>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Start Date</span>
+                            <div class="info-value">{{ contract.start_date|date:"M d, Y" }}</div>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">End Date</span>
+                            <div class="info-value">{{ contract.end_date|date:"M d, Y" }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-item">
+                            <span class="info-label">Status</span>
+                            <div class="info-value">
+                                <span class="status-badge status-{{ contract.status|lower }}">
+                                    {{ contract.get_status_display }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Contract Value</span>
+                            <div class="info-value">
+                                {% if contract.contract_value %}
+                                    {{ contract.currency }} {{ contract.contract_value|floatformat:2 }}
+                                {% else %}
+                                    Not specified
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Created</span>
+                            <div class="info-value">{{ contract.created_at|date:"M d, Y" }}</div>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Contract File</span>
+                            <div class="info-value">
+                                {% if contract.contract_file %}
+                                    <a href="{{ contract.contract_file.url }}" class="btn btn-outline-modern btn-modern btn-sm" target="_blank">
+                                        <i class="fas fa-download"></i> Download Contract
+                                    </a>
+                                {% else %}
+                                    No file uploaded
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if contract.description %}
+                <div class="mt-4 pt-3" style="border-top: 1px solid var(--gray-200);">
+                    <span class="info-label">Description</span>
+                    <p class="info-value mt-2">{{ contract.description }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 mb-4">
+        <div class="card-modern">
+            <div class="card-header-modern">
+                <h3 class="card-title-modern">
+                    <i class="fas fa-chart-bar"></i>
+                    Delivery Summary
+                </h3>
+            </div>
+            <div class="card-body-modern">
+                <div class="summary-item">
+                    <span class="summary-label">Total Deliveries:</span>
+                    <span class="summary-value">{{ total_deliveries }}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Verified Deliveries:</span>
+                    <span class="summary-value text-success">{{ verified_deliveries }}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Pending Verification:</span>
+                    <span class="summary-value text-warning">{{ total_deliveries|add:"-"|add:verified_deliveries }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Contract Documents Section -->
+<div class="card-modern fade-in-up">
+    <div class="card-header-modern">
+        <h3 class="card-title-modern">
+            <i class="fas fa-file-contract"></i>
+            Contract Documents
+        </h3>
+    </div>
+    <div class="card-body-modern">
+        {% if contract_documents %}
+            <!-- Static Documents -->
+            {% if static_documents %}
+            <div class="mb-4">
+                <div class="section-header text-primary">
+                    <i class="fas fa-file-alt"></i>
+                    <h6>Static Documents (Standard Contract Files)</h6>
+                </div>
+                <div class="row">
+                    {% for assignment in static_documents %}
+                    <div class="col-md-6 mb-3">
+                        <div class="document-card border-primary">
+                            <h6 class="document-title">
+                                <i class="fas fa-file-pdf text-danger"></i>
+                                {{ assignment.document.title }}
+                            </h6>
+                            <p class="document-description">{{ assignment.document.description }}</p>
+                            <div class="document-meta">
+                                v{{ assignment.document.version }} | 
+                                {% if assignment.document.document_file %}
+                                    {{ assignment.document.file_extension }} ({{ assignment.document.file_size }})
+                                {% else %}
+                                    Template Document
+                                {% endif %}
+                            </div>
+                            <div class="document-actions">
+                                {% if assignment.document.document_file %}
+                                <a href="{{ assignment.document.document_file.url }}" class="btn btn-primary-modern btn-modern btn-sm" target="_blank">
+                                    <i class="fas fa-download"></i> Download
+                                </a>
+                                {% else %}
+                                <button class="btn btn-outline-modern btn-modern btn-sm" disabled>
+                                    <i class="fas fa-file-alt"></i> Template
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Dynamic Documents -->
+            {% if dynamic_documents %}
+            <div class="mb-4">
+                <div class="section-header text-warning">
+                    <i class="fas fa-edit"></i>
+                    <h6>Dynamic Documents (Download, Sign & Upload)</h6>
+                </div>
+                <div class="alert-modern alert-warning-modern mb-3">
+                    <div class="alert-modern-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div>
+                        <strong>Action Required:</strong> Download the template files below, sign them, and upload the signed versions. <strong>All dynamic documents must be signed and uploaded before you can accept the contract.</strong>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    {% for assignment in dynamic_documents %}
+                    <div class="col-md-6 mb-3">
+                        <div class="document-card border-warning">
+                            <h6 class="document-title">
+                                <i class="fas fa-file-signature text-warning"></i>
+                                {{ assignment.document.title }}
+                            </h6>
+                            <p class="document-description">{{ assignment.document.description }}</p>
+                            <div class="document-meta">
+                                v{{ assignment.document.version }} | Template Document
+                            </div>
+                            <div class="document-actions">
+                                {% if assignment.document.document_file %}
+                                <a href="{{ assignment.document.document_file.url }}" class="btn btn-warning-modern btn-modern btn-sm" target="_blank">
+                                    <i class="fas fa-download"></i> Download Template
+                                </a>
+                                {% else %}
+                                <button class="btn btn-outline-modern btn-modern btn-sm" disabled>
+                                    <i class="fas fa-file-alt"></i> No Template
+                                </button>
+                                {% endif %}
+                                <button class="btn btn-success-modern btn-modern btn-sm upload-signed-btn" 
+                                        data-document-id="{{ assignment.document.id }}" 
+                                        data-document-title="{{ assignment.document.title }}">
+                                    <i class="fas fa-upload"></i> Upload Signed
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Contract-Specific Documents -->
+            {% if contract_specific_documents %}
+            <div class="mb-4">
+                <div class="section-header text-success">
+                    <i class="fas fa-file-contract"></i>
+                    <h6>Contract-Specific Documents</h6>
+                </div>
+                <div class="row">
+                    {% for assignment in contract_specific_documents %}
+                    <div class="col-md-6 mb-3">
+                        <div class="document-card border-success">
+                            <h6 class="document-title">
+                                <i class="fas fa-file-pdf text-success"></i>
+                                {{ assignment.document.title }}
+                            </h6>
+                            <p class="document-description">{{ assignment.document.description }}</p>
+                            <div class="document-meta">
+                                v{{ assignment.document.version }}
+                                {% if assignment.document.document_file %}
+                                | {{ assignment.document.file_extension }} ({{ assignment.document.file_size }})
+                                {% else %}
+                                | No file
+                                {% endif %}
+                            </div>
+                            <div class="document-actions">
+                                {% if assignment.document.document_file %}
+                                <a href="{{ assignment.document.document_file.url }}" class="btn btn-success-modern btn-modern btn-sm" target="_blank">
+                                    <i class="fas fa-download"></i> Download
+                                </a>
+                                {% else %}
+                                <button class="btn btn-outline-modern btn-modern btn-sm" disabled>
+                                    <i class="fas fa-file-alt"></i> No File
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="fas fa-file-contract"></i>
+            </div>
+            <h3 class="empty-state-title">No Documents Available</h3>
+            <p class="empty-state-description">No documents have been assigned to this contract yet.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Contract Actions -->
+{% if not acceptance or acceptance.status == 'PENDING' %}
+<div class="card-modern fade-in-up">
+    <div class="card-header-modern">
+        <h3 class="card-title-modern">
+            <i class="fas fa-handshake"></i>
+            Contract Actions
+        </h3>
+    </div>
+    <div class="card-body-modern">
+        <div class="row">
+            <div class="col-md-6 mb-3 mb-md-0">
+                <div class="d-grid">
+                    <button class="btn btn-success-modern btn-modern" style="padding: 0.75rem 1.5rem; font-size: 1rem;" data-bs-toggle="modal" data-bs-target="#acceptContractModal">
+                        <i class="fas fa-check"></i> Accept Contract
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="d-grid">
+                    <button class="btn btn-danger-modern btn-modern" style="padding: 0.75rem 1.5rem; font-size: 1rem;" data-bs-toggle="modal" data-bs-target="#rejectContractModal">
+                        <i class="fas fa-times"></i> Reject Contract
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Recent Deliveries -->
+{% if deliveries %}
+<div class="card-modern fade-in-up">
+    <div class="card-header-modern">
+        <h3 class="card-title-modern">
+            <i class="fas fa-truck"></i>
+            Recent Deliveries
+        </h3>
+    </div>
+    <div class="card-body-modern">
+        <div class="table-responsive">
+            <table class="table table-modern">
+                <thead>
+                    <tr>
+                        <th>Serial No.</th>
+                        <th>Commodity</th>
+                        <th>School/Region</th>
+                        <th>Quantity</th>
+                        <th>Delivery Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for delivery in deliveries|slice:":5" %}
+                    <tr>
+                        <td data-label="Serial No."><strong>{{ delivery.serial_number }}</strong></td>
+                        <td data-label="Commodity">{{ delivery.contract_commodity.commodity.name }}</td>
+                        <td data-label="School/Region">{{ delivery.get_school_name }}</td>
+                        <td data-label="Quantity">{{ delivery.quantity_delivered }} {{ delivery.unit_of_measure }}</td>
+                        <td data-label="Delivery Date">{{ delivery.delivery_date|date:"M d, Y" }}</td>
+                        <td data-label="Status">
+                            <span class="status-badge status-{{ delivery.status|lower }}">
+                                {{ delivery.get_status_display }}
+                            </span>
+                        </td>
+                        <td data-label="Actions">
+                            <div class="btn-group" role="group">
+                                {% if delivery.srv_document %}
+                                <a href="{{ delivery.srv_document.url }}" class="btn btn-outline-modern btn-modern btn-sm" target="_blank">
+                                    <i class="fas fa-file-alt"></i> SRV
+                                </a>
+                                {% endif %}
+                                {% if delivery.waybill_document %}
+                                <a href="{{ delivery.waybill_document.url }}" class="btn btn-outline-modern btn-modern btn-sm" target="_blank">
+                                    <i class="fas fa-file-alt"></i> Waybill
+                                </a>
+                                {% endif %}
+                                {% if delivery.invoice_document %}
+                                <a href="{{ delivery.invoice_document.url }}" class="btn btn-outline-modern btn-modern btn-sm" target="_blank">
+                                    <i class="fas fa-file-invoice"></i> Invoice
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% if deliveries.count > 5 %}
+        <div class="text-center mt-3">
+            <a href="{% url 'applications:supplier-deliveries' %}" class="btn btn-outline-modern btn-modern">
+                View All Deliveries
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+
+<!-- Accept Contract Modal -->
+<div class="modal fade" id="acceptContractModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Accept Contract</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="acceptContractForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="alert-modern alert-info-modern">
+                        <div class="alert-modern-icon">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        <div>
+                            By accepting this contract, you agree to supply the specified commodities according to the terms and conditions.
+                        </div>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="terms_accepted" name="terms_accepted" required>
+                        <label class="form-check-label" for="terms_accepted">
+                            I accept the terms and conditions of this contract
+                        </label>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="acceptance_notes" class="form-label">Additional Notes (Optional)</label>
+                        <textarea class="form-control" id="acceptance_notes" name="notes" rows="3" placeholder="Any additional comments or notes..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success-modern btn-modern">Accept Contract</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Reject Contract Modal -->
+<div class="modal fade" id="rejectContractModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Reject Contract</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="rejectContractForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="alert-modern alert-warning-modern">
+                        <div class="alert-modern-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div>
+                            Please provide a reason for rejecting this contract.
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="rejection_reason" class="form-label">Reason for Rejection *</label>
+                        <textarea class="form-control" id="rejection_reason" name="rejection_reason" rows="3" required placeholder="Please explain why you are rejecting this contract..."></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="rejection_notes" class="form-label">Additional Notes (Optional)</label>
+                        <textarea class="form-control" id="rejection_notes" name="notes" rows="3" placeholder="Any additional comments..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger-modern btn-modern">Reject Contract</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Signed Document Modal -->
+<div class="modal fade" id="uploadSignedModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Upload Signed Document</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="uploadSignedForm" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="alert-modern alert-info-modern">
+                        <div class="alert-modern-icon">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        <div>
+                            Upload the signed version of: <strong id="documentTitle"></strong>
+                        </div>
+                    </div>
+                    
+                    <input type="hidden" id="documentId" name="document_id">
+                    
+                    <div class="mb-3">
+                        <label for="signedDocument" class="form-label">Signed Document *</label>
+                        <input type="file" class="form-control" id="signedDocument" name="signed_document" 
+                               accept=".pdf,.doc,.docx" required>
+                        <div class="form-text">Upload the signed version of the document (PDF, DOC, or DOCX)</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="uploadNotes" class="form-label">Notes (Optional)</label>
+                        <textarea class="form-control" id="uploadNotes" name="notes" rows="3" 
+                                  placeholder="Any additional notes about the signed document..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success-modern btn-modern">
+                        <i class="fas fa-upload"></i>Upload Signed Document
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openUploadModal(documentId, documentTitle) {
+    const documentIdInput = document.getElementById('documentId');
+    const documentTitleElement = document.getElementById('documentTitle');
+    const modalElement = document.getElementById('uploadSignedModal');
+    
+    if (documentIdInput) {
+        documentIdInput.value = documentId;
+    }
+    
+    if (documentTitleElement) {
+        documentTitleElement.textContent = documentTitle;
+    }
+    
+    if (modalElement) {
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Set up upload signed buttons
+    const uploadButtons = document.querySelectorAll('.upload-signed-btn');
+    
+    uploadButtons.forEach((btn) => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const documentId = this.dataset.documentId;
+            const documentTitle = this.dataset.documentTitle;
+            openUploadModal(documentId, documentTitle);
+        });
+    });
+
+    // Upload signed document form
+    document.getElementById('uploadSignedForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+        submitBtn.disabled = true;
+        
+        fetch('{% url "applications:supplier-upload-signed-document" contract.pk %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('success', data.message);
+                bootstrap.Modal.getInstance(document.getElementById('uploadSignedModal')).hide();
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showAlert('danger', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('danger', 'An error occurred while uploading the document.');
+        })
+        .finally(() => {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        });
+    });
+
+    // Accept contract form
+    document.getElementById('acceptContractForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Accepting...';
+        submitBtn.disabled = true;
+        
+        fetch('{% url "applications:supplier-accept-contract" contract.pk %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('success', data.message);
+                bootstrap.Modal.getInstance(document.getElementById('acceptContractModal')).hide();
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showAlert('danger', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('danger', 'An error occurred while accepting the contract.');
+        })
+        .finally(() => {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        });
+    });
+    
+    // Reject contract form
+    document.getElementById('rejectContractForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Rejecting...';
+        submitBtn.disabled = true;
+        
+        fetch('{% url "applications:supplier-reject-contract" contract.pk %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('success', data.message);
+                bootstrap.Modal.getInstance(document.getElementById('rejectContractModal')).hide();
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showAlert('danger', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('danger', 'An error occurred while rejecting the contract.');
+        })
+        .finally(() => {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        });
+    });
+});
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    const container = document.querySelector('.content-body') || document.querySelector('main') || document.body;
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

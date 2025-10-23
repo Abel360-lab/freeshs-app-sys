@@ -434,6 +434,73 @@ class NotificationService:
                 "success": False,
                 "message": f"Unexpected error: {str(e)}"
             }
+    
+    def send_notification(
+        self,
+        recipient_email: str = None,
+        recipient_phone: str = None,
+        template=None,
+        context: Dict[str, Any] = None
+    ) -> bool:
+        """
+        Send notification using a NotificationTemplate.
+        
+        Args:
+            recipient_email: Recipient email address (optional)
+            recipient_phone: Recipient phone number (optional)
+            template: NotificationTemplate object
+            context: Template context variables
+            
+        Returns:
+            bool: True if notification was sent successfully
+        """
+        if not template:
+            logger.error("No template provided to send_notification")
+            return False
+        
+        if not recipient_email and not recipient_phone:
+            logger.error("No recipient provided to send_notification")
+            return False
+        
+        context = context or {}
+        
+        try:
+            # Render template with context
+            from django.template import Template, Context
+            subject_template = Template(template.subject)
+            body_template = Template(template.body)
+            
+            template_context = Context(context)
+            rendered_subject = subject_template.render(template_context)
+            rendered_body = body_template.render(template_context)
+            
+            success = False
+            
+            # Send email if recipient_email is provided
+            if recipient_email:
+                email_result = self.send_email(
+                    to=recipient_email,
+                    subject=rendered_subject,
+                    body=rendered_body,
+                    is_html=True,
+                    template_name=template.name
+                )
+                success = email_result.get('success', False)
+            
+            # Send SMS if recipient_phone is provided
+            if recipient_phone:
+                sms_result = self.send_sms(
+                    number=recipient_phone,
+                    message=rendered_body,
+                    template_name=template.name
+                )
+                success = success or sms_result.get('success', False)
+            
+            return success
+            
+        except Exception as e:
+            logger.error(f"Error sending notification with template {template.name}: {str(e)}")
+            return False
 
 
 # Global instance

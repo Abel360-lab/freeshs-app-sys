@@ -1,0 +1,847 @@
+{% extends "backoffice/base.html" %}
+{% load static %}
+
+{% block title %}Export Reports - GCX Admin Portal{% endblock %}
+
+{% block page_icon %}<i class="fas fa-download"></i>{% endblock %}
+{% block page_title %}Export Reports{% endblock %}
+{% block page_subtitle %}Export comprehensive data with customizable field selection{% endblock %}
+
+{% block page_header_container %}
+<div class="page-header-container">
+    <div class="page-header-content">
+        <div class="page-header-info">
+            <div class="page-header-breadcrumb">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'applications:backoffice-dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'applications:backoffice-reports' %}">Reports</a></li>
+                        <li class="breadcrumb-item active">Export</li>
+                    </ol>
+                </nav>
+            </div>
+            <h1 class="page-header-title">Export Reports</h1>
+            <p class="page-header-subtitle">Export comprehensive data with customizable field selection</p>
+        </div>
+        <div class="page-header-actions">
+            <a href="{% url 'applications:backoffice-reports' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Reports
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<form method="post" id="exportForm">
+    {% csrf_token %}
+    
+    <!-- Export Configuration Summary -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="modern-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
+                <div class="modern-card-body">
+                    <div class="row align-items-center">
+                        <div class="col-lg-8">
+                            <h5 class="mb-2" style="color: white; font-weight: 700;">
+                                <i class="fas fa-file-export me-2"></i>Export Configuration
+                            </h5>
+                            <p class="mb-0" style="opacity: 0.9; font-size: 0.9375rem;">
+                                Configure your export settings below and download comprehensive reports in your preferred format
+                            </p>
+                        </div>
+                        <div class="col-lg-4 text-end">
+                            <div class="export-summary-badge" style="background: rgba(255,255,255,0.2); padding: 1rem; border-radius: 10px;">
+                                <div style="font-size: 0.8125rem; opacity: 0.9; margin-bottom: 0.25rem;">Ready to Export</div>
+                                <div id="exportSummary" style="font-size: 1.25rem; font-weight: 700;">0 Data Types Selected</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Date Range & Format Selection -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="modern-card">
+                <div class="modern-card-header">
+                    <h6 class="modern-card-title mb-0">
+                        <i class="fas fa-calendar-alt"></i> Date Range Selection
+                    </h6>
+                </div>
+                <div class="modern-card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="date_from" class="form-label fw-semibold" style="font-size: 0.875rem;">
+                                <i class="fas fa-calendar-day text-primary me-1"></i>From Date
+                            </label>
+                            <input type="date" id="date_from" name="date_from" class="form-control" value="{{ date_from }}" required style="border-radius: 8px;">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="date_to" class="form-label fw-semibold" style="font-size: 0.875rem;">
+                                <i class="fas fa-calendar-check text-primary me-1"></i>To Date
+                            </label>
+                            <input type="date" id="date_to" name="date_to" class="form-control" value="{{ date_to }}" required style="border-radius: 8px;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="modern-card">
+                <div class="modern-card-header">
+                    <h6 class="modern-card-title mb-0">
+                        <i class="fas fa-file-code"></i> Export Format
+                    </h6>
+                </div>
+                <div class="modern-card-body">
+                    <label for="format" class="form-label fw-semibold" style="font-size: 0.875rem;">
+                        <i class="fas fa-file-alt text-success me-1"></i>File Format
+                    </label>
+                    <select id="format" name="format" class="form-select" style="border-radius: 8px;">
+                        <option value="csv" {% if export_format == 'csv' %}selected{% endif %}>CSV Format (.csv)</option>
+                        <option value="xlsx">Excel Format (.xlsx)</option>
+                    </select>
+                    <div class="mt-3 p-2" style="background: #f9fafb; border-radius: 8px; font-size: 0.8125rem;">
+                        <i class="fas fa-info-circle text-info"></i>
+                        <span class="text-muted">Excel recommended for large datasets</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Types Selection -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="modern-card">
+                <div class="modern-card-header">
+                    <h6 class="modern-card-title mb-0">
+                        <i class="fas fa-database"></i> Data Types Selection
+                    </h6>
+                    <span class="badge-modern info">Select one or more</span>
+                </div>
+                <div class="modern-card-body">
+                    <div class="alert" style="background: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 100%); color: #0c4a6e; border: none; border-radius: 10px; margin-bottom: 1.5rem;">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        <strong>Export Logic:</strong> Select multiple data types to export related data together. For example, selecting deliveries + contracts will include contract details in the delivery rows.
+                    </div>
+                    
+                    <div class="row g-3">
+                        <div class="col-lg-3 col-md-6">
+                            <div class="data-type-card">
+                                <input class="form-check-input" type="checkbox" name="data_types" value="applications" id="data_applications" {% if 'applications' in selected_types %}checked{% endif %}>
+                                <label class="data-type-label" for="data_applications">
+                                    <div class="data-type-icon" style="background: #dbeafe; color: #1e40af;">
+                                        <i class="fas fa-file-alt"></i>
+                                    </div>
+                                    <div class="data-type-title">Applications</div>
+                                    <div class="data-type-desc">Supplier application records</div>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-3 col-md-6">
+                            <div class="data-type-card">
+                                <input class="form-check-input" type="checkbox" name="data_types" value="deliveries" id="data_deliveries" {% if 'deliveries' in selected_types %}checked{% endif %}>
+                                <label class="data-type-label" for="data_deliveries">
+                                    <div class="data-type-icon" style="background: #dcfce7; color: #166534;">
+                                        <i class="fas fa-truck"></i>
+                                    </div>
+                                    <div class="data-type-title">Deliveries</div>
+                                    <div class="data-type-desc">Delivery tracking data</div>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-3 col-md-6">
+                            <div class="data-type-card">
+                                <input class="form-check-input" type="checkbox" name="data_types" value="contracts" id="data_contracts" {% if 'contracts' in selected_types %}checked{% endif %}>
+                                <label class="data-type-label" for="data_contracts">
+                                    <div class="data-type-icon" style="background: #fef3c7; color: #92400e;">
+                                        <i class="fas fa-file-contract"></i>
+                                    </div>
+                                    <div class="data-type-title">Contracts</div>
+                                    <div class="data-type-desc">Contract agreements</div>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-3 col-md-6">
+                            <div class="data-type-card">
+                                <input class="form-check-input" type="checkbox" name="data_types" value="suppliers" id="data_suppliers" {% if 'suppliers' in selected_types %}checked{% endif %}>
+                                <label class="data-type-label" for="data_suppliers">
+                                    <div class="data-type-icon" style="background: #fee2e2; color: #991b1b;">
+                                        <i class="fas fa-users"></i>
+                                    </div>
+                                    <div class="data-type-title">Suppliers</div>
+                                    <div class="data-type-desc">Supplier user accounts</div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Field Selection -->
+    <div class="row">
+        <!-- Applications Fields -->
+        <div class="col-md-6 mb-4" id="applications_fields" style="display: none;">
+            <div class="modern-card">
+                <div class="modern-card-header">
+                    <h6 class="modern-card-title mb-0">
+                        <i class="fas fa-file-alt text-primary"></i> Application Fields
+                    </h6>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="toggleFields('application_fields', true)">
+                        <i class="fas fa-check-square"></i> Select All
+                    </button>
+                </div>
+                <div class="modern-card-body">
+                    <div class="row g-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="application_fields" value="id" id="app_id" checked>
+                            <label class="form-check-label" for="app_id">Application ID</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="application_fields" value="business_name" id="app_business_name" checked>
+                            <label class="form-check-label" for="app_business_name">Business Name</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="application_fields" value="contact_person" id="app_contact_person" checked>
+                            <label class="form-check-label" for="app_contact_person">Contact Person</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="application_fields" value="email" id="app_email" checked>
+                            <label class="form-check-label" for="app_email">Email</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="application_fields" value="phone" id="app_phone" checked>
+                            <label class="form-check-label" for="app_phone">Phone</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="application_fields" value="status" id="app_status" checked>
+                            <label class="form-check-label" for="app_status">Status</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="application_fields" value="created_at" id="app_created_at" checked>
+                            <label class="form-check-label" for="app_created_at">Created Date</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="application_fields" value="business_address" id="app_address">
+                            <label class="form-check-label" for="app_address">Business Address</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="application_fields" value="business_registration_number" id="app_reg_number">
+                            <label class="form-check-label" for="app_reg_number">Registration Number</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="application_fields" value="tax_identification_number" id="app_tax_id">
+                            <label class="form-check-label" for="app_tax_id">Tax ID</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="application_fields" value="years_in_business" id="app_years">
+                            <label class="form-check-label" for="app_years">Years in Business</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="application_fields" value="number_of_employees" id="app_employees">
+                            <label class="form-check-label" for="app_employees">Number of Employees</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="application_fields" value="annual_revenue" id="app_revenue">
+                            <label class="form-check-label" for="app_revenue">Annual Revenue</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Deliveries Fields -->
+            <div class="col-md-6 mb-4" id="deliveries_fields" style="display: none;">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="card-title">
+                            <i class="fas fa-truck text-success"></i>
+                            Delivery Fields
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="delivery_fields" value="serial_number" id="del_serial_number" checked>
+                            <label class="form-check-label" for="del_serial_number">Serial Number</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="delivery_fields" value="supplier_user__username" id="del_supplier" checked>
+                            <label class="form-check-label" for="del_supplier">Supplier</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="delivery_fields" value="delivery_school__name" id="del_school" checked>
+                            <label class="form-check-label" for="del_school">School</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="delivery_fields" value="delivery_region__name" id="del_region" checked>
+                            <label class="form-check-label" for="del_region">Region</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="delivery_fields" value="status" id="del_status" checked>
+                            <label class="form-check-label" for="del_status">Status</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="delivery_fields" value="delivery_date" id="del_date" checked>
+                            <label class="form-check-label" for="del_date">Delivery Date</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="delivery_fields" value="srv_number" id="del_srv_number">
+                            <label class="form-check-label" for="del_srv_number">SRV Number</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="delivery_fields" value="waybill_number" id="del_waybill_number">
+                            <label class="form-check-label" for="del_waybill_number">Waybill Number</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="delivery_fields" value="invoice_number" id="del_invoice_number">
+                            <label class="form-check-label" for="del_invoice_number">Invoice Number</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="delivery_fields" value="notes" id="del_notes">
+                            <label class="form-check-label" for="del_notes">Notes</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="delivery_fields" value="verified_by__username" id="del_verified_by">
+                            <label class="form-check-label" for="del_verified_by">Verified By</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="delivery_fields" value="verified_at" id="del_verified_at">
+                            <label class="form-check-label" for="del_verified_at">Verified At</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="delivery_fields" value="verification_notes" id="del_verification_notes">
+                            <label class="form-check-label" for="del_verification_notes">Verification Notes</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="delivery_fields" value="commodities_delivered" id="del_commodities_delivered" checked>
+                            <label class="form-check-label" for="del_commodities_delivered">Commodities Delivered</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="delivery_fields" value="total_commodity_value" id="del_total_commodity_value" checked>
+                            <label class="form-check-label" for="del_total_commodity_value">Total Commodity Value</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contracts Fields -->
+            <div class="col-md-6 mb-4" id="contracts_fields" style="display: none;">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="card-title">
+                            <i class="fas fa-file-contract text-info"></i>
+                            Contract Fields
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="contract_fields" value="contract_number" id="con_contract_number" checked>
+                            <label class="form-check-label" for="con_contract_number">Contract Number</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="contract_fields" value="application__business_name" id="con_business_name" checked>
+                            <label class="form-check-label" for="con_business_name">Business Name</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="contract_fields" value="status" id="con_status" checked>
+                            <label class="form-check-label" for="con_status">Status</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="contract_fields" value="created_at" id="con_created_at" checked>
+                            <label class="form-check-label" for="con_created_at">Created Date</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="contract_fields" value="title" id="con_title">
+                            <label class="form-check-label" for="con_title">Contract Title</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="contract_fields" value="contract_value" id="con_value">
+                            <label class="form-check-label" for="con_value">Contract Value</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="contract_fields" value="start_date" id="con_start_date">
+                            <label class="form-check-label" for="con_start_date">Start Date</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="contract_fields" value="end_date" id="con_end_date">
+                            <label class="form-check-label" for="con_end_date">End Date</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="contract_fields" value="application__contact_person" id="con_contact_person">
+                            <label class="form-check-label" for="con_contact_person">Contact Person</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="contract_fields" value="application__email" id="con_email">
+                            <label class="form-check-label" for="con_email">Email</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="contract_fields" value="application__phone" id="con_phone">
+                            <label class="form-check-label" for="con_phone">Phone</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Suppliers Fields -->
+            <div class="col-md-6 mb-4" id="suppliers_fields" style="display: none;">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="card-title">
+                            <i class="fas fa-users text-warning"></i>
+                            Supplier Fields
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="supplier_fields" value="username" id="sup_username" checked>
+                            <label class="form-check-label" for="sup_username">Username</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="supplier_fields" value="email" id="sup_email" checked>
+                            <label class="form-check-label" for="sup_email">Email</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="supplier_fields" value="first_name" id="sup_first_name" checked>
+                            <label class="form-check-label" for="sup_first_name">First Name</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="supplier_fields" value="last_name" id="sup_last_name" checked>
+                            <label class="form-check-label" for="sup_last_name">Last Name</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="supplier_fields" value="date_joined" id="sup_date_joined" checked>
+                            <label class="form-check-label" for="sup_date_joined">Date Joined</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="supplier_fields" value="is_active" id="sup_is_active">
+                            <label class="form-check-label" for="sup_is_active">Is Active</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="supplier_fields" value="last_login" id="sup_last_login">
+                            <label class="form-check-label" for="sup_last_login">Last Login</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="supplier_fields" value="phone" id="sup_phone">
+                            <label class="form-check-label" for="sup_phone">Phone</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    <!-- Export Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="modern-card">
+                <div class="modern-card-header" style="background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);">
+                    <h6 class="modern-card-title mb-0">
+                        <i class="fas fa-cog"></i> Export Actions
+                    </h6>
+                </div>
+                <div class="modern-card-body">
+                    <div class="row align-items-center">
+                        <div class="col-lg-6">
+                            <div class="export-preview-card">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #dbeafe, #e0f2fe); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fas fa-eye" style="font-size: 1.25rem; color: #1e40af;"></i>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 0.8125rem; color: #6b7280; font-weight: 600; text-transform: uppercase; margin-bottom: 0.25rem;">Export Preview</div>
+                                        <div id="exportPreview" style="font-size: 0.9375rem; color: #111827; font-weight: 600;">Select data types to preview export</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6 text-end">
+                            <button type="button" class="btn btn-outline-secondary me-2" onclick="selectAllFields()" style="border-radius: 8px;">
+                                <i class="fas fa-check-double me-1"></i> Select All
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary me-2" onclick="clearAllFields()" style="border-radius: 8px;">
+                                <i class="fas fa-times me-1"></i> Clear All
+                            </button>
+                            <button type="submit" id="exportBtn" class="btn btn-primary" style="border-radius: 8px; padding: 0.625rem 1.5rem;">
+                                <i class="fas fa-download me-2"></i> Generate Export
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- Toast Container -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+    <div id="successToast" class="toast align-items-center text-white bg-success border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="fas fa-check-circle me-2"></i>
+                <span id="successMessage">Export generated successfully!</span>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+    
+    <div id="loadingToast" class="toast align-items-center text-white bg-primary border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="fas fa-spinner fa-spin me-2"></i>
+                <span id="loadingMessage">Preparing export...</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Modern Dashboard-Style Components */
+.modern-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.modern-card:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.modern-card-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #ffffff;
+}
+
+.modern-card-title {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.modern-card-body {
+    padding: 1.5rem;
+}
+
+/* Badge Modern */
+.badge-modern {
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.badge-modern.info {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+/* Data Type Cards */
+.data-type-card {
+    background: #ffffff;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1.25rem;
+    text-align: center;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    height: 100%;
+    position: relative;
+}
+
+.data-type-card input[type="checkbox"] {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.data-type-card:has(input:checked) {
+    border-color: #667eea;
+    background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.2);
+}
+
+.data-type-label {
+    cursor: pointer;
+    margin: 0;
+    display: block;
+}
+
+.data-type-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin: 0 auto 1rem;
+    transition: all 0.3s ease;
+}
+
+.data-type-card:hover .data-type-icon {
+    transform: scale(1.1) rotate(5deg);
+}
+
+.data-type-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 0.5rem;
+}
+
+.data-type-desc {
+    font-size: 0.8125rem;
+    color: #6b7280;
+}
+
+/* Form Controls */
+.form-check {
+    margin-bottom: 0.75rem;
+    padding-left: 2rem;
+}
+
+.form-check-input {
+    width: 1.125rem;
+    height: 1.125rem;
+    margin-top: 0.125rem;
+    border-radius: 4px;
+    border: 1.5px solid #cbd5e1;
+    cursor: pointer;
+}
+
+.form-check-input:checked {
+    background-color: #667eea;
+    border-color: #667eea;
+}
+
+.form-check-input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.form-check-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151;
+    cursor: pointer;
+}
+
+/* Export Preview Card */
+.export-preview-card {
+    background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+    border: 1.5px dashed #cbd5e1;
+    border-radius: 10px;
+    padding: 1.25rem;
+}
+
+/* Buttons */
+.btn {
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btn-outline-secondary {
+    border-color: #e5e7eb;
+    color: #6b7280;
+}
+
+.btn-outline-secondary:hover {
+    background: #f3f4f6;
+    border-color: #cbd5e1;
+    color: #374151;
+}
+
+.btn-outline-primary {
+    border-color: #667eea;
+    color: #667eea;
+}
+
+.btn-outline-primary:hover {
+    background: #667eea;
+    border-color: #667eea;
+    color: white;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modern-card {
+    animation: fadeInUp 0.5s ease backwards;
+}
+
+.data-type-card {
+    animation: fadeInUp 0.5s ease backwards;
+}
+
+.data-type-card:nth-child(1) { animation-delay: 0.1s; }
+.data-type-card:nth-child(2) { animation-delay: 0.2s; }
+.data-type-card:nth-child(3) { animation-delay: 0.3s; }
+.data-type-card:nth-child(4) { animation-delay: 0.4s; }
+</style>
+
+<script>
+// Show/hide field sections based on data type selection
+document.addEventListener('DOMContentLoaded', function() {
+    const dataTypeCheckboxes = document.querySelectorAll('input[name="data_types"]');
+    const fieldSections = {
+        'applications': document.getElementById('applications_fields'),
+        'deliveries': document.getElementById('deliveries_fields'),
+        'contracts': document.getElementById('contracts_fields'),
+        'suppliers': document.getElementById('suppliers_fields')
+    };
+
+    function toggleFieldSections() {
+        dataTypeCheckboxes.forEach(checkbox => {
+            const section = fieldSections[checkbox.value];
+            if (section) {
+                section.style.display = checkbox.checked ? 'block' : 'none';
+            }
+        });
+        updateExportPreview();
+    }
+
+    dataTypeCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', toggleFieldSections);
+    });
+
+    // Initial call
+    toggleFieldSections();
+});
+
+function selectAllFields() {
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = true;
+    });
+    updateExportPreview();
+}
+
+function clearAllFields() {
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    updateExportPreview();
+}
+
+function updateExportPreview() {
+    const selectedTypes = Array.from(document.querySelectorAll('input[name="data_types"]:checked')).map(cb => cb.value);
+    const selectedFields = {
+        applications: Array.from(document.querySelectorAll('input[name="application_fields"]:checked')).length,
+        deliveries: Array.from(document.querySelectorAll('input[name="delivery_fields"]:checked')).length,
+        contracts: Array.from(document.querySelectorAll('input[name="contract_fields"]:checked')).length,
+        suppliers: Array.from(document.querySelectorAll('input[name="supplier_fields"]:checked')).length
+    };
+
+    // Update summary badge
+    const summaryEl = document.getElementById('exportSummary');
+    if (selectedTypes.length === 0) {
+        summaryEl.textContent = '0 Data Types Selected';
+        summaryEl.style.color = 'rgba(255,255,255,0.7)';
+    } else {
+        summaryEl.textContent = `${selectedTypes.length} Data Type${selectedTypes.length > 1 ? 's' : ''} Selected`;
+        summaryEl.style.color = 'white';
+    }
+
+    // Update export preview
+    const previewEl = document.getElementById('exportPreview');
+    if (selectedTypes.length === 0) {
+        previewEl.textContent = 'No data types selected - please select at least one';
+        previewEl.style.color = '#991b1b';
+        return;
+    }
+
+    const preview = selectedTypes.map(type => {
+        const count = selectedFields[type] || 0;
+        return `${type.charAt(0).toUpperCase() + type.slice(1)} (${count} fields)`;
+    }).join(', ');
+
+    previewEl.textContent = preview;
+    previewEl.style.color = '#111827';
+}
+
+// Update preview when checkboxes change
+document.addEventListener('change', function(e) {
+    if (e.target.type === 'checkbox') {
+        updateExportPreview();
+    }
+});
+
+// Initial preview update
+updateExportPreview();
+
+// Add loading state to form submission
+document.getElementById('exportForm').addEventListener('submit', function(e) {
+    const btn = document.getElementById('exportBtn');
+    const originalHtml = btn.innerHTML;
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Generating Export...';
+    
+    // Show loading toast
+    const loadingToast = document.getElementById('loadingToast');
+    const toast = new bootstrap.Toast(loadingToast, { autohide: false });
+    toast.show();
+    
+    // Re-enable button after a delay (in case of error or completion)
+    setTimeout(() => {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+        toast.hide();
+        
+        // Show success toast
+        const successToast = document.getElementById('successToast');
+        const successBsToast = new bootstrap.Toast(successToast, { delay: 3000 });
+        successBsToast.show();
+    }, 3000);
+});
+
+// Toggle fields helper
+function toggleFields(fieldName, selectAll) {
+    const checkboxes = document.querySelectorAll(`input[name="${fieldName}"]`);
+    checkboxes.forEach(cb => cb.checked = selectAll);
+    updateExportPreview();
+}
+</script>
+{% endblock %}

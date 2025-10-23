@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Documents - GCX Supplier Portal</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header h1 {
+            color: #1e3a5f;
+            margin-bottom: 0.5rem;
+        }
+        
+        .tracking-code {
+            font-family: 'Courier New', monospace;
+            background: #f3f4f6;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 1rem;
+            color: #374151;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .nav-links a {
+            color: #1e3a5f;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+        
+        .nav-links a:hover,
+        .nav-links a.active {
+            background-color: #e5e7eb;
+        }
+        
+        .upload-grid {
+            display: grid;
+            gap: 2rem;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card h3 {
+            color: #1e3a5f;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .document-item {
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: border-color 0.2s;
+        }
+        
+        .document-item:hover {
+            border-color: #1e3a5f;
+        }
+        
+        .document-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+        
+        .document-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1e3a5f;
+        }
+        
+        .document-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .document-status.uploaded {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .document-status.pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .document-description {
+            color: #6b7280;
+            margin-bottom: 1rem;
+        }
+        
+        .upload-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .file-input {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        
+        .file-input-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: #1e3a5f;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border: none;
+        }
+        
+        .file-input-button:hover {
+            background: #1a3254;
+        }
+        
+        .file-name {
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            color: #374151;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-primary {
+            background: #059669;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #047857;
+        }
+        
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .uploaded-document {
+            background: #f0fdf4;
+            border-color: #bbf7d0;
+        }
+        
+        .uploaded-document .document-status {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .uploaded-document .file-name {
+            color: #065f46;
+            font-weight: 500;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #e5e7eb;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: #059669;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        
+        .upload-success {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #065f46;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            display: none;
+        }
+        
+        .upload-error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            .document-header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-upload"></i> Upload Documents</h1>
+            <div class="tracking-code">{{ application.tracking_code }}</div>
+            <p>{{ application.business_name }}</p>
+            {% if not user.is_active %}
+            <div class="alert alert-warning" style="margin-top: 1rem;">
+                <i class="fas fa-info-circle"></i>
+                <strong>Account Status:</strong> Your account is pending activation. You can upload documents for this application.
+            </div>
+            {% endif %}
+            
+            <div class="nav-links">
+                <a href="{% url 'accounts:dashboard' %}">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+                <a href="{% url 'applications:supplier-applications-list' %}">
+                    <i class="fas fa-file-alt"></i> Applications
+                </a>
+                <a href="{% url 'applications:supplier-application-detail' application.id %}">
+                    <i class="fas fa-eye"></i> Details
+                </a>
+                <a href="{% url 'applications:supplier-document-upload' application.id %}" class="active">
+                    <i class="fas fa-upload"></i> Upload
+                </a>
+                <form method="post" action="{% url 'accounts:logout' %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" style="border: none; background: none; color: #6c757d; text-decoration: none;">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <div class="upload-grid">
+            {% if outstanding_requests %}
+                {% for request in outstanding_requests %}
+                <div class="card">
+                    <h3><i class="fas fa-file-upload"></i> {{ request.document_requirement.label }}</h3>
+                    
+                    <div class="document-description">
+                        {{ request.document_requirement.description }}
+                    </div>
+                    
+                    <form method="post" enctype="multipart/form-data" class="upload-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="document_requirement_id" value="{{ request.document_requirement.id }}">
+                        
+                        <div class="file-input-wrapper">
+                            <input type="file" name="document" class="file-input" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" required>
+                            <button type="button" class="file-input-button">
+                                <i class="fas fa-cloud-upload-alt"></i> Choose File
+                            </button>
+                        </div>
+                        
+                        <div class="file-name" style="display: none;"></div>
+                        <div class="progress-bar" style="display: none;">
+                            <div class="progress-fill"></div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-upload"></i> Upload Document
+                        </button>
+                        
+                        <div class="upload-success">
+                            <i class="fas fa-check-circle"></i> Document uploaded successfully!
+                        </div>
+                        
+                        <div class="upload-error">
+                            <i class="fas fa-exclamation-circle"></i> Upload failed. Please try again.
+                        </div>
+                    </form>
+                </div>
+                {% endfor %}
+            {% endif %}
+            
+            {% if uploaded_documents %}
+                <div class="card">
+                    <h3><i class="fas fa-file-check"></i> Uploaded Documents</h3>
+                    
+                    {% for document in uploaded_documents %}
+                    <div class="document-item uploaded-document">
+                        <div class="document-header">
+                            <div class="document-title">{{ document.document_requirement.label }}</div>
+                            <span class="document-status uploaded">Uploaded</span>
+                        </div>
+                        <div class="document-description">{{ document.document_requirement.description }}</div>
+                        <div class="file-name">
+                            <i class="fas fa-file"></i> {{ document.file_name }}
+                            <span style="color: #6b7280;">({{ document.file_size|filesizeformat }})</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            
+            {% if not outstanding_requests and not uploaded_documents %}
+                <div class="card">
+                    <h3><i class="fas fa-info-circle"></i> No Documents Required</h3>
+                    <p>There are no documents to upload for this application at this time.</p>
+                </div>
+            {% endif %}
+            
+            <div class="actions">
+                <a href="{% url 'applications:supplier-application-detail' application.id %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Application Details
+                </a>
+                <a href="{% url 'applications:supplier-applications-list' %}" class="btn btn-secondary">
+                    <i class="fas fa-list"></i> All Applications
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // File input handling
+        document.querySelectorAll('.file-input').forEach(input => {
+            input.addEventListener('change', function() {
+                const fileName = this.files[0]?.name;
+                const fileNameDiv = this.parentElement.parentElement.querySelector('.file-name');
+                
+                if (fileName) {
+                    fileNameDiv.textContent = `Selected: ${fileName}`;
+                    fileNameDiv.style.display = 'block';
+                } else {
+                    fileNameDiv.style.display = 'none';
+                }
+            });
+        });
+        
+        // File input button click
+        document.querySelectorAll('.file-input-button').forEach(button => {
+            button.addEventListener('click', function() {
+                const fileInput = this.parentElement.querySelector('.file-input');
+                fileInput.click();
+            });
+        });
+        
+        // Form submission with progress
+        document.querySelectorAll('.upload-form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                const progressBar = this.querySelector('.progress-bar');
+                const progressFill = this.querySelector('.progress-fill');
+                const uploadSuccess = this.querySelector('.upload-success');
+                const uploadError = this.querySelector('.upload-error');
+                
+                // Show progress bar
+                progressBar.style.display = 'block';
+                
+                // Simulate progress
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += Math.random() * 15;
+                    if (progress > 90) progress = 90;
+                    progressFill.style.width = progress + '%';
+                }, 100);
+                
+                // Handle form submission
+                fetch(this.action || window.location.href, {
+                    method: 'POST',
+                    body: new FormData(this)
+                })
+                .then(response => {
+                    clearInterval(interval);
+                    progressFill.style.width = '100%';
+                    
+                    if (response.ok) {
+                        uploadSuccess.style.display = 'block';
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1500);
+                    } else {
+                        uploadError.style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    clearInterval(interval);
+                    uploadError.style.display = 'block';
+                });
+                
+                e.preventDefault();
+            });
+        });
+    </script>
+</body>
+</html>

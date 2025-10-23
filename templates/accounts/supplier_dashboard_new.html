@@ -1,0 +1,1078 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Dashboard - GCX Supplier Portal{% endblock %}
+
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}Welcome back, {{ user.get_full_name|default:user.username }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Dashboard Specific Styles */
+    .dashboard-hero {
+        background: linear-gradient(135deg, rgba(26, 71, 42, 0.9) 0%, rgba(45, 90, 61, 0.9) 100%), 
+                    url('/media/logo/Untitled-1.jpg');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        color: white;
+        border-radius: var(--border-radius-lg);
+        padding: 2rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .dashboard-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 200px;
+        height: 200px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        transform: translate(50%, -50%);
+    }
+
+    .dashboard-hero::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 150px;
+        height: 150px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 50%;
+        transform: translate(-50%, 50%);
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 2;
+    }
+
+    .hero-title {
+        font-size: 2rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin-bottom: 1.5rem;
+    }
+
+    .account-status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-active {
+        background: rgba(25, 135, 84, 0.2);
+        color: #0f5132;
+        border: 1px solid rgba(25, 135, 84, 0.3);
+    }
+
+    .status-pending {
+        background: rgba(253, 126, 20, 0.2);
+        color: #996300;
+        border: 1px solid rgba(253, 126, 20, 0.3);
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card-modern {
+        background: var(--white);
+        border: 1px solid var(--gray-200);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        box-shadow: var(--shadow-sm);
+        transition: all var(--transition);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card-modern::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--gcx-secondary);
+        transform: scaleY(0);
+        transition: transform var(--transition);
+    }
+
+    .stat-card-modern:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .stat-card-modern:hover::before {
+        transform: scaleY(1);
+    }
+
+    .stat-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--border-radius-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+    }
+
+    .stat-icon.applications {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+    }
+
+    .stat-icon.documents {
+        background: linear-gradient(135deg, #f093fb, #f5576c);
+    }
+
+    .stat-icon.completed {
+        background: linear-gradient(135deg, #4facfe, #00f2fe);
+    }
+
+    .stat-icon.profile {
+        background: linear-gradient(135deg, #43e97b, #38f9d7);
+    }
+
+    .stat-icon.deliveries {
+        background: linear-gradient(135deg, #ffecd2, #fcb69f);
+    }
+
+    .stat-icon.pending {
+        background: linear-gradient(135deg, #a8edea, #fed6e3);
+    }
+
+    .stat-icon.contracts {
+        background: linear-gradient(135deg, #d299c2, #fef9d7);
+    }
+
+    .stat-icon.signed {
+        background: linear-gradient(135deg, #89f7fe, #66a6ff);
+    }
+
+    /* Table Styles */
+    .table-modern {
+        border: none;
+        margin-bottom: 0;
+    }
+
+    .table-modern thead th {
+        border: none;
+        background: var(--gray-50);
+        color: var(--gray-700);
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 1rem 0.75rem;
+    }
+
+    .table-modern tbody td {
+        border: none;
+        border-bottom: 1px solid var(--gray-100);
+        padding: 1rem 0.75rem;
+        vertical-align: middle;
+    }
+
+    .table-modern tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .table-modern tbody tr:hover {
+        background: var(--gray-25);
+    }
+
+    /* Status Badge Styles */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-badge.status-pending {
+        background: rgba(253, 126, 20, 0.1);
+        color: #fd7e14;
+        border: 1px solid rgba(253, 126, 20, 0.2);
+    }
+
+    .status-badge.status-verified {
+        background: rgba(25, 135, 84, 0.1);
+        color: #198754;
+        border: 1px solid rgba(25, 135, 84, 0.2);
+    }
+
+    .status-badge.status-rejected {
+        background: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+        border: 1px solid rgba(220, 53, 69, 0.2);
+    }
+
+    .status-badge.status-active {
+        background: rgba(25, 135, 84, 0.1);
+        color: #198754;
+        border: 1px solid rgba(25, 135, 84, 0.2);
+    }
+
+    .status-badge.status-inactive {
+        background: rgba(108, 117, 125, 0.1);
+        color: #6c757d;
+        border: 1px solid rgba(108, 117, 125, 0.2);
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--gray-900);
+        line-height: 1;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+        font-size: 0.875rem;
+        color: var(--gray-600);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .stat-change {
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.25rem 0.5rem;
+        border-radius: 12px;
+        margin-top: 0.5rem;
+        display: inline-block;
+    }
+
+    .stat-change.positive {
+        background: rgba(25, 135, 84, 0.1);
+        color: #0f5132;
+    }
+
+    .stat-change.negative {
+        background: rgba(220, 53, 69, 0.1);
+        color: #842029;
+    }
+
+    /* Progress Card */
+    .progress-card {
+        background: var(--white);
+        border: 1px solid var(--gray-200);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        box-shadow: var(--shadow-sm);
+        margin-bottom: 2rem;
+    }
+
+    .progress-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
+
+    .progress-title {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: var(--gray-900);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .progress-percentage {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--gcx-primary);
+    }
+
+    .progress-bar-modern {
+        height: 12px;
+        background: var(--gray-200);
+        border-radius: 6px;
+        overflow: hidden;
+        margin-bottom: 1rem;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--gcx-primary), var(--gcx-primary-light));
+        border-radius: 6px;
+        transition: width 1s ease-out;
+        position: relative;
+    }
+
+    .progress-fill::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        animation: shimmer 2s infinite;
+    }
+
+    /* Applications Grid */
+    .applications-grid {
+        display: grid;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .application-card {
+        background: var(--white);
+        border: 1px solid var(--gray-200);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        box-shadow: var(--shadow-sm);
+        transition: all var(--transition);
+        position: relative;
+    }
+
+    .application-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow);
+        border-color: var(--gcx-primary);
+    }
+
+    .application-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
+
+    .application-title {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: var(--gray-900);
+        margin-bottom: 0.25rem;
+    }
+
+    .application-tracking {
+        font-size: 0.875rem;
+        color: var(--gray-600);
+        font-family: 'Courier New', monospace;
+    }
+
+    .application-status {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .application-meta {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        font-size: 0.875rem;
+        color: var(--gray-600);
+    }
+
+    .application-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+        background: var(--white);
+        border: 1px solid var(--gray-200);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .empty-state-icon {
+        width: 80px;
+        height: 80px;
+        background: var(--gray-100);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        font-size: 2rem;
+        color: var(--gray-400);
+    }
+
+    .empty-state-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--gray-900);
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state-description {
+        color: var(--gray-600);
+        margin-bottom: 2rem;
+    }
+
+    /* Quick Actions */
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .action-card {
+        background: var(--white);
+        border: 1px solid var(--gray-200);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        box-shadow: var(--shadow-sm);
+        transition: all var(--transition);
+    }
+
+    .action-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow);
+    }
+
+    .action-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .action-icon {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, var(--gcx-primary), var(--gcx-primary-light));
+        border-radius: var(--border-radius-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.25rem;
+    }
+
+    .action-title {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: var(--gray-900);
+    }
+
+    .action-description {
+        color: var(--gray-600);
+        margin-bottom: 1.5rem;
+        line-height: 1.5;
+    }
+
+    /* Alert Modern */
+    .alert-modern {
+        border: none;
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        position: relative;
+        border-left: 4px solid;
+    }
+
+    .alert-warning-modern {
+        background: rgba(253, 126, 20, 0.1);
+        color: #996300;
+        border-left-color: var(--warning);
+    }
+
+    .alert-warning-modern .alert-icon {
+        color: var(--warning);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .dashboard-hero {
+            padding: 1.5rem;
+        }
+
+        .hero-title {
+            font-size: 1.5rem;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .quick-actions {
+            grid-template-columns: 1fr;
+        }
+
+        .application-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .application-actions {
+            width: 100%;
+            justify-content: stretch;
+        }
+
+        .application-actions .btn {
+            flex: 1;
+        }
+    }
+
+    /* Animations */
+    @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+
+    .fade-in-up {
+        animation: fadeInUp 0.6s ease-out;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .stagger-animation > * {
+        animation: fadeInUp 0.6s ease-out;
+    }
+
+    .stagger-animation > *:nth-child(1) { animation-delay: 0.1s; }
+    .stagger-animation > *:nth-child(2) { animation-delay: 0.2s; }
+    .stagger-animation > *:nth-child(3) { animation-delay: 0.3s; }
+    .stagger-animation > *:nth-child(4) { animation-delay: 0.4s; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Dashboard Hero Section -->
+<div class="dashboard-hero fade-in-up">
+    <div class="hero-content">
+        <h1 class="hero-title">
+            <i class="fas fa-tachometer-alt me-2"></i>
+            Welcome to Your Dashboard
+        </h1>
+        <p class="hero-subtitle">
+            Manage your applications, track progress, and stay updated with your supplier journey
+        </p>
+        <div class="d-flex align-items-center gap-3">
+            <div class="account-status-badge {% if user.is_active %}status-active{% else %}status-pending{% endif %}">
+                <i class="fas fa-{% if user.is_active %}check-circle{% else %}clock{% endif %}"></i>
+                {% if user.is_active %}Account Active{% else %}Account Pending Activation{% endif %}
+            </div>
+            <div class="text-white-50">
+                <small>Last login: {{ user.last_login|date:"M d, Y H:i"|default:"First time" }}</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Account Status Notice -->
+{% if not user.is_active %}
+<div class="alert-modern alert-warning-modern fade-in-up">
+    <div class="d-flex align-items-start gap-3">
+        <div class="alert-icon">
+            <i class="fas fa-exclamation-triangle fa-lg"></i>
+        </div>
+        <div>
+            <h6 class="alert-heading mb-2">Account Pending Activation</h6>
+            <p class="mb-0">
+                Your account is currently pending activation by the admin. You can monitor your applications and upload documents, but some features may be limited.
+            </p>
+            <small class="opacity-75">You will receive an email notification once your account is activated.</small>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Statistics Grid -->
+<div class="stats-grid stagger-animation">
+    <div class="stat-card-modern">
+        <div class="stat-header">
+            <div class="stat-icon applications">
+                <i class="fas fa-file-alt"></i>
+            </div>
+        </div>
+        <div class="stat-number">{{ applications_count|default:0 }}</div>
+        <div class="stat-label">Total Applications</div>
+        <div class="stat-change positive">
+            <i class="fas fa-arrow-up me-1"></i>+12% this month
+        </div>
+    </div>
+
+    <div class="stat-card-modern">
+        <div class="stat-header">
+            <div class="stat-icon documents">
+                <i class="fas fa-upload"></i>
+            </div>
+        </div>
+        <div class="stat-number">{{ pending_docs_count|default:0 }}</div>
+        <div class="stat-label">Pending Documents</div>
+        <div class="stat-change {% if pending_docs_count > 0 %}negative{% else %}positive{% endif %}">
+            <i class="fas fa-{% if pending_docs_count > 0 %}exclamation{% else %}check{% endif %} me-1"></i>
+            {% if pending_docs_count > 0 %}Action Required{% else %}All Complete{% endif %}
+        </div>
+    </div>
+
+    <div class="stat-card-modern">
+        <div class="stat-header">
+            <div class="stat-icon completed">
+                <i class="fas fa-check-circle"></i>
+            </div>
+        </div>
+        <div class="stat-number">{{ completed_docs_count|default:0 }}</div>
+        <div class="stat-label">Completed Documents</div>
+        <div class="stat-change positive">
+            <i class="fas fa-arrow-up me-1"></i>+8% this week
+        </div>
+    </div>
+
+    <div class="stat-card-modern">
+        <div class="stat-header">
+            <div class="stat-icon profile">
+                <i class="fas fa-user-check"></i>
+            </div>
+        </div>
+        <div class="stat-number">{{ profile_completion|default:0 }}%</div>
+        <div class="stat-label">Profile Completion</div>
+        <div class="stat-change {% if profile_completion < 100 %}negative{% else %}positive{% endif %}">
+            <i class="fas fa-{% if profile_completion < 100 %}exclamation{% else %}check{% endif %} me-1"></i>
+            {% if profile_completion < 100 %}Incomplete{% else %}Complete{% endif %}
+        </div>
+    </div>
+
+    <!-- Delivery Statistics -->
+    <div class="stat-card-modern">
+        <div class="stat-header">
+            <div class="stat-icon deliveries">
+                <i class="fas fa-truck"></i>
+            </div>
+        </div>
+        <div class="stat-number">{{ total_deliveries|default:0 }}</div>
+        <div class="stat-label">Total Deliveries</div>
+        <div class="stat-change {% if verified_deliveries > 0 %}positive{% else %}neutral{% endif %}">
+            <i class="fas fa-{% if verified_deliveries > 0 %}check{% else %}clock{% endif %} me-1"></i>
+            {{ verified_deliveries }} Verified
+        </div>
+    </div>
+
+    <div class="stat-card-modern">
+        <div class="stat-header">
+            <div class="stat-icon pending">
+                <i class="fas fa-hourglass-half"></i>
+            </div>
+        </div>
+        <div class="stat-number">{{ pending_deliveries|default:0 }}</div>
+        <div class="stat-label">Pending Deliveries</div>
+        <div class="stat-change {% if pending_deliveries > 0 %}negative{% else %}positive{% endif %}">
+            <i class="fas fa-{% if pending_deliveries > 0 %}exclamation{% else %}check{% endif %} me-1"></i>
+            {% if pending_deliveries > 0 %}Under Review{% else %}All Processed{% endif %}
+        </div>
+    </div>
+
+    <!-- Contract Statistics -->
+    <div class="stat-card-modern">
+        <div class="stat-header">
+            <div class="stat-icon contracts">
+                <i class="fas fa-file-contract"></i>
+            </div>
+        </div>
+        <div class="stat-number">{{ total_contracts|default:0 }}</div>
+        <div class="stat-label">Total Contracts</div>
+        <div class="stat-change {% if active_contracts > 0 %}positive{% else %}neutral{% endif %}">
+            <i class="fas fa-{% if active_contracts > 0 %}check{% else %}clock{% endif %} me-1"></i>
+            {{ active_contracts }} Active
+        </div>
+    </div>
+
+    <div class="stat-card-modern">
+        <div class="stat-header">
+            <div class="stat-icon signed">
+                <i class="fas fa-signature"></i>
+            </div>
+        </div>
+        <div class="stat-number">{{ signed_contracts_count|default:0 }}</div>
+        <div class="stat-label">Signed Contracts</div>
+        <div class="stat-change {% if signed_contracts_count > 0 %}positive{% else %}neutral{% endif %}">
+            <i class="fas fa-{% if signed_contracts_count > 0 %}check{% else %}exclamation{% endif %} me-1"></i>
+            {% if signed_contracts_count > 0 %}Ready for Deliveries{% else %}Awaiting Signature{% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Profile Completion Progress -->
+{% if profile_completion < 100 %}
+<div class="progress-card fade-in-up">
+    <div class="progress-header">
+        <div class="progress-title">
+            <i class="fas fa-chart-line"></i>
+            Profile Completion Progress
+        </div>
+        <div class="progress-percentage">{{ profile_completion|default:0 }}%</div>
+    </div>
+    <div class="progress-bar-modern">
+        <div class="progress-fill" style="width: {{ profile_completion|default:0 }}%"></div>
+    </div>
+    <p class="text-muted mb-0">
+        <i class="fas fa-info-circle me-1"></i>
+        Complete your profile by uploading all required documents to reach 100%.
+    </p>
+</div>
+{% endif %}
+
+<!-- Applications Section -->
+{% if applications %}
+<div class="card-modern fade-in-up">
+    <div class="card-header-modern">
+        <h3 class="card-title-modern">
+            <i class="fas fa-file-alt"></i>
+            Your Applications
+        </h3>
+    </div>
+    <div class="card-body-modern">
+        <div class="applications-grid">
+            {% for application in applications %}
+            <div class="application-card">
+                <div class="application-header">
+                    <div>
+                        <h4 class="application-title">{{ application.business_name }}</h4>
+                        <div class="application-tracking">{{ application.tracking_code }}</div>
+                    </div>
+                    <span class="application-status status-{{ application.status|lower }}">
+                        {{ application.get_status_display }}
+                    </span>
+                </div>
+                <div class="application-meta">
+                    <span><i class="fas fa-calendar me-1"></i>{{ application.created_at|date:"M d, Y" }}</span>
+                    <span><i class="fas fa-seedling me-1"></i>{{ application.commodities_to_supply.count }} commodities</span>
+                </div>
+                <div class="application-actions">
+                    <a href="{% url 'applications:supplier-application-detail' application.id %}" 
+                       class="btn btn-primary-modern btn-modern">
+                        <i class="fas fa-eye me-1"></i>View Details
+                    </a>
+                    <a href="{% url 'applications:supplier-document-upload' application.id %}" 
+                       class="btn btn-outline-modern btn-modern">
+                        <i class="fas fa-upload me-1"></i>Upload Docs
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="empty-state fade-in-up">
+    <div class="empty-state-icon">
+        <i class="fas fa-file-alt"></i>
+    </div>
+    <h3 class="empty-state-title">No Applications Yet</h3>
+    <p class="empty-state-description">
+        You haven't submitted any applications yet. Get started by submitting your first application to become a GCX supplier.
+    </p>
+    <a href="{% url 'applications:application-form' %}" class="btn btn-primary-modern btn-modern">
+        <i class="fas fa-plus me-2"></i>Submit New Application
+    </a>
+</div>
+{% endif %}
+
+<!-- Recent Deliveries Section -->
+{% if recent_deliveries %}
+<div class="card-modern fade-in-up">
+    <div class="card-header-modern">
+        <h3 class="card-title-modern">
+            <i class="fas fa-truck"></i>
+            Recent Deliveries
+        </h3>
+        <a href="{% url 'applications:supplier-deliveries' %}" class="btn btn-outline-modern btn-sm">
+            <i class="fas fa-eye me-1"></i>View All
+        </a>
+    </div>
+    <div class="card-body-modern">
+        <div class="table-responsive">
+            <table class="table table-modern">
+                <thead>
+                    <tr>
+                        <th>Delivery #</th>
+                        <th>School</th>
+                        <th>Region</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for delivery in recent_deliveries %}
+                    <tr>
+                        <td>
+                            <strong>{{ delivery.serial_number }}</strong>
+                        </td>
+                        <td>{{ delivery.delivery_school.name }}</td>
+                        <td>{{ delivery.delivery_region.name }}</td>
+                        <td>{{ delivery.delivery_date|date:"M d, Y" }}</td>
+                        <td>
+                            <span class="status-badge status-{{ delivery.status|lower }}">
+                                {{ delivery.get_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{% url 'applications:supplier-delivery-detail' delivery.pk %}" 
+                               class="btn btn-outline-modern btn-sm">
+                                <i class="fas fa-eye me-1"></i>View
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Recent Contracts Section -->
+{% if recent_contracts %}
+<div class="card-modern fade-in-up">
+    <div class="card-header-modern">
+        <h3 class="card-title-modern">
+            <i class="fas fa-file-contract"></i>
+            Recent Contracts
+        </h3>
+        <a href="{% url 'applications:supplier-contracts' %}" class="btn btn-outline-modern btn-sm">
+            <i class="fas fa-eye me-1"></i>View All
+        </a>
+    </div>
+    <div class="card-body-modern">
+        <div class="table-responsive">
+            <table class="table table-modern">
+                <thead>
+                    <tr>
+                        <th>Contract #</th>
+                        <th>Business Name</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for contract in recent_contracts %}
+                    <tr>
+                        <td>
+                            <strong>{{ contract.contract_number }}</strong>
+                        </td>
+                        <td>{{ contract.application.business_name }}</td>
+                        <td>
+                            <span class="status-badge status-{{ contract.status|lower }}">
+                                {{ contract.get_status_display }}
+                            </span>
+                        </td>
+                        <td>{{ contract.created_at|date:"M d, Y" }}</td>
+                        <td>
+                            <a href="{% url 'applications:supplier-contract-detail' contract.pk %}" 
+                               class="btn btn-outline-modern btn-sm">
+                                <i class="fas fa-eye me-1"></i>View
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Pending Documents Section -->
+{% if pending_documents %}
+<div class="card-modern fade-in-up">
+    <div class="card-header-modern">
+        <h3 class="card-title-modern">
+            <i class="fas fa-upload"></i>
+            Pending Document Uploads
+        </h3>
+    </div>
+    <div class="card-body-modern">
+        <p class="text-muted mb-3">
+            <i class="fas fa-info-circle me-1"></i>
+            Please upload the following required documents to complete your application:
+        </p>
+        <div class="list-group">
+            {% for doc in pending_documents %}
+            <div class="list-group-item d-flex justify-content-between align-items-center border-0 bg-light rounded mb-2">
+                <div>
+                    <strong class="text-dark">{{ doc.label }}</strong>
+                    <br>
+                    <small class="text-muted">{{ doc.description }}</small>
+                </div>
+                <a href="{% url 'applications:supplier-document-upload' doc.application_id %}" 
+                   class="btn btn-warning btn-sm">
+                    <i class="fas fa-upload me-1"></i>Upload
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Quick Actions -->
+<div class="quick-actions stagger-animation">
+    <div class="action-card">
+        <div class="action-header">
+            <div class="action-icon">
+                <i class="fas fa-plus"></i>
+            </div>
+            <h4 class="action-title">Submit New Application</h4>
+        </div>
+        <p class="action-description">
+            Start a new supplier application to join the GCX network and begin your journey as a certified supplier.
+        </p>
+        <a href="{% url 'applications:application-form' %}" class="btn btn-primary-modern btn-modern w-100">
+            <i class="fas fa-plus me-2"></i>Get Started
+        </a>
+    </div>
+
+    <div class="action-card">
+        <div class="action-header">
+            <div class="action-icon">
+                <i class="fas fa-list"></i>
+            </div>
+            <h4 class="action-title">View All Applications</h4>
+        </div>
+        <p class="action-description">
+            Review and manage all your submitted applications, track their status, and monitor progress.
+        </p>
+        <a href="{% url 'applications:supplier-applications-list' %}" class="btn btn-outline-modern btn-modern w-100">
+            <i class="fas fa-list me-2"></i>View Applications
+        </a>
+    </div>
+
+    <div class="action-card">
+        <div class="action-header">
+            <div class="action-icon">
+                <i class="fas fa-cloud-upload-alt"></i>
+            </div>
+            <h4 class="action-title">Upload Documents</h4>
+        </div>
+        <p class="action-description">
+            Upload required documents for your applications or manage existing document submissions.
+        </p>
+        <a href="{% url 'applications:supplier-general-document-upload' %}" class="btn btn-outline-modern btn-modern w-100">
+            <i class="fas fa-cloud-upload-alt me-2"></i>Upload Documents
+        </a>
+    </div>
+
+    <div class="action-card">
+        <div class="action-header">
+            <div class="action-icon">
+                <i class="fas fa-headset"></i>
+            </div>
+            <h4 class="action-title">Get Support</h4>
+        </div>
+        <p class="action-description">
+            Need help with your applications or have questions? Our support team is here to assist you.
+        </p>
+        <a href="mailto:support@gcx.com.gh" class="btn btn-secondary-modern btn-modern w-100">
+            <i class="fas fa-envelope me-2"></i>Contact Support
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate progress bar
+    const progressFill = document.querySelector('.progress-fill');
+    if (progressFill) {
+        const width = progressFill.style.width;
+        progressFill.style.width = '0%';
+        setTimeout(() => {
+            progressFill.style.width = width;
+        }, 500);
+    }
+
+    // Animate stat numbers
+    const statNumbers = document.querySelectorAll('.stat-number');
+    statNumbers.forEach(stat => {
+        const finalValue = parseInt(stat.textContent.replace(/[^\d]/g, ''));
+        if (finalValue > 0) {
+            animateNumber(stat, 0, finalValue, 1000);
+        }
+    });
+
+    function animateNumber(element, start, end, duration) {
+        const startTime = performance.now();
+        const isPercentage = element.textContent.includes('%');
+        
+        function updateNumber(currentTime) {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const current = Math.floor(start + (end - start) * progress);
+            
+            element.textContent = current + (isPercentage ? '%' : '');
+            
+            if (progress < 1) {
+                requestAnimationFrame(updateNumber);
+            }
+        }
+        
+        requestAnimationFrame(updateNumber);
+    }
+
+    // Add hover effects to cards
+    const cards = document.querySelectorAll('.stat-card-modern, .application-card, .action-card');
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-4px)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+});
+</script>
+{% endblock %}

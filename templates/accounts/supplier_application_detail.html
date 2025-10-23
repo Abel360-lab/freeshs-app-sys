@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application Details - GCX Supplier Portal</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header h1 {
+            color: #1e3a5f;
+            margin-bottom: 0.5rem;
+        }
+        
+        .tracking-code {
+            font-family: 'Courier New', monospace;
+            background: #f3f4f6;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 1rem;
+            color: #374151;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .nav-links a {
+            color: #1e3a5f;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+        
+        .nav-links a:hover,
+        .nav-links a.active {
+            background-color: #e5e7eb;
+        }
+        
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+        
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+        
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card h3 {
+            color: #1e3a5f;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .status-section {
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .status-badge {
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+        
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .status-approved {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .status-under-review {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .status-rejected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .account-status {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+            background: #f9fafb;
+        }
+        
+        .account-status.active {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .account-status.pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+        
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+            background: #f9fafb;
+            border-radius: 8px;
+        }
+        
+        .detail-label {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-bottom: 0.25rem;
+            font-weight: 500;
+        }
+        
+        .detail-value {
+            font-weight: 600;
+            color: #374151;
+        }
+        
+        .commodities-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .commodity-tag {
+            background: #e5e7eb;
+            color: #374151;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.875rem;
+        }
+        
+        .documents-section {
+            margin-top: 2rem;
+        }
+        
+        .document-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: #f9fafb;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .document-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .document-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .document-status.uploaded {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .document-status.pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .btn-primary {
+            background: #1e3a5f;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #1a3254;
+        }
+        
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+        
+        .btn-success {
+            background: #059669;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #047857;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        @media (max-width: 768px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .detail-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-file-alt"></i> Application Details</h1>
+            <div class="tracking-code">{{ application.tracking_code }}</div>
+            {% if not user.is_active %}
+            <div class="alert alert-warning" style="margin-top: 1rem;">
+                <i class="fas fa-info-circle"></i>
+                <strong>Account Status:</strong> Your account is pending activation. You can monitor this application and upload documents, but some features may be limited.
+            </div>
+            {% endif %}
+            
+            <div class="nav-links">
+                <a href="{% url 'accounts:dashboard' %}">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+                <a href="{% url 'applications:supplier-applications-list' %}">
+                    <i class="fas fa-file-alt"></i> Applications
+                </a>
+                <a href="{% url 'applications:supplier-applications-list' %}" class="active">
+                    <i class="fas fa-eye"></i> Details
+                </a>
+                <form method="post" action="{% url 'accounts:logout' %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" style="border: none; background: none; color: #6c757d; text-decoration: none;">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <div class="content-grid">
+            <div class="main-content">
+                <!-- Application Information -->
+                <div class="card">
+                    <h3><i class="fas fa-info-circle"></i> Application Information</h3>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <span class="detail-label">Business Name</span>
+                            <span class="detail-value">{{ application.business_name }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Business Type</span>
+                            <span class="detail-value">{{ application.get_business_type_display }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Registration Number</span>
+                            <span class="detail-value">{{ application.registration_number }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">TIN Number</span>
+                            <span class="detail-value">{{ application.tin_number }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Email</span>
+                            <span class="detail-value">{{ application.email }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Telephone</span>
+                            <span class="detail-value">{{ application.telephone }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Region</span>
+                            <span class="detail-value">{{ application.region.name|default:"Not specified" }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">City</span>
+                            <span class="detail-value">{{ application.city }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Physical Address</span>
+                            <span class="detail-value">{{ application.physical_address }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Warehouse Location</span>
+                            <span class="detail-value">{{ application.warehouse_location }}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Commodities -->
+                {% if commodities %}
+                <div class="card">
+                    <h3><i class="fas fa-seedling"></i> Commodities to Supply</h3>
+                    <div class="commodities-list">
+                        {% for commodity in commodities %}
+                        <span class="commodity-tag">{{ commodity }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Documents -->
+                <div class="card documents-section">
+                    <h3><i class="fas fa-file-upload"></i> Documents</h3>
+                    
+                    {% if outstanding_requests %}
+                        <h4 style="margin-bottom: 1rem; color: #92400e;">Pending Documents</h4>
+                        {% for request in outstanding_requests %}
+                        <div class="document-item">
+                            <div class="document-info">
+                                <i class="fas fa-file-alt"></i>
+                                <div>
+                                    <div style="font-weight: 600;">{{ request.document_requirement.label }}</div>
+                                    <div style="font-size: 0.875rem; color: #6b7280;">{{ request.document_requirement.description }}</div>
+                                </div>
+                            </div>
+                            <span class="document-status pending">Pending</span>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    {% if uploaded_documents %}
+                        <h4 style="margin: 2rem 0 1rem 0; color: #065f46;">Uploaded Documents</h4>
+                        {% for document in uploaded_documents %}
+                        <div class="document-item">
+                            <div class="document-info">
+                                <i class="fas fa-file-check"></i>
+                                <div>
+                                    <div style="font-weight: 600;">{{ document.document_requirement.label }}</div>
+                                    <div style="font-size: 0.875rem; color: #6b7280;">{{ document.file_name }}</div>
+                                </div>
+                            </div>
+                            <span class="document-status uploaded">Uploaded</span>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    {% if not outstanding_requests and not uploaded_documents %}
+                        <p style="color: #6b7280; text-align: center; padding: 2rem;">No documents available for this application.</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="sidebar">
+                <!-- Status Card -->
+                <div class="card status-section">
+                    <h3><i class="fas fa-chart-line"></i> Application Status</h3>
+                    <div class="status-badge status-{{ application.status|lower }}">
+                        {{ application.get_status_display }}
+                    </div>
+                    
+                    <div class="account-status {% if user.is_active %}active{% else %}pending{% endif %}">
+                        <i class="fas fa-user-shield"></i>
+                        <strong>Account Status:</strong>
+                        {% if user.is_active %}
+                            Active
+                        {% else %}
+                            Pending Activation
+                        {% endif %}
+                    </div>
+                    
+                    <div style="margin-top: 1rem; font-size: 0.875rem; color: #6b7280;">
+                        <div><strong>Submitted:</strong> {{ application.created_at|date:"M d, Y H:i" }}</div>
+                        {% if application.submitted_at %}
+                        <div><strong>Processed:</strong> {{ application.submitted_at|date:"M d, Y H:i" }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Actions -->
+                <div class="card">
+                    <h3><i class="fas fa-cogs"></i> Actions</h3>
+                    <div class="actions">
+                        {% if application.status == 'pending_review' or application.status == 'under_review' %}
+                        <a href="{% url 'applications:supplier-document-upload' application.id %}" class="btn btn-primary">
+                            <i class="fas fa-upload"></i> Upload Documents
+                        </a>
+                        {% endif %}
+                        
+                        <a href="{% url 'applications:supplier-applications-list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Applications
+                        </a>
+                        
+                        {% if user.is_active %}
+                        <a href="{% url 'accounts:dashboard' %}" class="btn btn-success">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

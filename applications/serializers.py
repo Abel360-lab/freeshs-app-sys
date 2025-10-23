@@ -118,6 +118,31 @@ class SupplierApplicationSerializer(serializers.ModelSerializer):
             if not data.get('declaration_agreed'):
                 raise serializers.ValidationError("Declaration must be agreed to before submission.")
         
+        # Check for existing applications with same email
+        email = data.get('email')
+        if email:
+            existing_applications = SupplierApplication.objects.filter(email=email)
+            
+            # Allow reapplication only if all existing applications are rejected
+            non_rejected_applications = existing_applications.exclude(
+                status=SupplierApplication.ApplicationStatus.REJECTED
+            )
+            
+            if non_rejected_applications.exists():
+                # Check if there are any pending or approved applications
+                pending_or_approved = non_rejected_applications.filter(
+                    status__in=[
+                        SupplierApplication.ApplicationStatus.PENDING_REVIEW,
+                        SupplierApplication.ApplicationStatus.UNDER_REVIEW,
+                        SupplierApplication.ApplicationStatus.APPROVED
+                    ]
+                )
+                
+                if pending_or_approved.exists():
+                    raise serializers.ValidationError({
+                        'email': "An application with this email address already exists and is pending or approved. Please use a different email address or contact support if you believe this is an error."
+                    })
+        
         return data
     
     def create(self, validated_data):
@@ -214,6 +239,31 @@ class ApplicationSubmitSerializer(serializers.ModelSerializer):
         if not data.get('declaration_agreed'):
             raise serializers.ValidationError("Declaration must be agreed to before submission.")
         
+        # Check for existing applications with same email - allow rejected applicants to reapply
+        email = data.get('email')
+        if email:
+            existing_applications = SupplierApplication.objects.filter(email=email)
+            
+            # Allow reapplication only if all existing applications are rejected
+            non_rejected_applications = existing_applications.exclude(
+                status=SupplierApplication.ApplicationStatus.REJECTED
+            )
+            
+            if non_rejected_applications.exists():
+                # Check if there are any pending or approved applications
+                pending_or_approved = non_rejected_applications.filter(
+                    status__in=[
+                        SupplierApplication.ApplicationStatus.PENDING_REVIEW,
+                        SupplierApplication.ApplicationStatus.UNDER_REVIEW,
+                        SupplierApplication.ApplicationStatus.APPROVED
+                    ]
+                )
+                
+                if pending_or_approved.exists():
+                    raise serializers.ValidationError({
+                        'email': "An application with this email address already exists and is pending or approved. Please use a different email address or contact support if you believe this is an error."
+                    })
+        
         # Validate commodities - must have either predefined commodities or other commodities
         commodity_ids = data.get('commodity_ids', [])
         other_commodities = data.get('other_commodities', '').strip()
@@ -238,11 +288,13 @@ class ApplicationSubmitSerializer(serializers.ModelSerializer):
             processed_food_names = ['tom brown', 'palm oil']
             fda_required = any(food in other_commodities.lower() for food in processed_food_names)
         
-        # Validate FDA certificate if required
+        # FDA certificate validation - allow submission without it (will be uploaded later)
+        # Note: FDA certificate can be uploaded later through the document upload system
         if fda_required:
             fda_file = data.get('fda_cert_processed_food')
-            if not fda_file or (hasattr(fda_file, 'size') and fda_file.size == 0):
-                raise serializers.ValidationError("FDA certificate is required when supplying processed foods (Tom Brown, Palm Oil, etc.)")
+            # Allow submission without FDA certificate - it can be uploaded later
+            # if not fda_file or (hasattr(fda_file, 'size') and fda_file.size == 0):
+            #     raise serializers.ValidationError("FDA certificate is required when supplying processed foods (Tom Brown, Palm Oil, etc.)")
         else:
             # If FDA certificate is not required, we can still accept it if provided
             # No validation needed for optional field

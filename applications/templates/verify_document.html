@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Verification - GCX</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            animation: slideUp 0.5s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .card-header {
+            padding: 30px;
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .card-header.success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+        
+        .card-header.error {
+            background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%);
+        }
+        
+        .card-header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .card-header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        .icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            animation: bounce 1s ease-in-out;
+        }
+        
+        @keyframes bounce {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
+        
+        .card-body {
+            padding: 40px 30px;
+        }
+        
+        .info-group {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .info-group:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        
+        .info-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #666;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            font-size: 16px;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-badge.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-badge.pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-badge.rejected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .verification-info {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .verification-info h3 {
+            font-size: 14px;
+            color: #667eea;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .verification-info p {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .error-message {
+            background: #fee;
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 4px solid #ee0979;
+        }
+        
+        .error-message h3 {
+            color: #ee0979;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        
+        .error-message p {
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            color: #666;
+            font-size: 13px;
+        }
+        
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        .checkmark {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: block;
+            stroke-width: 2;
+            stroke: #4BB543;
+            stroke-miterlimit: 10;
+            margin: 10px auto;
+            box-shadow: inset 0 0 0 #4BB543;
+            animation: fill 0.4s ease-in-out 0.4s forwards, scale 0.3s ease-in-out 0.9s both;
+        }
+        
+        .checkmark-circle {
+            stroke-dasharray: 166;
+            stroke-dashoffset: 166;
+            stroke-width: 2;
+            stroke-miterlimit: 10;
+            stroke: #4BB543;
+            fill: none;
+            animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+        }
+        
+        .checkmark-check {
+            transform-origin: 50% 50%;
+            stroke-dasharray: 48;
+            stroke-dashoffset: 48;
+            animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+        }
+        
+        @keyframes stroke {
+            100% {
+                stroke-dashoffset: 0;
+            }
+        }
+        
+        @keyframes scale {
+            0%, 100% {
+                transform: none;
+            }
+            50% {
+                transform: scale3d(1.1, 1.1, 1);
+            }
+        }
+        
+        @keyframes fill {
+            100% {
+                box-shadow: inset 0 0 0 30px #4BB543;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            {% if verified %}
+            <!-- Success State -->
+            <div class="card-header success">
+                <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                    <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+                    <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+                </svg>
+                <h1>✓ Document Verified</h1>
+                <p>This document is authentic and has been verified</p>
+            </div>
+            
+            <div class="card-body">
+                <div class="info-group">
+                    <div class="info-label">Application ID</div>
+                    <div class="info-value">{{ application.tracking_code }}</div>
+                </div>
+                
+                <div class="info-group">
+                    <div class="info-label">Company Name</div>
+                    <div class="info-value">{{ application.business_name }}</div>
+                </div>
+                
+                <div class="info-group">
+                    <div class="info-label">Application Status</div>
+                    <div class="info-value">
+                        <span class="status-badge {{ application.status|lower }}">
+                            {{ application.get_status_display }}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="info-group">
+                    <div class="info-label">Submission Date</div>
+                    <div class="info-value">{{ application.created_at|date:"F d, Y" }}</div>
+                </div>
+                
+                <div class="info-group">
+                    <div class="info-label">Contact Email</div>
+                    <div class="info-value">{{ application.email }}</div>
+                </div>
+                
+                <div class="verification-info">
+                    <h3>🔒 Verification Information</h3>
+                    <p>
+                        This document has been cryptographically verified using SHA-256 hashing.
+                        The document is authentic and has not been tampered with since generation.
+                    </p>
+                    <p style="margin-top: 10px;">
+                        <strong>Verified at:</strong> {{ now|date:"F d, Y g:i A" }}
+                    </p>
+                </div>
+            </div>
+            
+            {% elif error %}
+            <!-- Error State -->
+            <div class="card-header error">
+                <div class="icon">⚠</div>
+                <h1>Verification Failed</h1>
+                <p>Unable to verify this document</p>
+            </div>
+            
+            <div class="card-body">
+                <div class="error-message">
+                    <h3>{{ error }}</h3>
+                    <p>
+                        This document could not be verified. This may occur if:
+                    </p>
+                    <ul style="margin-top: 10px; margin-left: 20px; line-height: 1.8;">
+                        <li>The document has been modified after generation</li>
+                        <li>The QR code or verification link is corrupted</li>
+                        <li>The document is not from our system</li>
+                        <li>The application ID is invalid</li>
+                    </ul>
+                </div>
+                
+                <div class="verification-info" style="border-left-color: #ee0979;">
+                    <h3 style="color: #ee0979;">⚠ Security Notice</h3>
+                    <p>
+                        If you believe this document should be valid, please contact our support team
+                        with the application reference number.
+                    </p>
+                </div>
+            </div>
+            
+            {% else %}
+            <!-- Pending/Loading State -->
+            <div class="card-header">
+                <div class="icon">📄</div>
+                <h1>Document Verification</h1>
+                <p>Scan QR code to verify document authenticity</p>
+            </div>
+            
+            <div class="card-body">
+                <div class="verification-info">
+                    <h3>How It Works</h3>
+                    <p>
+                        Each PDF document generated by our system includes a unique QR code.
+                        Scanning this code will verify the document's authenticity and display
+                        the application details.
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="footer">
+                <p>
+                    Ghana Commodity Exchange<br>
+                    <a href="mailto:membership@gcx.com.gh">membership@gcx.com.gh</a> | 
+                    <a href="https://gcx.com.gh">www.gcx.com.gh</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
+

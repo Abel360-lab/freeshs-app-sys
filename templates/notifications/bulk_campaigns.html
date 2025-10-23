@@ -1,0 +1,519 @@
+{% extends 'backoffice/base.html' %}
+{% load static %}
+
+{% block title %}Bulk Campaigns - GCX Admin Portal{% endblock %}
+
+{% block breadcrumb_current %}Bulk Campaigns{% endblock %}
+
+{% block page_icon %}<i class="fas fa-bullhorn"></i>{% endblock %}
+{% block page_title %}Bulk Campaigns{% endblock %}
+{% block page_subtitle %}Manage bulk notification campaigns{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'notifications:create-bulk-campaign' %}" class="btn btn-primary btn-sm">
+    <i class="fas fa-plus"></i> Create Campaign
+</a>
+<button type="button" class="btn btn-outline-warning btn-sm" onclick="pauseAllCampaigns()">
+    <i class="fas fa-pause"></i> Pause All
+</button>
+<button type="button" class="btn btn-outline-success btn-sm" onclick="resumeAllCampaigns()">
+    <i class="fas fa-play"></i> Resume All
+</button>
+{% endblock %}
+
+{% block extrahead %}
+<style>
+    :root {
+        --primary-color: #1a472a;
+        --accent-color: #d4af37;
+        --success-color: #28a745;
+        --warning-color: #ffc107;
+        --danger-color: #dc3545;
+        --info-color: #17a2b8;
+        --light-color: #f8f9fa;
+        --dark-color: #343a40;
+        --border-radius: 8px;
+        --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
+        --shadow-md: 0 4px 8px rgba(0,0,0,0.15);
+        --transition: all 0.3s ease;
+    }
+
+    .campaigns-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .campaign-card {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        box-shadow: var(--shadow-sm);
+        border-left: 4px solid var(--info-color);
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .campaign-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+    }
+
+    .campaign-card.active { border-left-color: var(--success-color); }
+    .campaign-card.paused { border-left-color: var(--warning-color); }
+    .campaign-card.completed { border-left-color: var(--info-color); }
+    .campaign-card.cancelled { border-left-color: var(--danger-color); }
+
+    .campaign-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
+
+    .campaign-name {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--dark-color);
+        margin: 0;
+    }
+
+    .campaign-status {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .status-active { background: rgba(40, 167, 69, 0.1); color: var(--success-color); }
+    .status-paused { background: rgba(255, 193, 7, 0.1); color: var(--warning-color); }
+    .status-completed { background: rgba(23, 162, 184, 0.1); color: var(--info-color); }
+    .status-cancelled { background: rgba(220, 53, 69, 0.1); color: var(--danger-color); }
+
+    .campaign-description {
+        color: #6c757d;
+        font-size: 0.875rem;
+        margin-bottom: 1rem;
+        line-height: 1.4;
+    }
+
+    .campaign-metrics {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .metric {
+        text-align: center;
+        padding: 0.75rem;
+        background: var(--light-color);
+        border-radius: var(--border-radius);
+    }
+
+    .metric-value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin: 0;
+    }
+
+    .metric-label {
+        font-size: 0.75rem;
+        color: #6c757d;
+        margin: 0.25rem 0 0 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .campaign-progress {
+        margin-bottom: 1rem;
+    }
+
+    .progress-bar {
+        height: 8px;
+        background: #e9ecef;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary-color) 0%, var(--accent-color) 100%);
+        border-radius: 4px;
+        transition: width 0.3s ease;
+    }
+
+    .progress-text {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 0.5rem;
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+
+    .campaign-actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-action {
+        padding: 0.375rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        border: none;
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .btn-action:hover {
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .btn-start { background: var(--success-color); color: white; }
+    .btn-pause { background: var(--warning-color); color: white; }
+    .btn-resume { background: var(--info-color); color: white; }
+    .btn-cancel { background: var(--danger-color); color: white; }
+    .btn-view { background: var(--primary-color); color: white; }
+
+    .priority-badge {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .priority-urgent { background: rgba(220, 53, 69, 0.1); color: var(--danger-color); }
+    .priority-high { background: rgba(255, 193, 7, 0.1); color: var(--warning-color); }
+    .priority-normal { background: rgba(23, 162, 184, 0.1); color: var(--info-color); }
+    .priority-low { background: rgba(108, 117, 125, 0.1); color: #6c757d; }
+
+    .campaign-stats {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: 2rem;
+        box-shadow: var(--shadow-sm);
+        margin-bottom: 2rem;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .stat-card {
+        text-align: center;
+        padding: 1.5rem;
+        background: var(--light-color);
+        border-radius: var(--border-radius);
+        transition: var(--transition);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin: 0;
+    }
+
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.875rem;
+        margin: 0.5rem 0 0 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .loading-spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid var(--primary-color);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .fade-in {
+        animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: #6c757d;
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    @media (max-width: 768px) {
+        .campaigns-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .campaign-metrics {
+            grid-template-columns: 1fr;
+        }
+        
+        .campaign-actions {
+            flex-direction: column;
+        }
+        
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Campaign Statistics -->
+<div class="campaign-stats">
+    <h3 class="mb-4">
+        <i class="fas fa-chart-bar"></i>
+        Campaign Statistics
+    </h3>
+    
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">{{ total_campaigns|default:0 }}</div>
+            <div class="stat-label">Total Campaigns</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ active_campaigns|default:0 }}</div>
+            <div class="stat-label">Active</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ completed_campaigns|default:0 }}</div>
+            <div class="stat-label">Completed</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ total_recipients|default:0 }}</div>
+            <div class="stat-label">Total Recipients</div>
+        </div>
+    </div>
+</div>
+
+<!-- Campaigns Grid -->
+<div class="campaigns-grid">
+    {% for campaign in campaigns %}
+    <div class="campaign-card {{ campaign.status|lower }} fade-in">
+        <div class="priority-badge priority-{{ campaign.priority|lower }}">
+            {{ campaign.priority }}
+        </div>
+        
+        <div class="campaign-header">
+            <h3 class="campaign-name">{{ campaign.name }}</h3>
+            <span class="campaign-status status-{{ campaign.status|lower }}">{{ campaign.status }}</span>
+        </div>
+        
+        {% if campaign.description %}
+        <div class="campaign-description">
+            {{ campaign.description|truncatechars:100 }}
+        </div>
+        {% endif %}
+        
+        <div class="campaign-metrics">
+            <div class="metric">
+                <div class="metric-value">{{ campaign.total_recipients|default:0 }}</div>
+                <div class="metric-label">Recipients</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value">{{ campaign.sent_count|default:0 }}</div>
+                <div class="metric-label">Sent</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value">{{ campaign.success_rate|default:0|floatformat:1 }}%</div>
+                <div class="metric-label">Success Rate</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value">{{ campaign.failed_count|default:0 }}</div>
+                <div class="metric-label">Failed</div>
+            </div>
+        </div>
+        
+        <div class="campaign-progress">
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: {{ campaign.get_progress_percentage|default:0 }}%"></div>
+            </div>
+            <div class="progress-text">
+                <span>{{ campaign.get_progress_percentage|default:0 }}% Complete</span>
+                <span>{{ campaign.sent_count|default:0 }} / {{ campaign.total_recipients|default:0 }}</span>
+            </div>
+        </div>
+        
+        <div class="campaign-actions">
+            {% if campaign.status == 'DRAFT' %}
+            <button class="btn-action btn-start" onclick="controlCampaign({{ campaign.id }}, 'start')">
+                <i class="fas fa-play"></i> Start
+            </button>
+            <button class="btn-action btn-cancel" onclick="controlCampaign({{ campaign.id }}, 'cancel')">
+                <i class="fas fa-times"></i> Cancel
+            </button>
+            {% elif campaign.status == 'RUNNING' %}
+            <button class="btn-action btn-pause" onclick="controlCampaign({{ campaign.id }}, 'pause')">
+                <i class="fas fa-pause"></i> Pause
+            </button>
+            <button class="btn-action btn-cancel" onclick="controlCampaign({{ campaign.id }}, 'cancel')">
+                <i class="fas fa-times"></i> Cancel
+            </button>
+            {% elif campaign.status == 'PAUSED' %}
+            <button class="btn-action btn-resume" onclick="controlCampaign({{ campaign.id }}, 'resume')">
+                <i class="fas fa-play"></i> Resume
+            </button>
+            <button class="btn-action btn-cancel" onclick="controlCampaign({{ campaign.id }}, 'cancel')">
+                <i class="fas fa-times"></i> Cancel
+            </button>
+            {% endif %}
+            
+            <button class="btn-action btn-view" onclick="viewCampaign({{ campaign.id }})">
+                <i class="fas fa-eye"></i> View
+            </button>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="empty-state">
+            <i class="fas fa-bullhorn"></i>
+            <h4>No Campaigns Found</h4>
+            <p>You haven't created any bulk campaigns yet.</p>
+            <a href="{% url 'notifications:create-bulk-campaign' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Create Your First Campaign
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block extrajs %}
+<script>
+    function controlCampaign(campaignId, action) {
+        const button = event.target.closest('.btn-action');
+        const originalText = button.innerHTML;
+        
+        button.innerHTML = '<span class="loading-spinner"></span> Processing...';
+        button.disabled = true;
+        
+        fetch(`{% url 'notifications:bulk-campaign-control' campaign_id=1 action='start' %}`.replace('1', campaignId).replace('start', action), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification(data.message, 'success');
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                showNotification(data.message || 'Action failed', 'error');
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Network error occurred', 'error');
+            button.innerHTML = originalText;
+            button.disabled = false;
+        });
+    }
+    
+    function viewCampaign(campaignId) {
+        // Implementation for viewing campaign details
+        showNotification('Campaign details view coming soon', 'info');
+    }
+    
+    function pauseAllCampaigns() {
+        if (confirm('Are you sure you want to pause all active campaigns?')) {
+            // Implementation for pausing all campaigns
+            showNotification('Pause all functionality coming soon', 'info');
+        }
+    }
+    
+    function resumeAllCampaigns() {
+        if (confirm('Are you sure you want to resume all paused campaigns?')) {
+            // Implementation for resuming all campaigns
+            showNotification('Resume all functionality coming soon', 'info');
+        }
+    }
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    function showNotification(message, type) {
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        notification.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 5000);
+    }
+    
+    // Add fade-in animation to campaign cards
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.campaign-card');
+        cards.forEach(function(card, index) {
+            setTimeout(function() {
+                card.classList.add('fade-in');
+            }, index * 100);
+        });
+    });
+</script>
+{% endblock %}

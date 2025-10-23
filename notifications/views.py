@@ -5,12 +5,17 @@ Notification views for GCX Supplier Application Portal.
 from django.shortcuts import render, get_object_or_404
 from django.contrib.admin.views.decorators import staff_member_required
 from django.http import JsonResponse
-from django.db.models import Count, Q, Avg
+from django.db.models import Count, Q, Avg, Max
 from django.utils import timezone
 from datetime import timedelta
 from django.core.paginator import Paginator
+from django.views.decorators.http import require_POST
+import json
 
-from .models import NotificationLog, SMSNotification, NotificationAnalytics, NotificationTemplate
+from .models import (
+    NotificationLog, SMSNotification, NotificationAnalytics, NotificationTemplate,
+    NotificationService, BulkNotification, NotificationQueue
+)
 
 
 @staff_member_required
@@ -269,15 +274,21 @@ def notification_analytics(request):
         })
     daily_stats.reverse()
     
-    # Top templates
-    top_templates = NotificationTemplate.objects.annotate(
-        sent_count=Count('logs')
-    ).order_by('-sent_count')[:10]
-    
-    # Add last_used date to each template
+    # Top templates with success rate and last used
+    top_templates = (
+        NotificationTemplate.objects
+        .annotate(
+            sent_count=Count('logs'),
+            success_count=Count('logs', filter=Q(logs__status__in=['SENT','DELIVERED','OPENED','CLICKED'])),
+            last_used_ts=Max('logs__created_at')
+        )
+        .order_by('-sent_count')[:10]
+    )
+    # attach computed fields for display (avoid division by zero)
     for template in top_templates:
-        last_log = template.logs.order_by('-created_at').first()
-        template.last_used = last_log.created_at if last_log else None
+        total = template.sent_count or 0
+        template.success_rate = round((template.success_count / total) * 100, 2) if total > 0 else 0
+        template.last_used = template.last_used_ts
     
     context = {
         'email_stats': email_stats,
@@ -285,6 +296,14 @@ def notification_analytics(request):
         'overall_stats': overall_stats,
         'daily_stats': daily_stats,
         'top_templates': top_templates,
+        'status_distribution': {
+            'sent': notifications.filter(status='SENT').count(),
+            'delivered': notifications.filter(status='DELIVERED').count(),
+            'opened': notifications.filter(status='OPENED').count(),
+            'clicked': notifications.filter(status='CLICKED').count(),
+            'failed': notifications.filter(status='FAILED').count(),
+            'bounced': notifications.filter(status='BOUNCED').count(),
+        },
         'days': days,
         'start_date': start_date,
         'end_date': end_date,
@@ -333,34 +352,97 @@ def notification_analytics_api(request):
 
 
 @staff_member_required
+def edit_notification_template(request, template_id):
+    """Edit a notification template with live preview."""
+    template = get_object_or_404(NotificationTemplate, id=template_id)
+    if request.method == 'POST':
+        # Basic save without custom forms to keep minimal
+        template.name = request.POST.get('name', template.name)
+        template.subject = request.POST.get('subject', template.subject)
+        template.body_html = request.POST.get('body_html', template.body_html)
+        template.body_text = request.POST.get('body_text', template.body_text)
+        is_active = request.POST.get('is_active')
+        template.is_active = True if is_active in ['on', 'true', '1'] else False
+        template.save()
+        return JsonResponse({'success': True}) if request.headers.get('x-requested-with') == 'XMLHttpRequest' else render(request, 'notifications/template_edit.html', {'tmpl': template, 'saved': True})
+    return render(request, 'notifications/template_edit.html', {'tmpl': template})
+
+
+@staff_member_required
+@require_POST
+def preview_notification_template(request, template_id):
+    """Return a rendered HTML preview using posted subject/body and sample context."""
+    _ = get_object_or_404(NotificationTemplate, id=template_id)
+    data = request.POST
+    subject = data.get('subject', '')
+    body_html = data.get('body_html', '')
+    body_text = data.get('body_text', '')
+
+    # Provide sample context similar to what the app might send
+    sample = {
+        'supplier_name': 'Acme Supplies Ltd.',
+        'tracking_code': 'GCX-APP-001234',
+        'business_name': 'Acme Supplies',
+        'support_email': 'support@gcx.com.gh',
+        'current_date': timezone.now().strftime('%B %d, %Y')
+    }
+
+    # Render by simple substitution of {{ var }} where possible
+    # Minimalistic, since full templating is handled elsewhere in the app
+    def render_vars(s: str) -> str:
+        out = s or ''
+        for k, v in sample.items():
+            out = out.replace('{{ ' + k + ' }}', str(v))
+        return out
+
+    rendered_subject = render_vars(subject)
+    rendered_html = render_vars(body_html)
+    rendered_text = render_vars(body_text)
+
+    html = f"""
+    <div style=\"font-family: Inter, Arial, sans-serif; padding:16px;\">
+      <h2 style=\"margin-top:0;\">{rendered_subject}</h2>
+      <div style=\"border:1px solid #e5e7eb; border-radius:8px; padding:16px;\">{rendered_html}</div>
+      <pre style=\"background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:12px; margin-top:12px; white-space:pre-wrap;\">{rendered_text}</pre>
+    </div>
+    """
+    return JsonResponse({'html': html})
+
+
+@staff_member_required
+@require_POST
 def retry_failed_notifications(request):
     """
     Retry failed notifications.
     """
-    if request.method == 'POST':
-        notification_ids = request.POST.getlist('notification_ids')
-        
-        if not notification_ids:
-            # Retry all failed notifications
-            notifications = NotificationLog.objects.filter(status='FAILED')
-            notification_ids = list(notifications.values_list('id', flat=True))
-        
-        retried_count = 0
-        for notification_id in notification_ids:
-            try:
-                notification = NotificationLog.objects.get(id=notification_id)
-                if notification.can_retry():
-                    notification.schedule_retry()
-                    retried_count += 1
-            except NotificationLog.DoesNotExist:
-                continue
-        
-        return JsonResponse({
-            'success': True,
-            'message': f'Successfully scheduled {retried_count} notifications for retry'
-        })
-    
-    return JsonResponse({'success': False, 'message': 'Invalid request method'})
+    try:
+        data = json.loads(request.body or '{}')
+    except Exception:
+        data = {}
+    notification_ids = data.get('notification_ids') or request.POST.getlist('notification_ids')
+
+    if not notification_ids:
+        # Retry all failed notifications
+        notifications = NotificationLog.objects.filter(status='FAILED')
+        notification_ids = list(notifications.values_list('id', flat=True))
+
+    retried_count = 0
+    for notification_id in notification_ids:
+        try:
+            notification = NotificationLog.objects.get(id=notification_id)
+            if notification.can_retry():
+                notification.schedule_retry()
+                retried_count += 1
+        except NotificationLog.DoesNotExist:
+            continue
+
+        # Kick off async task to send pending notifications
+        try:
+            from .tasks import send_pending_notifications
+            send_pending_notifications.delay()
+        except Exception:
+            pass
+        return JsonResponse({'success': True, 'message': f'Successfully scheduled {retried_count} notifications for retry'})
 
 
 @staff_member_required

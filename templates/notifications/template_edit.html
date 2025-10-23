@@ -1,0 +1,128 @@
+{% extends 'backoffice/base.html' %}
+{% load static %}
+
+{% block title %}Edit Template - {{ tmpl.name }}{% endblock %}
+
+{% block page_header_container %}
+<div class="page-header-container">
+  <div class="page-header-content">
+    <div class="page-header-info">
+      <div class="page-header-breadcrumb">
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'applications:backoffice-dashboard' %}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'notifications:dashboard' %}">Notifications</a></li>
+            <li class="breadcrumb-item active">Edit Template</li>
+          </ol>
+        </nav>
+      </div>
+      <h1 class="page-header-title">Edit: {{ tmpl.name }}</h1>
+      <p class="page-header-subtitle">Update the template and preview changes live</p>
+    </div>
+    <div class="page-header-actions">
+      <a href="{% url 'notifications:dashboard' %}" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left"></i> Back</a>
+      <button id="saveBtn" class="btn btn-primary btn-sm"><i class="fas fa-save"></i> Save</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<style>
+  .editor-grid { display:grid; grid-template-columns: 1fr 1fr; gap:1rem; }
+  @media (max-width: 992px) { .editor-grid { grid-template-columns: 1fr; } }
+  .editor-card { background:#fff; border:1px solid var(--border-color); border-radius:12px; box-shadow: var(--shadow-sm); }
+  .editor-card .card-header { background:#f9fafb; border-bottom:1px solid var(--border-color); }
+  .form-control-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; }
+  #previewFrame { width:100%; height: 700px; border:0; background:#fff; }
+</style>
+
+<div class="editor-grid">
+  <div class="editor-card">
+    <div class="card-header"><h5 class="card-title m-0">Template</h5></div>
+    <div class="card-body">
+      <form id="templateForm" method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label class="form-label">Name</label>
+          <input type="text" class="form-control" name="name" value="{{ tmpl.name }}">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Subject</label>
+          <input type="text" class="form-control" name="subject" id="subjectInput" value="{{ tmpl.subject }}">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">HTML Body</label>
+          <textarea class="form-control form-control-mono" rows="10" name="body_html" id="htmlInput">{{ tmpl.body_html }}</textarea>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Text Body</label>
+          <textarea class="form-control form-control-mono" rows="6" name="body_text" id="textInput">{{ tmpl.body_text }}</textarea>
+        </div>
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" name="is_active" id="isActive" {% if tmpl.is_active %}checked{% endif %}>
+          <label class="form-check-label" for="isActive">Active</label>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="editor-card">
+    <div class="card-header"><h5 class="card-title m-0">Live Preview</h5></div>
+    <div class="card-body">
+      <iframe id="previewFrame" title="Template Preview"></iframe>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:9999;">
+  <div id="saveToast" class="toast align-items-center text-white bg-success border-0" role="alert">
+    <div class="d-flex">
+      <div class="toast-body"><i class="fas fa-check-circle me-2"></i>Template saved</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+  <div id="errorToast" class="toast align-items-center text-white bg-danger border-0" role="alert">
+    <div class="d-flex">
+      <div class="toast-body"><i class="fas fa-exclamation-circle me-2"></i>Error saving template</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extrajs %}
+<script>
+  function debounce(fn, ms){ let t; return function(){ clearTimeout(t); t=setTimeout(()=>fn.apply(this, arguments), ms); } }
+
+  function updatePreview(){
+    const form = document.getElementById('templateForm');
+    const formData = new FormData(form);
+    fetch('{% url "notifications:template-preview" tmpl.id %}', {
+      method: 'POST', headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}' }, body: formData
+    })
+    .then(r=>r.json())
+    .then(data=>{ document.getElementById('previewFrame').srcdoc = data.html; })
+    .catch(()=>{});
+  }
+
+  const debouncedPreview = debounce(updatePreview, 300);
+  ['subjectInput','htmlInput','textInput','isActive'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el){ el.addEventListener('input', debouncedPreview); el.addEventListener('change', debouncedPreview); }
+  });
+
+  document.getElementById('saveBtn').addEventListener('click', function(){
+    const form = document.getElementById('templateForm');
+    const formData = new FormData(form);
+    fetch('', { method:'POST', headers:{ 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}', 'X-Requested-With':'XMLHttpRequest' }, body: formData })
+    .then(r=>r.json()).then(()=>{
+      new bootstrap.Toast(document.getElementById('saveToast')).show();
+    }).catch(()=>{
+      new bootstrap.Toast(document.getElementById('errorToast')).show();
+    });
+  });
+
+  document.addEventListener('DOMContentLoaded', updatePreview);
+</script>
+{% endblock %}
+
+

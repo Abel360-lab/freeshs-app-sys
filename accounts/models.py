@@ -45,6 +45,11 @@ class User(AbstractUser):
         help_text="Whether the phone number has been verified"
     )
     
+    must_change_password = models.BooleanField(
+        default=False,
+        help_text="Whether the user must change their password on next login"
+    )
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     

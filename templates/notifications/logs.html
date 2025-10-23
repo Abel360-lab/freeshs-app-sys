@@ -1,325 +1,507 @@
 {% extends 'backoffice/base.html' %}
 {% load static %}
 
-{% block title %}Notification Logs{% endblock %}
+{% block title %}Notification Logs - GCX Admin Portal{% endblock %}
 
-{% block extra_css %}
-<style>
-    .log-item {
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
-        padding: 15px;
-        margin-bottom: 10px;
-        transition: all 0.3s ease;
-    }
-    
-    .log-item:hover {
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    
-    .status-badge {
-        display: inline-block;
-        padding: 4px 8px;
-        border-radius: 12px;
-        font-size: 0.8rem;
-        font-weight: 500;
-    }
-    
-    .status-sent {
-        background-color: #d4edda;
-        color: #155724;
-    }
-    
-    .status-delivered {
-        background-color: #d1ecf1;
-        color: #0c5460;
-    }
-    
-    .status-opened {
-        background-color: #cce5ff;
-        color: #004085;
-    }
-    
-    .status-clicked {
-        background-color: #fff3cd;
-        color: #856404;
-    }
-    
-    .status-failed {
-        background-color: #f8d7da;
-        color: #721c24;
-    }
-    
-    .status-bounced {
-        background-color: #f5c6cb;
-        color: #721c24;
-    }
-    
-    .status-pending {
-        background-color: #e2e3e5;
-        color: #383d41;
-    }
-    
-    .filter-card {
-        background-color: #f8f9fa;
-        border-radius: 8px;
-        padding: 20px;
-        margin-bottom: 20px;
-    }
-    
-    .log-details {
-        font-size: 0.9rem;
-        color: #6c757d;
-    }
-    
-    .log-content {
-        max-height: 100px;
-        overflow-y: auto;
-        background-color: #f8f9fa;
-        padding: 10px;
-        border-radius: 4px;
-        margin-top: 10px;
-    }
-</style>
-{% endblock %}
-
-{% block content %}
-<div class="container-fluid">
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 class="text-primary">
-                <i class="fas fa-list"></i> Notification Logs
-            </h2>
-            <p class="text-muted">View and manage all notification logs</p>
+{% block page_header_container %}
+<div class="page-header-container">
+    <div class="page-header-content">
+        <div class="page-header-info">
+            <div class="page-header-breadcrumb">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'applications:backoffice-dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'notifications:dashboard' %}">Notifications</a></li>
+                        <li class="breadcrumb-item active">Logs</li>
+                    </ol>
+                </nav>
+            </div>
+            <h1 class="page-header-title">Notification Logs</h1>
+            <p class="page-header-subtitle">Detailed history of all sent notifications and their delivery status</p>
         </div>
-        <div>
+        <div class="page-header-actions">
+            <button class="btn btn-outline-secondary" onclick="location.reload()">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
             <a href="{% url 'notifications:dashboard' %}" class="btn btn-outline-primary">
-                <i class="fas fa-chart-line"></i> Dashboard
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+            <a href="{% url 'notifications:analytics' %}" class="btn btn-primary">
+                <i class="fas fa-chart-bar"></i> Analytics
             </a>
         </div>
     </div>
-    
-    <!-- Filters -->
-    <div class="filter-card">
-        <form method="get" class="row g-3">
-            <div class="col-md-3">
-                <label for="status" class="form-label">Status</label>
-                <select class="form-select" id="status" name="status">
-                    <option value="">All Statuses</option>
-                    {% for value, label in status_choices %}
-                    <option value="{{ value }}" {% if current_filters.status == value %}selected{% endif %}>{{ label }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label for="channel" class="form-label">Channel</label>
-                <select class="form-select" id="channel" name="channel">
-                    <option value="">All Channels</option>
-                    {% for value, label in channel_choices %}
-                    <option value="{{ value }}" {% if current_filters.channel == value %}selected{% endif %}>{{ label }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label for="template" class="form-label">Template</label>
-                <select class="form-select" id="template" name="template">
-                    <option value="">All Templates</option>
-                    {% for value, label in template_choices %}
-                    <option value="{{ value }}" {% if current_filters.template == value %}selected{% endif %}>{{ label }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label for="search" class="form-label">Search</label>
-                <input type="text" class="form-control" id="search" name="search" 
-                       value="{{ current_filters.search }}" placeholder="Email, name, or subject">
-            </div>
-            <div class="col-12">
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-search"></i> Filter
-                </button>
-                <a href="{% url 'notifications:logs' %}" class="btn btn-outline-secondary">
-                    <i class="fas fa-times"></i> Clear
-                </a>
-            </div>
-        </form>
-    </div>
-    
-    <!-- Logs List -->
-    <div class="row">
-        <div class="col-12">
-            {% for log in logs %}
-            <div class="log-item">
-                <div class="row">
-                    <div class="col-md-8">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <div>
-                                <h6 class="mb-1">
-                                    <strong>{{ log.template.name }}</strong>
-                                    <span class="badge bg-secondary ms-2">{{ log.get_channel_display }}</span>
-                                </h6>
-                                <div class="log-details">
-                                    <strong>To:</strong> {{ log.recipient_email }}
-                                    {% if log.recipient_name %} ({{ log.recipient_name }}){% endif %}
-                                    <br>
-                                    <strong>Subject:</strong> {{ log.subject }}
-                                </div>
-                            </div>
-                            <div class="text-end">
-                                <span class="status-badge status-{{ log.status|lower }}">
-                                    {{ log.get_status_display }}
-                                </span>
-                                <br>
-                                <small class="text-muted">{{ log.created_at|timesince }} ago</small>
-                            </div>
-                        </div>
-                        
-                        <!-- Timestamps -->
-                        <div class="row text-muted small">
-                            <div class="col-md-3">
-                                <strong>Created:</strong> {{ log.created_at|date:"M d, Y H:i" }}
-                            </div>
-                            {% if log.sent_at %}
-                            <div class="col-md-3">
-                                <strong>Sent:</strong> {{ log.sent_at|date:"M d, Y H:i" }}
-                            </div>
-                            {% endif %}
-                            {% if log.delivered_at %}
-                            <div class="col-md-3">
-                                <strong>Delivered:</strong> {{ log.delivered_at|date:"M d, Y H:i" }}
-                            </div>
-                            {% endif %}
-                            {% if log.opened_at %}
-                            <div class="col-md-3">
-                                <strong>Opened:</strong> {{ log.opened_at|date:"M d, Y H:i" }}
-                            </div>
-                            {% endif %}
-                        </div>
-                        
-                        <!-- Error Message -->
-                        {% if log.error_message %}
-                        <div class="alert alert-danger mt-2 mb-0">
-                            <strong>Error:</strong> {{ log.error_message }}
-                        </div>
-                        {% endif %}
-                        
-                        <!-- Related Objects -->
-                        {% if log.application or log.user %}
-                        <div class="mt-2">
-                            {% if log.application %}
-                            <span class="badge bg-info me-2">
-                                <i class="fas fa-file-alt"></i> Application: {{ log.application.tracking_code }}
-                            </span>
-                            {% endif %}
-                            {% if log.user %}
-                            <span class="badge bg-success">
-                                <i class="fas fa-user"></i> User: {{ log.user.get_full_name|default:log.user.username }}
-                            </span>
-                            {% endif %}
-                        </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="col-md-4">
-                        <div class="d-flex flex-column gap-2">
-                            <a href="{% url 'notifications:detail' log.id %}" class="btn btn-sm btn-outline-primary">
-                                <i class="fas fa-eye"></i> View Details
-                            </a>
-                            
-                            {% if log.status == 'FAILED' and log.can_retry %}
-                            <button class="btn btn-sm btn-outline-warning" onclick="retryNotification({{ log.id }})">
-                                <i class="fas fa-redo"></i> Retry
-                            </button>
-                            {% endif %}
-                            
-                            {% if log.tracking_id %}
-                            <a href="{{ log.get_tracking_url }}" class="btn btn-sm btn-outline-info" target="_blank">
-                                <i class="fas fa-link"></i> Track
-                            </a>
-                            {% endif %}
-                        </div>
-                        
-                        <!-- Delivery Time -->
-                        {% if log.delivery_time %}
-                        <div class="mt-2 text-center">
-                            <small class="text-muted">
-                                <strong>Delivery Time:</strong> {{ log.delivery_time|floatformat:1 }}s
-                            </small>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            {% empty %}
-            <div class="text-center py-5">
-                <i class="fas fa-bell-slash fa-3x text-muted mb-3"></i>
-                <h5 class="text-muted">No notification logs found</h5>
-                <p class="text-muted">Try adjusting your filters or check back later.</p>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-    
-    <!-- Pagination -->
-    {% if logs.has_other_pages %}
-    <nav aria-label="Notification logs pagination">
-        <ul class="pagination justify-content-center">
-            {% if logs.has_previous %}
-            <li class="page-item">
-                <a class="page-link" href="?page=1{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}{% if current_filters.channel %}&channel={{ current_filters.channel }}{% endif %}{% if current_filters.template %}&template={{ current_filters.template }}{% endif %}{% if current_filters.search %}&search={{ current_filters.search }}{% endif %}">First</a>
-            </li>
-            <li class="page-item">
-                <a class="page-link" href="?page={{ logs.previous_page_number }}{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}{% if current_filters.channel %}&channel={{ current_filters.channel }}{% endif %}{% if current_filters.template %}&template={{ current_filters.template }}{% endif %}{% if current_filters.search %}&search={{ current_filters.search }}{% endif %}">Previous</a>
-            </li>
-            {% endif %}
-            
-            <li class="page-item active">
-                <span class="page-link">
-                    Page {{ logs.number }} of {{ logs.paginator.num_pages }}
-                </span>
-            </li>
-            
-            {% if logs.has_next %}
-            <li class="page-item">
-                <a class="page-link" href="?page={{ logs.next_page_number }}{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}{% if current_filters.channel %}&channel={{ current_filters.channel }}{% endif %}{% if current_filters.template %}&template={{ current_filters.template }}{% endif %}{% if current_filters.search %}&search={{ current_filters.search }}{% endif %}">Next</a>
-            </li>
-            <li class="page-item">
-                <a class="page-link" href="?page={{ logs.paginator.num_pages }}{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}{% if current_filters.channel %}&channel={{ current_filters.channel }}{% endif %}{% if current_filters.template %}&template={{ current_filters.template }}{% endif %}{% if current_filters.search %}&search={{ current_filters.search }}{% endif %}">Last</a>
-            </li>
-            {% endif %}
-        </ul>
-    </nav>
-    {% endif %}
 </div>
 {% endblock %}
 
-{% block extra_js %}
+{% block content %}
+<form style="display: none;" id="csrf-form">{% csrf_token %}</form>
+
+<style>
+/* Notification Logs Styles */
+.filter-panel {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.filter-panel h6 {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0 0 1rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.log-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    transition: all 0.2s ease;
+}
+
+.log-card:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.log-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.log-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.log-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.log-info h6 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0 0 0.375rem 0;
+}
+
+.log-info p {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin: 0 0 0.5rem 0;
+}
+
+.log-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    font-size: 0.75rem;
+    color: #9ca3af;
+}
+
+.log-status {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+}
+
+.status-pill {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    white-space: nowrap;
+}
+
+.status-pill.sent {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-pill.delivered {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.status-pill.opened {
+    background: #e0f2fe;
+    color: #075985;
+}
+
+.status-pill.failed {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.status-pill.bounced {
+    background: #fecaca;
+    color: #7f1d1d;
+}
+
+.status-pill.pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.log-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    padding: 1rem;
+    background: #f9fafb;
+    border-radius: 8px;
+    margin-top: 1rem;
+}
+
+.log-detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.log-detail-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.log-detail-value {
+    font-size: 0.875rem;
+    color: #111827;
+    font-weight: 500;
+}
+
+.log-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: #f9fafb;
+    border-radius: 12px;
+    border: 2px dashed #e5e7eb;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    color: #d1d5db;
+    margin-bottom: 1rem;
+}
+
+.empty-state p {
+    font-size: 1.125rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+/* Pagination */
+.pagination-modern {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 2rem;
+}
+
+.pagination-modern .page-link {
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+    color: #6b7280;
+    padding: 0.5rem 0.875rem;
+    font-weight: 500;
+}
+
+.pagination-modern .page-item.active .page-link {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: #ffffff;
+}
+
+.pagination-modern .page-link:hover {
+    background: #f3f4f6;
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+</style>
+
+<!-- Filters -->
+<div class="filter-panel">
+    <h6><i class="fas fa-filter"></i> Filter Notifications</h6>
+    <form method="get">
+        <div class="row g-3">
+            <div class="col-lg-3 col-md-6">
+                <label for="status" class="form-label fw-semibold">Status</label>
+                <select class="form-select" id="status" name="status">
+                    <option value="">All Statuses</option>
+                    <option value="SENT" {% if request.GET.status == 'SENT' %}selected{% endif %}>Sent</option>
+                    <option value="DELIVERED" {% if request.GET.status == 'DELIVERED' %}selected{% endif %}>Delivered</option>
+                    <option value="OPENED" {% if request.GET.status == 'OPENED' %}selected{% endif %}>Opened</option>
+                    <option value="FAILED" {% if request.GET.status == 'FAILED' %}selected{% endif %}>Failed</option>
+                    <option value="BOUNCED" {% if request.GET.status == 'BOUNCED' %}selected{% endif %}>Bounced</option>
+                    <option value="PENDING" {% if request.GET.status == 'PENDING' %}selected{% endif %}>Pending</option>
+                </select>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <label for="channel" class="form-label fw-semibold">Channel</label>
+                <select class="form-select" id="channel" name="channel">
+                    <option value="">All Channels</option>
+                    <option value="EMAIL" {% if request.GET.channel == 'EMAIL' %}selected{% endif %}>Email</option>
+                    <option value="SMS" {% if request.GET.channel == 'SMS' %}selected{% endif %}>SMS</option>
+                </select>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <label for="template" class="form-label fw-semibold">Template</label>
+                <input type="text" class="form-control" id="template" name="template" 
+                       value="{{ request.GET.template }}" placeholder="Template name">
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <label for="search" class="form-label fw-semibold">Search</label>
+                <input type="text" class="form-control" id="search" name="search" 
+                       value="{{ request.GET.search }}" placeholder="Email or subject">
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search me-2"></i>Apply Filters
+                </button>
+                <a href="{% url 'notifications:logs' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times me-2"></i>Clear All
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Logs List -->
+<div class="row">
+    <div class="col-12">
+        {% if logs %}
+        {% for log in logs %}
+        <div class="log-card">
+            <div class="log-header">
+                <div class="d-flex align-items-start gap-3 flex-grow-1">
+                    <div class="log-icon" style="background: {% if log.status == 'SENT' or log.status == 'DELIVERED' %}#dcfce7; color: #166534{% elif log.status == 'FAILED' or log.status == 'BOUNCED' %}#fee2e2; color: #991b1b{% elif log.status == 'OPENED' %}#dbeafe; color: #1e40af{% else %}#fef3c7; color: #92400e{% endif %};">
+                        <i class="fas {% if log.status == 'SENT' or log.status == 'DELIVERED' %}fa-check-circle{% elif log.status == 'FAILED' or log.status == 'BOUNCED' %}fa-times-circle{% elif log.status == 'OPENED' %}fa-envelope-open{% else %}fa-clock{% endif %}"></i>
+                    </div>
+                    <div class="log-info">
+                        <h6>{{ log.template.name|default:"Notification" }}</h6>
+                        <p><strong>To:</strong> {{ log.recipient_email }} {% if log.recipient_name %}({{ log.recipient_name }}){% endif %}</p>
+                        <p><strong>Subject:</strong> {{ log.subject }}</p>
+                        <div class="log-meta">
+                            <span><i class="fas fa-calendar me-1"></i>{{ log.created_at|date:"M d, Y" }}</span>
+                            <span><i class="fas fa-clock me-1"></i>{{ log.created_at|time:"h:i A" }}</span>
+                            <span><i class="fas fa-envelope me-1"></i>{{ log.get_channel_display }}</span>
+                            {% if log.sent_at %}
+                            <span><i class="fas fa-paper-plane me-1"></i>Sent {{ log.sent_at|timesince }} ago</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="log-status">
+                    <span class="status-pill {{ log.status|lower }}">{{ log.get_status_display }}</span>
+                    <a href="{% url 'notifications:detail' log.id %}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-eye"></i> View
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Timeline of events -->
+            {% if log.sent_at or log.delivered_at or log.opened_at or log.clicked_at %}
+            <div class="log-details-grid">
+                {% if log.sent_at %}
+                <div class="log-detail-item">
+                    <div class="log-detail-label">Sent</div>
+                    <div class="log-detail-value">{{ log.sent_at|date:"M d, Y h:i A" }}</div>
+                </div>
+                {% endif %}
+                {% if log.delivered_at %}
+                <div class="log-detail-item">
+                    <div class="log-detail-label">Delivered</div>
+                    <div class="log-detail-value">{{ log.delivered_at|date:"M d, Y h:i A" }}</div>
+                </div>
+                {% endif %}
+                {% if log.opened_at %}
+                <div class="log-detail-item">
+                    <div class="log-detail-label">Opened</div>
+                    <div class="log-detail-value">{{ log.opened_at|date:"M d, Y h:i A" }}</div>
+                </div>
+                {% endif %}
+                {% if log.clicked_at %}
+                <div class="log-detail-item">
+                    <div class="log-detail-label">Clicked</div>
+                    <div class="log-detail-value">{{ log.clicked_at|date:"M d, Y h:i A" }}</div>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+            
+            <!-- Error message if failed -->
+            {% if log.error_message and log.status == 'FAILED' %}
+            <div class="alert alert-danger mb-0 mt-2" style="font-size: 0.8125rem;">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>Error:</strong> {{ log.error_message }}
+            </div>
+            {% endif %}
+            
+            <!-- Retry button for failed notifications -->
+            {% if log.status == 'FAILED' %}
+            <div class="log-actions">
+                <button class="btn btn-sm btn-warning" onclick="retryNotification({{ log.id }})">
+                    <i class="fas fa-redo me-1"></i>Retry Sending
+                </button>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        
+        <!-- Pagination -->
+        {% if logs.has_other_pages %}
+        <nav aria-label="Page navigation">
+            <ul class="pagination pagination-modern">
+                {% if logs.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ logs.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.channel %}&channel={{ request.GET.channel }}{% endif %}{% if request.GET.template %}&template={{ request.GET.template }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                        <i class="fas fa-chevron-left"></i> Previous
+                    </a>
+                </li>
+                {% endif %}
+                
+                <li class="page-item active">
+                    <span class="page-link">
+                        Page {{ logs.number }} of {{ logs.paginator.num_pages }}
+                    </span>
+                </li>
+                
+                {% if logs.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ logs.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.channel %}&channel={{ request.GET.channel }}{% endif %}{% if request.GET.template %}&template={{ request.GET.template }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                        Next <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-inbox"></i>
+            <p>No notification logs found</p>
+            {% if request.GET.status or request.GET.channel or request.GET.template or request.GET.search %}
+            <a href="{% url 'notifications:logs' %}" class="btn btn-outline-primary mt-3">
+                <i class="fas fa-times me-2"></i>Clear Filters
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+    <div id="successToast" class="toast align-items-center text-white bg-success border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="fas fa-check-circle me-2"></i>
+                <span id="successMessage">Success</span>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+    
+    <div id="errorToast" class="toast align-items-center text-white bg-danger border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <span id="errorMessage">Error</span>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extrajs %}
 <script>
-function retryNotification(notificationId) {
-    if (confirm('Are you sure you want to retry this notification?')) {
-        fetch('{% url "notifications:retry-failed" %}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'X-CSRFToken': '{{ csrf_token }}'
-            },
-            body: 'notification_ids=' + notificationId
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert(data.message);
-                location.reload();
-            } else {
-                alert('Error: ' + data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while retrying the notification.');
-        });
+function showSuccessToast(message) {
+    const toastElement = document.getElementById('successToast');
+    document.getElementById('successMessage').textContent = message;
+    const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
+    toast.show();
+}
+
+function showErrorToast(message) {
+    const toastElement = document.getElementById('errorToast');
+    document.getElementById('errorMessage').textContent = message;
+    const toast = new bootstrap.Toast(toastElement, { delay: 5000 });
+    toast.show();
+}
+
+function retryNotification(logId) {
+    if (!confirm('Retry sending this notification?')) {
+        return;
     }
+    
+    const csrfToken = document.querySelector('#csrf-form input[name="csrfmiddlewaretoken"]').value;
+    
+    if (!csrfToken) {
+        showErrorToast('CSRF token not found. Please refresh the page.');
+        return;
+    }
+    
+    fetch(`/notifications/api/retry-failed/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({ notification_id: logId })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            showSuccessToast('Notification queued for retry ✓');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showErrorToast(data.message || 'Failed to retry notification');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showErrorToast('An error occurred: ' + error.message);
+    });
 }
 </script>
 {% endblock %}

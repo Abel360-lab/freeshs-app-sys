@@ -2,437 +2,749 @@
 {% load static %}
 
 {% block title %}Notification Details - {{ log.template.name }}{% endblock %}
+{% block body_class %}page-notif-detail{% endblock %}
+{% block page_title %}Notification Details{% endblock %}
 
-{% block extra_css %}
-<style>
-    .detail-card {
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
-        padding: 20px;
-        margin-bottom: 20px;
-        width: 100%;
-        max-width: none;
-    }
-    
-    .container-fluid {
-        max-width: 100%;
-        padding-left: 15px;
-        padding-right: 15px;
-    }
-    
-    .detail-card .row {
-        margin-left: 0;
-        margin-right: 0;
-    }
-    
-    .detail-card .col-md-6 {
-        padding-left: 0;
-        padding-right: 0;
-    }
-    
-    .detail-card p {
-        margin-bottom: 10px;
-        word-wrap: break-word;
-    }
-    
-    .status-badge {
-        display: inline-block;
-        padding: 8px 16px;
-        border-radius: 20px;
-        font-size: 14px;
-        font-weight: 500;
-    }
-    
-    .status-sent {
-        background-color: #d4edda;
-        color: #155724;
-    }
-    
-    .status-delivered {
-        background-color: #d1ecf1;
-        color: #0c5460;
-    }
-    
-    .status-opened {
-        background-color: #cce5ff;
-        color: #004085;
-    }
-    
-    .status-clicked {
-        background-color: #fff3cd;
-        color: #856404;
-    }
-    
-    .status-failed {
-        background-color: #f8d7da;
-        color: #721c24;
-    }
-    
-    .status-bounced {
-        background-color: #f5c6cb;
-        color: #721c24;
-    }
-    
-    .status-pending {
-        background-color: #e2e3e5;
-        color: #383d41;
-    }
-    
-    .content-preview {
-        max-height: none;
-        overflow-y: visible;
-        background-color: #f8f9fa;
-        padding: 15px;
-        border-radius: 4px;
-        border: 1px solid #dee2e6;
-        width: 100%;
-        max-width: none;
-    }
-    
-    .timeline-item {
-        position: relative;
-        padding-left: 30px;
-        margin-bottom: 20px;
-    }
-    
-    .timeline-item::before {
-        content: '';
-        position: absolute;
-        left: 10px;
-        top: 0;
-        bottom: -20px;
-        width: 2px;
-        background-color: #dee2e6;
-    }
-    
-    .timeline-item:last-child::before {
-        display: none;
-    }
-    
-    .timeline-marker {
-        position: absolute;
-        left: 6px;
-        top: 5px;
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        background-color: #007bff;
-    }
-    
-    .timeline-marker.success {
-        background-color: #28a745;
-    }
-    
-    .timeline-marker.warning {
-        background-color: #ffc107;
-    }
-    
-    .timeline-marker.danger {
-        background-color: #dc3545;
-    }
-</style>
-{% endblock %}
-
-{% block content %}
-<div class="container-fluid">
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 class="text-primary">
-                <i class="fas fa-bell"></i> Notification Details
-            </h2>
-            <p class="text-muted">{{ log.template.name }} - {{ log.recipient_email }}</p>
+{% block page_header_container %}
+<div class="page-header-container">
+    <div class="page-header-content">
+        <div class="page-header-info">
+            <div class="page-header-breadcrumb">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'applications:backoffice-dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'notifications:dashboard' %}">Notifications</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'notifications:logs' %}">Logs</a></li>
+                        <li class="breadcrumb-item active">Detail</li>
+                    </ol>
+                </nav>
+            </div>
+            <h1 class="page-header-title">{{ log.template.name }}</h1>
+            <p class="page-header-subtitle">
+                To: {{ log.recipient_email }} • {{ log.created_at|date:"F d, Y at h:i A" }}
+            </p>
         </div>
-        <div>
-            <a href="{% url 'notifications:logs' %}" class="btn btn-outline-primary">
+        <div class="page-header-actions">
+            {% if log.status == 'FAILED' and log.can_retry %}
+            <button class="btn btn-warning" onclick="retryNotification()">
+                <i class="fas fa-redo"></i> Retry
+            </button>
+            {% endif %}
+            <a href="{% url 'notifications:logs' %}" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left"></i> Back to Logs
             </a>
         </div>
     </div>
+    </div>
+{% endblock %}
+
+{% block content %}
+<div class="notif-detail-page" id="notif-detail" data-log-id="{{ log.id }}">
+<form style="display: none;" id="csrf-form">{% csrf_token %}</form>
+
+<style>
+/* Layout fixes to prevent squeezed content/overflow on this page */
+.content-body { overflow-x: visible; }
+/* Ensure full-width container on this page */
+.content-container { width: 100% !important; max-width: none !important; margin: 0 !important; }
+.main-content .content-body .content-container { width: 100% !important; max-width: none !important; margin: 0 !important; }
+.page-header-container, .page-header-content { width: 100%; }
+.row { --bs-gutter-x: 1.5rem; margin-left: 0; margin-right: 0; width: 100%; }
+.col-lg-8, .col-lg-4 { flex: 0 0 auto; width: 100%; }
+@media (min-width: 992px) {
+  .col-lg-8 { width: 66.66666667%; }
+  .col-lg-4 { width: 33.33333333%; }
+}
+.status-banner-notif, .detail-card-modern { max-width: 100% !important; }
+.notif-detail-page { width: 100%; }
+.notif-detail-page .detail-card-modern,
+.notif-detail-page .status-banner-notif { width: 100%; }
+
+/* Notification Detail Page Styles */
+.status-banner-notif {
+    background: #ffffff;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+}
+
+.status-banner-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.status-icon-xl {
+    width: 64px;
+    height: 64px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+}
+
+.status-content h4 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 0.25rem 0;
+}
+
+.status-content p {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin: 0;
+}
+
+.status-badge-xxl {
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.status-badge-xxl.sent,
+.status-badge-xxl.delivered {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-badge-xxl.opened {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.status-badge-xxl.failed,
+.status-badge-xxl.bounced {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.status-badge-xxl.pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.detail-card-modern {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 1.25rem;
+}
+
+.detail-card-header {
+    padding: 1rem 1.25rem;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.detail-card-header h5 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.detail-card-body {
+    padding: 1.25rem;
+}
+
+.info-row-detail {
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.info-row-detail:first-child {
+    padding-top: 0;
+}
+
+.info-row-detail:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.info-label-detail {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #6b7280;
+}
+
+.info-value-detail {
+    font-size: 0.875rem;
+    color: #111827;
+    font-weight: 500;
+}
+
+.info-value-detail code {
+    background: #f3f4f6;
+    padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.8125rem;
+}
+
+.email-preview {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-top: 1rem;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.email-preview iframe {
+        width: 100%;
+    min-height: 400px;
+    border: none;
+    border-radius: 4px;
+    background: #ffffff;
+    }
     
-    <!-- Main Details -->
-            <!-- Basic Information -->
-            <div class="detail-card">
-                <h5 class="text-primary mb-3">
-                    <i class="fas fa-info-circle"></i> Basic Information
-                </h5>
+.timeline-modern {
+        position: relative;
+    padding-left: 2.5rem;
+    }
+    
+.timeline-modern::before {
+        content: '';
+        position: absolute;
+    left: 0.75rem;
+        top: 0;
+    bottom: 0;
+        width: 2px;
+    background: linear-gradient(180deg, var(--primary-color), #e5e7eb);
+}
+
+.timeline-event {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.timeline-event:last-child {
+    margin-bottom: 0;
+}
+
+.timeline-dot-modern {
+        position: absolute;
+    left: -2.5rem;
+    width: 1.5rem;
+    height: 1.5rem;
+        border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.625rem;
+    color: #ffffff;
+    border: 2px solid #ffffff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.timeline-content {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 0.875rem 1rem;
+}
+
+.timeline-content h6 {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0 0 0.25rem 0;
+}
+
+.timeline-content small {
+    font-size: 0.75rem;
+    color: #9ca3af;
+}
+
+/* Soft background utility classes for status icon */
+.bg-success-soft { background: #dcfce7; color: #166534; }
+.bg-danger-soft  { background: #fee2e2; color: #991b1b; }
+.bg-info-soft    { background: #dbeafe; color: #1e40af; }
+.bg-warning-soft { background: #fef3c7; color: #92400e; }
+</style>
+
+<!-- Status Banner -->
+<div class="status-banner-notif">
+    <div class="status-banner-left">
+        <div class="status-icon-xl {% if log.status == 'SENT' or log.status == 'DELIVERED' %}bg-success-soft{% elif log.status == 'FAILED' or log.status == 'BOUNCED' %}bg-danger-soft{% elif log.status == 'OPENED' %}bg-info-soft{% else %}bg-warning-soft{% endif %}">
+            <i class="fas {% if log.status == 'SENT' or log.status == 'DELIVERED' %}fa-check-circle{% elif log.status == 'FAILED' or log.status == 'BOUNCED' %}fa-times-circle{% elif log.status == 'OPENED' %}fa-envelope-open{% else %}fa-clock{% endif %}"></i>
+        </div>
+        <div class="status-content">
+            <h4>{{ log.get_channel_display }} Notification</h4>
+            <p>
+                <i class="fas fa-calendar me-1"></i>
+                {{ log.created_at|date:"F d, Y" }}
+                {% if log.sent_at %}
+                • Sent {{ log.sent_at|timesince }} ago
+                {% endif %}
+            </p>
+        </div>
+    </div>
+        <div>
+        <span class="status-badge-xxl {{ log.status|lower }}">
+            {{ log.get_status_display }}
+        </span>
+    </div>
+</div>
+
+<!-- Error Alert -->
+{% if log.error_message %}
+<div class="alert alert-danger" style="border-radius: 10px; border: 1.5px solid #fecaca;">
+    <div class="d-flex align-items-start gap-2">
+        <div style="width: 36px; height: 36px; background: #fee2e2; color: #991b1b; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div>
+            <h6 class="mb-1"><strong>Error Message</strong></h6>
+            <p class="mb-0" style="white-space: pre-wrap;">{{ log.error_message }}</p>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Main Content -->
                 <div class="row">
-                    <div class="col-md-6">
-                        <p><strong>Template:</strong> {{ log.template.name }}</p>
-                        <p><strong>Channel:</strong> {{ log.get_channel_display }}</p>
-                        <p><strong>Status:</strong> 
-                            <span class="status-badge status-{{ log.status|lower }}">
-                                {{ log.get_status_display }}
-                            </span>
-                        </p>
-                        <p><strong>Tracking ID:</strong> 
-                            {% if log.tracking_id %}
-                                <code>{{ log.tracking_id }}</code>
-                            {% else %}
-                                <span class="text-muted">Not available</span>
-                            {% endif %}
-                        </p>
+    <!-- Left Column -->
+    <div class="col-lg-8">
+        <!-- Recipient Info -->
+        <div class="detail-card-modern">
+            <div class="detail-card-header">
+                <h5><i class="fas fa-user"></i> Recipient Information</h5>
+            </div>
+            <div class="detail-card-body">
+                <div class="info-row-detail">
+                    <div class="info-label-detail">Email</div>
+                    <div class="info-value-detail">{{ log.recipient_email }}</div>
                     </div>
-                    <div class="col-md-6">
-                        <p><strong>Recipient Email:</strong> {{ log.recipient_email }}</p>
-                        <p><strong>Recipient Name:</strong> 
-                            {% if log.recipient_name %}{{ log.recipient_name }}{% else %}<span class="text-muted">Not provided</span>{% endif %}
-                        </p>
-                        <p><strong>External ID:</strong> 
-                            {% if log.external_id %}<code>{{ log.external_id }}</code>{% else %}<span class="text-muted">Not available</span>{% endif %}
-                        </p>
-                        <p><strong>Retry Count:</strong> {{ log.retry_count }}/{{ log.max_retries }}</p>
+                <div class="info-row-detail">
+                    <div class="info-label-detail">Name</div>
+                    <div class="info-value-detail">{{ log.recipient_name|default:"Not provided" }}</div>
+                </div>
+                <div class="info-row-detail">
+                    <div class="info-label-detail">Phone</div>
+                    <div class="info-value-detail">{{ log.recipient_phone|default:"Not provided" }}</div>
                     </div>
                 </div>
             </div>
             
-            <!-- Content -->
-            <div class="detail-card">
-                <h5 class="text-primary mb-3">
-                    <i class="fas fa-file-text"></i> Content
-                </h5>
-                <p><strong>Subject:</strong> {{ log.subject }}</p>
+        <!-- Email Content -->
+        <div class="detail-card-modern">
+            <div class="detail-card-header">
+                <h5><i class="fas fa-envelope"></i> Email Content</h5>
+            </div>
+            <div class="detail-card-body">
+                <div class="info-row-detail">
+                    <div class="info-label-detail">Subject</div>
+                    <div class="info-value-detail"><strong>{{ log.subject }}</strong></div>
+                </div>
                 
                 {% if log.body_html %}
-                <div class="mb-3">
-                    <strong>HTML Body:</strong>
-                    <div class="content-preview">
-                        {{ log.body_html|safe }}
+                <div class="mt-3">
+                    <div class="info-label-detail mb-2">HTML Preview</div>
+                    <div class="email-preview">
+                        <iframe id="emailPreviewFrame" title="Email HTML Preview" style="width: 100%; border: 0; background: #ffffff;" srcdoc="{{ log.body_html|escape }}"></iframe>
                     </div>
                 </div>
                 {% endif %}
                 
                 {% if log.body_text %}
-                <div class="mb-3">
-                    <strong>Text Body:</strong>
-                    <div class="content-preview">
-                        <pre>{{ log.body_text }}</pre>
+                <div class="mt-3">
+                    <div class="info-label-detail mb-2">Plain Text</div>
+                    <div class="email-preview">
+                        <pre style="margin: 0; white-space: pre-wrap; font-family: monospace; font-size: 0.8125rem;">{{ log.body_text }}</pre>
                     </div>
                 </div>
                 {% endif %}
             </div>
+        </div>
+
+        <!-- Technical Details -->
+        <div class="detail-card-modern">
+            <div class="detail-card-header">
+                <h5><i class="fas fa-cog"></i> Technical Details</h5>
+            </div>
+            <div class="detail-card-body">
+                <div class="info-row-detail">
+                    <div class="info-label-detail">Template</div>
+                    <div class="info-value-detail">{{ log.template.name }}</div>
+                </div>
+                <div class="info-row-detail">
+                    <div class="info-label-detail">Channel</div>
+                    <div class="info-value-detail">{{ log.get_channel_display }}</div>
+                </div>
+                <div class="info-row-detail">
+                    <div class="info-label-detail">Tracking ID</div>
+                    <div class="info-value-detail">
+                        {% if log.tracking_id %}
+                        <code>{{ log.tracking_id }}</code>
+                        <button class="btn btn-sm btn-outline-secondary ms-2" onclick="copyToClipboard('{{ log.tracking_id }}')">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                        {% else %}
+                        <span class="text-muted">Not available</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="info-row-detail">
+                    <div class="info-label-detail">External ID</div>
+                    <div class="info-value-detail">
+                        {% if log.external_id %}<code>{{ log.external_id }}</code>{% else %}<span class="text-muted">Not available</span>{% endif %}
+                    </div>
+                </div>
+                <div class="info-row-detail">
+                    <div class="info-label-detail">Retry Count</div>
+                    <div class="info-value-detail">{{ log.retry_count }} / {{ log.max_retries }}</div>
+                </div>
+                {% if log.delivery_time %}
+                <div class="info-row-detail">
+                    <div class="info-label-detail">Delivery Time</div>
+                    <div class="info-value-detail">{{ log.delivery_time|floatformat:2 }} seconds</div>
+                </div>
+                {% endif %}
+            </div>
+            </div>
             
-            <!-- Error Information -->
-            {% if log.error_message %}
-            <div class="detail-card">
-                <h5 class="text-danger mb-3">
-                    <i class="fas fa-exclamation-triangle"></i> Error Information
-                </h5>
-                <div class="alert alert-danger">
-                    <strong>Error Message:</strong><br>
-                    {{ log.error_message }}
+        <!-- Related Objects -->
+        {% if log.application or log.user %}
+        <div class="detail-card-modern">
+            <div class="detail-card-header">
+                <h5><i class="fas fa-link"></i> Related Objects</h5>
+            </div>
+            <div class="detail-card-body">
+                {% if log.application %}
+                <div class="info-row-detail">
+                    <div class="info-label-detail">Application</div>
+                    <div class="info-value-detail">
+                        <a href="{% url 'applications:backoffice-application-detail' log.application.pk %}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-file-alt me-1"></i>{{ log.application.tracking_code }}
+                        </a>
+                    </div>
+                </div>
+                <div class="info-row-detail">
+                    <div class="info-label-detail">Business Name</div>
+                    <div class="info-value-detail">{{ log.application.business_name }}</div>
+                </div>
+                {% endif %}
+                {% if log.user %}
+                <div class="info-row-detail">
+                    <div class="info-label-detail">User</div>
+                    <div class="info-value-detail">
+                        <span class="badge bg-primary">
+                            <i class="fas fa-user me-1"></i>{{ log.user.get_full_name|default:log.user.username }}
+                        </span>
+                    </div>
+                </div>
+                {% endif %}
                 </div>
             </div>
             {% endif %}
             
             <!-- Context Data -->
             {% if log.context_data %}
-            <div class="detail-card">
-                <h5 class="text-primary mb-3">
-                    <i class="fas fa-database"></i> Context Data
-                </h5>
-                <div class="content-preview">
-                    <pre>{{ log.context_data|pprint }}</pre>
+        <div class="detail-card-modern">
+            <div class="detail-card-header">
+                <h5><i class="fas fa-database"></i> Context Data</h5>
+            </div>
+            <div class="detail-card-body">
+                <div class="email-preview">
+                    <pre style="margin: 0; font-size: 0.8125rem;">{{ log.context_data|pprint }}</pre>
                 </div>
             </div>
-            {% endif %}
+        </div>
+        {% endif %}
         </div>
         
-        <!-- Sidebar -->
-        <div class="col-md-4">
+    <!-- Right Column -->
+    <div class="col-lg-4">
             <!-- Timeline -->
-            <div class="detail-card">
-                <h5 class="text-primary mb-3">
-                    <i class="fas fa-clock"></i> Timeline
-                </h5>
-                
-                <div class="timeline-item">
-                    <div class="timeline-marker"></div>
-                    <div>
-                        <strong>Created</strong>
-                        <br>
-                        <small class="text-muted">{{ log.created_at|date:"M d, Y H:i:s" }}</small>
-                    </div>
+        <div class="detail-card-modern">
+            <div class="detail-card-header">
+                <h5><i class="fas fa-history"></i> Event Timeline</h5>
+            </div>
+            <div class="detail-card-body">
+                <div class="timeline-modern">
+                    <div class="timeline-event">
+                        <div class="timeline-dot-modern" style="background: #3b82f6;">
+                            <i class="fas fa-plus"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6>Created</h6>
+                            <small>{{ log.created_at|date:"M d, Y" }} at {{ log.created_at|time:"h:i A" }}</small>
+                        </div>
                 </div>
                 
                 {% if log.sent_at %}
-                <div class="timeline-item">
-                    <div class="timeline-marker success"></div>
-                    <div>
-                        <strong>Sent</strong>
-                        <br>
-                        <small class="text-muted">{{ log.sent_at|date:"M d, Y H:i:s" }}</small>
-                    </div>
+                    <div class="timeline-event">
+                        <div class="timeline-dot-modern" style="background: #10b981;">
+                            <i class="fas fa-paper-plane"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6>Sent</h6>
+                            <small>{{ log.sent_at|date:"M d, Y" }} at {{ log.sent_at|time:"h:i A" }}</small>
+                        </div>
                 </div>
                 {% endif %}
                 
                 {% if log.delivered_at %}
-                <div class="timeline-item">
-                    <div class="timeline-marker success"></div>
-                    <div>
-                        <strong>Delivered</strong>
-                        <br>
-                        <small class="text-muted">{{ log.delivered_at|date:"M d, Y H:i:s" }}</small>
-                    </div>
+                    <div class="timeline-event">
+                        <div class="timeline-dot-modern" style="background: #10b981;">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6>Delivered</h6>
+                            <small>{{ log.delivered_at|date:"M d, Y" }} at {{ log.delivered_at|time:"h:i A" }}</small>
+                        </div>
                 </div>
                 {% endif %}
                 
                 {% if log.opened_at %}
-                <div class="timeline-item">
-                    <div class="timeline-marker warning"></div>
-                    <div>
-                        <strong>Opened</strong>
-                        <br>
-                        <small class="text-muted">{{ log.opened_at|date:"M d, Y H:i:s" }}</small>
-                    </div>
+                    <div class="timeline-event">
+                        <div class="timeline-dot-modern" style="background: #3b82f6;">
+                            <i class="fas fa-envelope-open"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6>Opened</h6>
+                            <small>{{ log.opened_at|date:"M d, Y" }} at {{ log.opened_at|time:"h:i A" }}</small>
+                        </div>
                 </div>
                 {% endif %}
                 
                 {% if log.clicked_at %}
-                <div class="timeline-item">
-                    <div class="timeline-marker warning"></div>
-                    <div>
-                        <strong>Clicked</strong>
-                        <br>
-                        <small class="text-muted">{{ log.clicked_at|date:"M d, Y H:i:s" }}</small>
-                    </div>
+                    <div class="timeline-event">
+                        <div class="timeline-dot-modern" style="background: #8b5cf6;">
+                            <i class="fas fa-mouse-pointer"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6>Clicked</h6>
+                            <small>{{ log.clicked_at|date:"M d, Y" }} at {{ log.clicked_at|time:"h:i A" }}</small>
+                        </div>
                 </div>
                 {% endif %}
                 
                 {% if log.status == 'FAILED' %}
-                <div class="timeline-item">
-                    <div class="timeline-marker danger"></div>
-                    <div>
-                        <strong>Failed</strong>
-                        <br>
-                        <small class="text-muted">{{ log.updated_at|date:"M d, Y H:i:s" }}</small>
+                    <div class="timeline-event">
+                        <div class="timeline-dot-modern" style="background: #ef4444;">
+                            <i class="fas fa-times"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6>Failed</h6>
+                            <small>{{ log.updated_at|date:"M d, Y" }} at {{ log.updated_at|time:"h:i A" }}</small>
+                        </div>
                     </div>
+                    {% endif %}
                 </div>
-                {% endif %}
             </div>
-            
-            <!-- Related Objects -->
-            <div class="detail-card">
-                <h5 class="text-primary mb-3">
-                    <i class="fas fa-link"></i> Related Objects
-                </h5>
-                
-                {% if log.application %}
-                <div class="mb-3">
-                    <strong>Application:</strong><br>
-                    <a href="{% url 'applications:backoffice-application-detail' log.application.pk %}" class="btn btn-sm btn-outline-info">
-                        <i class="fas fa-file-alt"></i> {{ log.application.tracking_code }}
+                </div>
+
+        <!-- Quick Actions -->
+        <div class="detail-card-modern">
+            <div class="detail-card-header">
+                <h5><i class="fas fa-bolt"></i> Quick Actions</h5>
+                </div>
+            <div class="detail-card-body">
+                <div class="d-grid gap-2">
+                    {% if log.status == 'FAILED' and log.can_retry %}
+                    <button class="btn btn-warning" onclick="retryNotification()">
+                        <i class="fas fa-redo me-2"></i>Retry Sending
+                    </button>
+                {% endif %}
+                    <a href="{% url 'notifications:logs' %}?search={{ log.recipient_email }}" class="btn btn-outline-primary">
+                        <i class="fas fa-search me-2"></i>Find Similar
+                    </a>
+                    {% if log.tracking_id %}
+                    <button class="btn btn-outline-secondary" onclick="copyToClipboard('{{ log.tracking_id }}')">
+                        <i class="fas fa-copy me-2"></i>Copy Tracking ID
+                    </button>
+                    {% endif %}
+                    <a href="{% url 'notifications:logs' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Logs
                     </a>
                 </div>
-                {% endif %}
-                
-                {% if log.user %}
-                <div class="mb-3">
-                    <strong>User:</strong><br>
-                    <span class="badge bg-success">
-                        <i class="fas fa-user"></i> {{ log.user.get_full_name|default:log.user.username }}
-                    </span>
-                </div>
-                {% endif %}
-                
-                {% if log.tracking_id %}
-                <div class="mb-3">
-                    <strong>Tracking URLs:</strong><br>
-                    <a href="{{ log.get_tracking_url }}" class="btn btn-sm btn-outline-primary" target="_blank">
-                        <i class="fas fa-link"></i> Track
-                    </a>
-                    <a href="{{ log.get_open_tracking_url }}" class="btn btn-sm btn-outline-info" target="_blank">
-                        <i class="fas fa-eye"></i> Open Track
-                    </a>
-                </div>
-                {% endif %}
+            </div>
             </div>
             
             <!-- Performance Metrics -->
-            <div class="detail-card">
-                <h5 class="text-primary mb-3">
-                    <i class="fas fa-chart-line"></i> Performance
-                </h5>
-                
+        <div class="detail-card-modern">
+            <div class="detail-card-header">
+                <h5><i class="fas fa-chart-bar"></i> Metrics</h5>
+            </div>
+            <div class="detail-card-body">
+                <div class="info-row-detail">
+                    <div class="info-label-detail">Success</div>
+                    <div class="info-value-detail">
+                        {% if log.is_successful %}
+                            <span class="badge bg-success"><i class="fas fa-check me-1"></i>Yes</span>
+                        {% else %}
+                            <span class="badge bg-danger"><i class="fas fa-times me-1"></i>No</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="info-row-detail">
+                    <div class="info-label-detail">Failed</div>
+                    <div class="info-value-detail">
+                        {% if log.is_failed %}
+                            <span class="badge bg-danger"><i class="fas fa-times me-1"></i>Yes</span>
+                        {% else %}
+                            <span class="badge bg-success"><i class="fas fa-check me-1"></i>No</span>
+                        {% endif %}
+                    </div>
+                </div>
                 {% if log.delivery_time %}
-                <p><strong>Delivery Time:</strong> {{ log.delivery_time|floatformat:2 }} seconds</p>
+                <div class="info-row-detail">
+                    <div class="info-label-detail">Delivery Time</div>
+                    <div class="info-value-detail">{{ log.delivery_time|floatformat:2 }}s</div>
+                </div>
                 {% endif %}
-                
-                <p><strong>Success Status:</strong> 
-                    {% if log.is_successful %}
-                        <span class="text-success"><i class="fas fa-check"></i> Yes</span>
-                    {% else %}
-                        <span class="text-danger"><i class="fas fa-times"></i> No</span>
-                    {% endif %}
-                </p>
-                
-                <p><strong>Failed Status:</strong> 
-                    {% if log.is_failed %}
-                        <span class="text-danger"><i class="fas fa-times"></i> Yes</span>
-                    {% else %}
-                        <span class="text-success"><i class="fas fa-check"></i> No</span>
-                    {% endif %}
-                </p>
+                <div class="info-row-detail">
+                    <div class="info-label-detail">Retries</div>
+                    <div class="info-value-detail">{{ log.retry_count }} / {{ log.max_retries }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+    <div id="successToast" class="toast align-items-center text-white bg-success border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="fas fa-check-circle me-2"></i>
+                <span id="successMessage">Success</span>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
             </div>
             
-            <!-- Actions -->
-            <div class="detail-card">
-                <h5 class="text-primary mb-3">
-                    <i class="fas fa-cogs"></i> Actions
-                </h5>
-                
-                {% if log.status == 'FAILED' and log.can_retry %}
-                <button class="btn btn-warning btn-sm mb-2" onclick="retryNotification({{ log.id }})">
-                    <i class="fas fa-redo"></i> Retry Notification
-                </button>
-                {% endif %}
-                
-                <a href="{% url 'notifications:logs' %}?search={{ log.recipient_email }}" class="btn btn-outline-primary btn-sm mb-2">
-                    <i class="fas fa-search"></i> Find Similar
-                </a>
-                
-                <button class="btn btn-outline-info btn-sm mb-2" onclick="copyToClipboard('{{ log.tracking_id }}')">
-                    <i class="fas fa-copy"></i> Copy Tracking ID
-                </button>
+    <div id="errorToast" class="toast align-items-center text-white bg-danger border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <span id="errorMessage">Error</span>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
             </div>
 </div>
+
 {% endblock %}
 
-{% block extra_js %}
+{% block extrajs %}
 <script>
-function retryNotification(notificationId) {
-    if (confirm('Are you sure you want to retry this notification?')) {
-        fetch('{% url "notifications:retry-failed" %}', {
+function showSuccessToast(message) {
+    const toastElement = document.getElementById('successToast');
+    document.getElementById('successMessage').textContent = message;
+    const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
+    toast.show();
+}
+
+function showErrorToast(message) {
+    const toastElement = document.getElementById('errorToast');
+    document.getElementById('errorMessage').textContent = message;
+    const toast = new bootstrap.Toast(toastElement, { delay: 5000 });
+    toast.show();
+}
+
+function retryNotification() {
+    if (!confirm('Retry sending this notification?')) {
+        return;
+    }
+    
+    const csrfToken = document.querySelector('#csrf-form input[name="csrfmiddlewaretoken"]').value;
+    const root = document.getElementById('notif-detail');
+    const logId = root ? root.dataset.logId : null;
+    
+    if (!csrfToken) {
+        showErrorToast('CSRF token not found. Please refresh the page.');
+        return;
+    }
+    if (!logId) {
+        showErrorToast('Notification ID not found.');
+        return;
+    }
+    
+    fetch('/notifications/api/retry-failed/', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'X-CSRFToken': '{{ csrf_token }}'
-            },
-            body: 'notification_ids=' + notificationId
-        })
-        .then(response => response.json())
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({ notification_id: parseInt(logId) })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
         .then(data => {
             if (data.success) {
-                alert(data.message);
-                location.reload();
+            showSuccessToast('Notification queued for retry! ✓');
+            setTimeout(() => location.reload(), 1500);
             } else {
-                alert('Error: ' + data.message);
+            showErrorToast(data.message || 'Failed to retry notification');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('An error occurred while retrying the notification.');
+        showErrorToast('An error occurred: ' + error.message);
         });
-    }
 }
 
 function copyToClipboard(text) {
     navigator.clipboard.writeText(text).then(function() {
-        alert('Tracking ID copied to clipboard!');
+        showSuccessToast('Tracking ID copied to clipboard!');
     }, function(err) {
-        console.error('Could not copy text: ', err);
-        alert('Failed to copy tracking ID');
+        console.error('Could not copy text:', err);
+        showErrorToast('Failed to copy tracking ID');
     });
 }
+
+// Resize the email preview iframe to fit its content
+document.addEventListener('DOMContentLoaded', function() {
+    const iframe = document.getElementById('emailPreviewFrame');
+    if (!iframe) return;
+    const resize = () => {
+        try {
+            const doc = iframe.contentDocument || iframe.contentWindow.document;
+            if (!doc) return;
+            // Reset first to measure scrollHeight accurately
+            iframe.style.height = '0px';
+            const height = Math.max(
+                doc.body.scrollHeight,
+                doc.documentElement.scrollHeight,
+                doc.body.offsetHeight,
+                doc.documentElement.offsetHeight
+            );
+            // Cap height to avoid runaway sizes
+            iframe.style.height = Math.min(height + 20, 1200) + 'px';
+        } catch (e) {
+            // Fallback height
+            iframe.style.height = '600px';
+        }
+    };
+    // Initial resize and on load
+    iframe.addEventListener('load', resize);
+    // In case srcdoc is already loaded
+    setTimeout(resize, 100);
+});
 </script>
 {% endblock %}

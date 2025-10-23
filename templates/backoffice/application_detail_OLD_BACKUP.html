@@ -1,0 +1,3477 @@
+{% extends 'backoffice/base.html' %}
+{% load static %}
+
+{% block title %}{{ application.business_name }} - Application Details{% endblock %}
+
+{% block content %}
+<!-- Hidden CSRF token form for JavaScript access -->
+<form style="display: none;" id="csrf-form">
+    {% csrf_token %}
+</form>
+
+<style>
+    /* Chart.js and ApexCharts scripts */
+    /* These will be loaded from the base template */
+        /* Application Detail Specific Styles */
+        .page-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #fbfbfc 100%);
+            color: rgb(11, 10, 10);
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            border-radius: 0 0 15px 15px;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .breadcrumb {
+            background: rgba(8, 8, 8, 0.2);
+            border-radius: 25px;
+            padding: 0.5rem 1rem;
+        }
+
+        .breadcrumb-item a {
+            color: rgb(13, 13, 13);
+            text-decoration: none;
+        }
+
+        .breadcrumb-item.active {
+            color: rgba(13, 1, 1, 0.8);
+        }
+
+        .page-actions .btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: rgb(16, 15, 15);
+            border-radius: 25px;
+            padding: 0.5rem 1.5rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .page-actions .btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            color: rgb(28, 40, 40);
+            transform: translateY(-2px);
+        }
+
+        /* Status Badge Styles */
+        .status-badge {
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-pending { background: linear-gradient(135deg, #ffc107, #ff8c00); color: white; }
+        .status-under-review { background: linear-gradient(135deg, #17a2b8, #138496); color: white; }
+        .status-approved { background: linear-gradient(135deg, #28a745, #20c997); color: white; }
+        .status-rejected { background: linear-gradient(135deg, #dc3545, #c82333); color: white; }
+
+        /* Card Styles */
+        .detail-card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            margin-bottom: 2rem;
+        }
+
+        .detail-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .detail-card .card-header {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-bottom: 2px solid #dee2e6;
+            border-radius: 15px 15px 0 0 !important;
+            padding: 1.5rem;
+        }
+
+        .detail-card .card-body {
+            padding: 2rem;
+        }
+
+        /* Business Information Cards */
+        .business-section {
+            margin-bottom: 2rem;
+        }
+
+        .section-header {
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #f8f9fa;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #495057;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .business-info-card {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1rem;
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+
+        .business-info-card:hover {
+            border-color: #007bff;
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .info-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .info-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .info-content {
+            flex: 1;
+        }
+
+        .info-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.25rem;
+        }
+
+        .info-value {
+            font-size: 0.95rem;
+            color: #212529;
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .contact-link {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .contact-link:hover {
+            color: #0056b3;
+            text-decoration: underline;
+        }
+
+        .info-value code {
+            background: #f8f9fa;
+            color: #e83e8c;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        /* Commodity Cards */
+        .commodities-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .commodity-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .commodity-card:hover {
+            border-color: #28a745;
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .commodity-image-container {
+            position: relative;
+            height: 180px;
+            overflow: hidden;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        }
+
+        .commodity-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .commodity-card:hover .commodity-image {
+            transform: scale(1.05);
+        }
+
+        .commodity-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+            font-size: 48px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        }
+
+        .commodity-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.7) 100%);
+            display: flex;
+            align-items: flex-end;
+            justify-content: flex-start;
+            padding: 1rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .commodity-card:hover .commodity-overlay {
+            opacity: 1;
+        }
+
+        .commodity-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: white;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .commodity-status i {
+            color: #28a745;
+            font-size: 1.0rem;
+        }
+
+        .commodity-content {
+            padding: 1.5rem;
+        }
+
+        .commodity-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #212529;
+            margin-bottom: 0.5rem;
+        }
+
+        .commodity-description {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        .commodity-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.375rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.5rem;
+            font-weight: 300;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .commodity-badge.processed {
+            background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+            color: white;
+        }
+
+        .commodity-badge.raw {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+        }
+
+        /* Other Commodities Section */
+        .other-commodities-section {
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+            border: 2px solid #2196f3;
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .other-commodities-header h6 {
+            color: #1976d2;
+            font-weight: 600;
+        }
+
+        .other-commodities-content {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            border-left: 4px solid #2196f3;
+        }
+
+        /* Summary Section */
+        .commodities-summary {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 12px;
+            padding: 2rem;
+            border: 1px solid #dee2e6;
+        }
+
+        .summary-item {
+            padding: 1rem;
+        }
+
+        .summary-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            color: white;
+            font-size: 24px;
+        }
+
+        .summary-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #28a745;
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Team Member and Next of Kin Cards */
+        .team-member-card, .kin-card {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .team-member-card:hover, .kin-card:hover {
+            border-color: #007bff;
+            box-shadow: 0 5px 15px rgba(0, 123, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .member-header, .kin-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #f8f9fa;
+        }
+
+        .member-avatar, .kin-avatar {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .member-info, .kin-info {
+            flex: 1;
+        }
+
+        .member-name, .kin-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #212529;
+            margin-bottom: 0.25rem;
+        }
+
+        .member-role, .kin-relationship {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .detail-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .detail-value {
+            font-size: 0.95rem;
+            color: #212529;
+            font-weight: 500;
+        }
+
+        .detail-value a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .detail-value a:hover {
+            text-decoration: underline;
+        }
+
+        /* Timeline Styles */
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 1rem;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, #007bff, #28a745, #ffc107, #dc3545);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 2rem;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -1.5rem;
+            top: 1rem;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 0 0 3px #007bff;
+        }
+
+        .timeline-item.approved::before {
+            box-shadow: 0 0 0 3px #28a745;
+        }
+
+        .timeline-item.rejected::before {
+            box-shadow: 0 0 0 3px #dc3545;
+        }
+
+        .timeline-item.warning::before {
+            box-shadow: 0 0 0 3px #ffc107;
+        }
+
+        .timeline-content {
+            padding: 1.5rem;
+        }
+
+        .timeline-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .timeline-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #212529;
+            margin: 0;
+        }
+
+        .timeline-time {
+            font-size: 0.8rem;
+            color: #6c757d;
+            background: #f8f9fa;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+        }
+
+        .timeline-description {
+            color: #495057;
+            line-height: 1.5;
+        }
+
+        /* Document Cards */
+        /* Document Status Cards */
+        .document-status-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .document-status-card {
+            position: relative;
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .document-status-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .status-indicator {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            border-radius: 12px 0 0 12px;
+        }
+
+        .document-status-card.verified .status-indicator {
+            background: #28a745;
+        }
+
+        .document-status-card.pending .status-indicator {
+            background: #ffc107;
+        }
+
+        .document-status-card.missing .status-indicator {
+            background: #dc3545;
+        }
+
+        .document-content {
+            margin-left: 0.5rem;
+        }
+
+        .document-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            height: 100%;
+            position: relative;
+        }
+
+        .document-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .document-card.verified {
+            border-color: #28a745;
+            background: linear-gradient(135deg, #f8fff8 0%, #ffffff 100%);
+        }
+
+        .document-card.uploaded {
+            border-color: #ffc107;
+            background: linear-gradient(135deg, #fffdf5 0%, #ffffff 100%);
+        }
+
+        .document-card.missing {
+            border-color: #dc3545;
+            background: linear-gradient(135deg, #fff5f5 0%, #ffffff 100%);
+        }
+
+        .document-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+        }
+
+        .document-status-card .document-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+        }
+
+        .document-icon {
+            font-size: 1.5rem;
+        }
+
+        .document-status .badge {
+            font-size: 0.75rem;
+            padding: 0.4rem 0.8rem;
+            border-radius: 15px;
+            font-weight: 600;
+        }
+
+        .document-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #212529;
+            margin-bottom: 0.75rem;
+        }
+
+        .document-status-card .document-title {
+            font-weight: 600;
+            color: #212529;
+            margin: 0;
+            font-size: 1rem;
+            line-height: 1.3;
+        }
+
+        .status-icon {
+            font-size: 1.25rem;
+            flex-shrink: 0;
+            margin-left: 0.75rem;
+        }
+
+        .payment-badge {
+            margin: 0.5rem 0;
+        }
+
+        .payment-badge .badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+        }
+
+        .document-description {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin-bottom: 1rem;
+            line-height: 1.4;
+        }
+
+        .document-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .document-actions .btn {
+            font-size: 0.8rem;
+            padding: 0.375rem 0.75rem;
+            border-radius: 6px;
+        }
+
+        .verification-section {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .verification-section .form-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .verification-section .form-control {
+            font-size: 0.875rem;
+        }
+
+        .verification-section .btn-group .btn {
+            font-size: 0.8rem;
+            padding: 0.375rem 0.75rem;
+        }
+
+        /* Verification Modal Styles */
+        .modal-header {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border-bottom: none;
+        }
+
+        .modal-header .btn-close {
+            filter: invert(1);
+        }
+
+        .modal-content {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-body {
+            padding: 2rem;
+        }
+
+        .modal-footer {
+            border-top: 1px solid #e9ecef;
+            padding: 1rem 2rem;
+        }
+
+        .modal-footer .btn {
+            border-radius: 8px;
+            font-weight: 500;
+            padding: 0.5rem 1.5rem;
+        }
+
+        .modal-title {
+            font-weight: 600;
+            font-size: 1.25rem;
+        }
+
+        .modal-body .alert {
+            border-radius: 8px;
+            border: none;
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+            color: #1976d2;
+        }
+
+        .modal-body .form-label {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .modal-body .form-control {
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            transition: all 0.3s ease;
+        }
+
+        .modal-body .form-control:focus {
+            border-color: #28a745;
+            box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+        }
+
+        /* Verification Info Styles */
+        .verification-info {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 0.75rem;
+            border-left: 3px solid #28a745;
+        }
+
+        .verification-details {
+            margin-bottom: 0.5rem;
+        }
+
+        .verification-notes {
+            background: #e8f5e8;
+            padding: 0.5rem;
+            border-radius: 6px;
+            border: 1px solid #d4edda;
+        }
+
+        .verification-info small {
+            font-size: 0.8rem;
+            line-height: 1.4;
+        }
+
+        .verification-info i {
+            color: #28a745;
+        }
+
+        /* Responsive Commodity Cards */
+        .commodities-grid-responsive {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        /* Ensure multiple columns even on wider screens */
+        @media (min-width: 1200px) {
+            .commodities-grid-responsive {
+                grid-template-columns: repeat(2, 1fr);
+                max-width: none;
+            }
+        }
+
+        @media (min-width: 1400px) {
+            .commodities-grid-responsive {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 992px) {
+            .commodities-grid-responsive {
+                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+                gap: 0.75rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .commodities-grid-responsive {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 0.5rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .commodities-grid-responsive {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+        }
+
+        /* Commodity List View Styles - Responsive Grid with Max 5 per Row */
+        .commodities-list-responsive {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.75rem;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .commodity-list-item {
+            display: flex;
+            align-items: center;
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 0.75rem;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .commodity-list-item:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            border-color: #28a745;
+        }
+
+        .commodity-list-image {
+            width: 50px;
+            height: 50px;
+            margin-right: 0.75rem;
+            flex-shrink: 0;
+            border-radius: 4px;
+            overflow: hidden;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        }
+
+        .commodity-list-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .commodity-list-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+            font-size: 1.2rem;
+        }
+
+        .commodity-list-content {
+            flex: 1;
+            min-width: 0;
+            max-width: 100%;
+            overflow: hidden;
+        }
+
+        .commodity-list-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #333;
+            margin: 0 0 0.25rem 0;
+            line-height: 1.2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+
+        .commodity-list-description {
+            color: #6c757d;
+            font-size: 0.8rem;
+            margin: 0 0 0.5rem 0;
+            line-height: 1.3;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            word-wrap: break-word;
+            max-width: 100%;
+        }
+
+        .commodity-list-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+            max-width: 100%;
+            overflow: hidden;
+        }
+
+        .commodity-list-badges .badge {
+            font-size: 0.7rem;
+            padding: 0.25rem 0.5rem;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        /* View Toggle Button Styles */
+        .btn-group .btn.active {
+            background-color: #007bff;
+            border-color: #007bff;
+            color: white;
+        }
+
+        .btn-group .btn:not(.active) {
+            background-color: white;
+            border-color: #007bff;
+            color: #007bff;
+        }
+
+        .btn-group .btn:not(.active):hover {
+            background-color: #007bff;
+            color: white;
+        }
+
+        /* Responsive adjustments for list view */
+        @media (min-width: 1200px) {
+            .commodities-list-responsive {
+                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                max-width: 100%;
+            }
+        }
+
+        /* Limit to maximum 5 columns on very wide screens */
+        @media (min-width: 1400px) {
+            .commodities-list-responsive {
+                grid-template-columns: repeat(5, 1fr);
+                max-width: 100%;
+            }
+        }
+
+        @media (min-width: 992px) and (max-width: 1199px) {
+            .commodities-list-responsive {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                max-width: 100%;
+            }
+        }
+
+        @media (min-width: 768px) and (max-width: 991px) {
+            .commodities-list-responsive {
+                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+                gap: 0.5rem;
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 767px) {
+            .commodities-list-responsive {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 0.5rem;
+                max-width: 100%;
+            }
+
+            .commodity-list-item {
+                padding: 0.5rem;
+            }
+
+            .commodity-list-image {
+                width: 40px;
+                height: 40px;
+                margin-right: 0.5rem;
+            }
+
+            .commodity-list-title {
+                font-size: 0.9rem;
+            }
+
+            .commodity-list-description {
+                font-size: 0.75rem;
+                -webkit-line-clamp: 1;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .commodities-list-responsive {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+
+            .commodity-list-item {
+                padding: 0.5rem;
+            }
+
+            .commodity-list-image {
+                width: 45px;
+                height: 45px;
+            }
+
+            .commodity-list-title {
+                font-size: 0.85rem;
+            }
+
+            .commodity-list-description {
+                font-size: 0.7rem;
+            }
+
+            .commodity-list-badges .badge {
+                font-size: 0.65rem;
+                padding: 0.2rem 0.4rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .commodities-list-responsive {
+                grid-template-columns: 1fr;
+                gap: 0.4rem;
+            }
+
+            .commodity-list-item {
+                padding: 0.4rem;
+            }
+
+            .commodity-list-image {
+                width: 40px;
+                height: 40px;
+            }
+
+            .commodity-list-title {
+                font-size: 0.8rem;
+            }
+
+            .commodity-list-description {
+                font-size: 0.65rem;
+            }
+        }
+
+        .commodity-card-responsive {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            max-width: 100%;
+            min-width: 0;
+        }
+
+        .commodity-card-responsive:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .commodity-image-container-responsive {
+            position: relative;
+            height: 120px;
+            overflow: hidden;
+        }
+
+        .commodity-image-responsive {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .commodity-card-responsive:hover .commodity-image-responsive {
+            transform: scale(1.05);
+        }
+
+        .commodity-placeholder-responsive {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: #6c757d;
+        }
+
+        .commodity-overlay-responsive {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .commodity-card-responsive:hover .commodity-overlay-responsive {
+            opacity: 1;
+        }
+
+        .commodity-status-responsive {
+            color: white;
+            text-align: center;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .commodity-status-responsive i {
+            display: block;
+            font-size: 1.2rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .commodity-content-responsive {
+            padding: 0.75rem;
+        }
+
+        .commodity-title-responsive {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            color: #212529;
+            line-height: 1.3;
+        }
+
+        .commodity-description-responsive {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .commodity-badge-responsive {
+            font-size: 0.7rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .commodity-badge-responsive.processed {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .commodity-badge-responsive.raw {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .other-commodities-section-responsive {
+            background: #f8f9fa;
+            border-radius: 6px;
+            padding: 0.75rem;
+            border-left: 3px solid #17a2b8;
+        }
+
+        .other-commodities-header-responsive h6 {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #495057;
+            margin: 0;
+        }
+
+        .other-commodities-content-responsive p {
+            font-size: 0.8rem;
+            line-height: 1.4;
+        }
+
+        .commodities-summary-responsive {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 0.75rem;
+            border: 1px solid #e9ecef;
+        }
+
+        .summary-item-responsive {
+            text-align: center;
+        }
+
+        .summary-icon-responsive {
+            font-size: 1rem;
+            color: #28a745;
+            margin-bottom: 0.25rem;
+        }
+
+        .summary-number-responsive {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #212529;
+            margin-bottom: 0.25rem;
+        }
+
+        .summary-label-responsive {
+            font-size: 0.7rem;
+            color: #6c757d;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 992px) {
+            .commodity-image-container-responsive {
+                height: 100px;
+            }
+            
+            .commodity-content-responsive {
+                padding: 0.5rem;
+            }
+            
+            .commodity-title-responsive {
+                font-size: 0.85rem;
+            }
+            
+            .commodity-description-responsive {
+                font-size: 0.75rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .commodity-card-responsive {
+                border-radius: 6px;
+            }
+            
+            .commodity-image-container-responsive {
+                height: 80px;
+            }
+            
+            .commodity-content-responsive {
+                padding: 0.5rem;
+            }
+            
+            .commodity-title-responsive {
+                font-size: 0.8rem;
+                margin-bottom: 0.2rem;
+            }
+            
+            .commodity-description-responsive {
+                font-size: 0.7rem;
+                margin-bottom: 0.4rem;
+            }
+            
+            .commodity-badge-responsive {
+                font-size: 0.65rem;
+                padding: 0.2rem 0.4rem;
+            }
+            
+            .other-commodities-section-responsive {
+                padding: 0.5rem;
+            }
+            
+            .other-commodities-header-responsive h6 {
+                font-size: 0.8rem;
+            }
+            
+            .other-commodities-content-responsive p {
+                font-size: 0.75rem;
+            }
+            
+            .commodities-summary-responsive {
+                padding: 0.5rem;
+            }
+            
+            .summary-icon-responsive {
+                font-size: 0.9rem;
+            }
+            
+            .summary-number-responsive {
+                font-size: 1rem;
+            }
+            
+            .summary-label-responsive {
+                font-size: 0.65rem;
+            }
+        }
+
+        .document-details, .document-verification, .document-notes {
+            font-size: 0.9rem;
+            color: #495057;
+            line-height: 1.5;
+            margin-bottom: 0.75rem;
+        }
+
+        .document-details strong, .document-verification strong, .document-notes strong {
+            color: #212529;
+            font-weight: 600;
+        }
+
+        .document-missing {
+            font-size: 0.9rem;
+            color: #6c757d;
+            font-style: italic;
+            text-align: center;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border: 1px dashed #dee2e6;
+        }
+
+        /* Document Actions */
+        .document-actions {
+            border-top: 1px solid #f8f9fa;
+            padding-top: 1rem;
+        }
+
+        .document-actions .btn-group {
+            width: 100%;
+        }
+
+        .document-actions .btn {
+            flex: 1;
+            font-size: 0.8rem;
+            padding: 0.5rem 0.75rem;
+        }
+
+        /* Verification Section */
+        .verification-section {
+            border: 1px solid #e9ecef;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        }
+
+        .verification-section h6 {
+            color: #495057;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .verification-section .form-control {
+            font-size: 0.9rem;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+        }
+
+        .verification-section .form-control:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        .verification-section .btn-group {
+            width: 100%;
+        }
+
+        .verification-section .btn {
+            flex: 1;
+            font-size: 0.8rem;
+            padding: 0.5rem 0.75rem;
+            font-weight: 600;
+        }
+
+        /* Verification Info */
+        .verification-info {
+            border: 1px solid #28a745;
+            background: linear-gradient(135deg, #d4edda 0%, #ffffff 100%);
+        }
+
+        .verification-info h6 {
+            color: #155724;
+            font-weight: 600;
+        }
+
+        .verification-info .document-verification,
+        .verification-info .document-notes {
+            font-size: 0.85rem;
+            color: #155724;
+        }
+
+        /* Responsive Design */
+        /* Responsive Layout for Business Info and Document Status */
+        @media (max-width: 992px) {
+            .col-lg-8, .col-lg-4 {
+                margin-bottom: 2rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .page-title {
+                font-size: 1.5rem;
+            }
+
+            .commodities-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .commodity-image-container {
+                height: 150px;
+            }
+
+            .commodity-content {
+                padding: 1rem;
+            }
+
+            .commodities-summary {
+                padding: 1.5rem;
+            }
+
+            .summary-item {
+                padding: 0.5rem;
+            }
+
+            .summary-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+
+            .summary-number {
+                font-size: 1.5rem;
+            }
+
+            .summary-stats {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .detail-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .business-info-card {
+                padding: 0.75rem;
+            }
+
+            .info-header {
+                gap: 0.5rem;
+            }
+
+            .info-icon {
+                width: 35px;
+                height: 35px;
+                font-size: 14px;
+            }
+
+            .info-title {
+                font-size: 0.85rem;
+            }
+
+            .info-value {
+                font-size: 0.9rem;
+            }
+
+            .section-title {
+                font-size: 0.9rem;
+            }
+
+            /* Document Cards Mobile */
+            .document-card {
+                padding: 1rem;
+            }
+
+            .document-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .document-title {
+                font-size: 0.9rem;
+            }
+
+            /* Document Status Responsive */
+            .document-status-list {
+                gap: 0.75rem;
+            }
+
+            .document-status-card {
+                padding: 1rem;
+            }
+
+            .document-status-card .document-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .document-status-card .document-title {
+                font-size: 0.9rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .status-icon {
+                font-size: 1rem;
+                margin-left: 0;
+                margin-top: 0.25rem;
+            }
+
+            .document-description {
+                font-size: 0.8rem;
+                margin-bottom: 0.75rem;
+            }
+
+            .document-actions {
+                gap: 0.25rem;
+            }
+
+            .document-actions .btn {
+                font-size: 0.75rem;
+                padding: 0.25rem 0.5rem;
+            }
+
+            .verification-section {
+                padding: 0.75rem;
+            }
+
+            .document-details, .document-verification, .document-notes {
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="page-title">
+                        <i class="fas fa-file-alt me-2"></i>
+                        Application Details
+                    </h1>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="/backoffice/">Dashboard</a></li>
+                            <li class="breadcrumb-item"><a href="/backoffice/applications/">Applications</a></li>
+                            <li class="breadcrumb-item active">{{ application.business_name }}</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div class="page-actions">
+                    <a href="/backoffice/applications/" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>Back to Applications
+                    </a>
+                    
+                    <!-- Application Actions Dropdown -->
+                    <div class="btn-group ms-2" role="group">
+                        <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-cog me-1"></i>Actions
+                        </button>
+                        <ul class="dropdown-menu">
+                            {% if can_approve %}
+                            <li>
+                                <button class="dropdown-item" onclick="performAction('approve')">
+                                    <i class="fas fa-check-circle text-success me-2"></i>Approve Application
+                                </button>
+                            </li>
+                            {% endif %}
+                            
+                            {% if can_reject %}
+                            <li>
+                                <button class="dropdown-item" onclick="performAction('reject')">
+                                    <i class="fas fa-times-circle text-danger me-2"></i>Reject Application
+                                </button>
+                            </li>
+                            {% endif %}
+                            
+                            {% if should_show_request_docs %}
+                            <li>
+                                <button class="dropdown-item" onclick="performAction('request_documents')">
+                                    <i class="fas fa-file-alt text-warning me-2"></i>Request Documents
+                                </button>
+                            </li>
+                            {% endif %}
+                            
+                            {% if application.status == 'APPROVED' and not application.user.is_active %}
+                            <li>
+                                <button class="dropdown-item" onclick="performAction('activate_account')">
+                                    <i class="fas fa-user-check text-info me-2"></i>Activate Account
+                                </button>
+                            </li>
+                            {% endif %}
+                            
+                            <li><hr class="dropdown-divider"></li>
+                            
+                            {% if all_documents_uploaded and all_documents_verified %}
+                            <li>
+                                <button class="dropdown-item" onclick="performAction('send_notification')">
+                                    <i class="fas fa-bell text-primary me-2"></i>Send Notification
+                                </button>
+                            </li>
+                            {% elif not all_documents_uploaded %}
+                            <li>
+                                <button class="dropdown-item" onclick="performAction('request_documents')">
+                                    <i class="fas fa-file-alt text-warning me-2"></i>Request Documents
+                                </button>
+                            </li>
+                            {% else %}
+                            <li>
+                                <button class="dropdown-item" onclick="performAction('send_notification')">
+                                    <i class="fas fa-bell text-primary me-2"></i>Send Notification
+                                </button>
+                            </li>
+                            {% endif %}
+                            
+                            <li>
+                                <button class="dropdown-item" onclick="performAction('add_notes')">
+                                    <i class="fas fa-sticky-note text-secondary me-2"></i>Add Notes
+                                </button>
+                            </li>
+                            
+                            <li>
+                                <button class="dropdown-item" onclick="performAction('change_status')">
+                                    <i class="fas fa-edit text-info me-2"></i>Change Status
+                                </button>
+                            </li>
+                            
+                            <li><hr class="dropdown-divider"></li>
+                            
+                            <li>
+                                <button class="dropdown-item" onclick="performAction('export_pdf')">
+                                    <i class="fas fa-file-pdf text-danger me-2"></i>Export PDF
+                                </button>
+                            </li>
+                            
+                            <li>
+                                <button class="dropdown-item" onclick="performAction('print')">
+                                    <i class="fas fa-print text-dark me-2"></i>Print Application
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Application Status Alert -->
+        {% if messages %}
+        <div class="row">
+            <div class="col-12">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    <i class="fas fa-info-circle me-2"></i>
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Application Status and Actions -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="detail-card">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Application Status & Actions
+                            </h5>
+                            <span class="status-badge status-{{ application.status|lower }}">
+                                {{ application.get_status_display }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <strong>Application ID:</strong> {{ application.tracking_code }}
+                                </div>
+                                <div class="mb-3">
+                                    <strong>Submitted:</strong> {{ application.created_at|date:"F d, Y \a\t H:i" }}
+                                </div>
+                                <div class="mb-3">
+                                    <strong>Last Updated:</strong> {{ application.updated_at|date:"F d, Y \a\t H:i" }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex gap-2 flex-wrap">
+                                    {% if application.status == 'PENDING_REVIEW' %}
+                                        <span class="btn btn-outline-secondary">
+                                            <i class="fas fa-clock me-1"></i>Pending Review
+                                        </span>
+                                    {% elif application.status == 'UNDER_REVIEW' %}
+                                        <span class="btn btn-outline-info">
+                                            <i class="fas fa-eye me-1"></i>Under Review
+                                        </span>
+                                    {% elif application.status == 'APPROVED' %}
+                                        <span class="btn btn-success">
+                                            <i class="fas fa-check me-1"></i>Approved
+                                        </span>
+                                    {% elif application.status == 'REJECTED' %}
+                                        <span class="btn btn-danger">
+                                            <i class="fas fa-times me-1"></i>Rejected
+                                        </span>
+                                    {% endif %}
+                                    
+                                    <button class="btn btn-outline-primary" onclick="window.print()">
+                                        <i class="fas fa-print me-1"></i>Print
+                                    </button>
+                                    
+                                    <button class="btn btn-outline-secondary" onclick="exportToPDF()">
+                                        <i class="fas fa-file-pdf me-1"></i>Export PDF
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Business Information and Document Status -->
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="detail-card">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-building me-2 text-primary"></i>
+                                Business Information
+                            </h5>
+                            <span class="badge bg-primary fs-12">{{ application.get_status_display }}</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Business Identity Section -->
+                        <div class="business-section mb-4">
+                            <div class="section-header">
+                                <h6 class="section-title">
+                                    <i class="fas fa-certificate text-primary"></i>
+                                    Business Identity
+                                </h6>
+                            </div>
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <div class="business-info-card">
+                                        <div class="info-header">
+                                            <!-- <div class="info-icon">
+                                                <i class="fas fa-building"></i>
+                                            </div> -->
+                                            <div class="info-content">
+                                                <h6 class="info-title">Business Name</h6>
+                                                <p class="info-value">{{ application.business_name }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="business-info-card">
+                                        <div class="info-header">
+                                            <!-- <div class="info-icon">
+                                                <i class="fas fa-briefcase"></i>
+                                            </div> -->
+                                            <div class="info-content">
+                                                <h6 class="info-title">Business Type</h6>
+                                                <p class="info-value">
+                                                    {% if application.business_type %}
+                                                        <span class="badge bg-info">{{ application.get_business_type_display }}</span>
+                                                    {% else %}
+                                                        Not specified
+                                                    {% endif %}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Registration Details Section -->
+                        <div class="business-section mb-4">
+                            <div class="section-header">
+                                <h6 class="section-title">
+                                    <i class="fas fa-file-alt text-success"></i>
+                                    Registration Details
+                                </h6>
+                            </div>
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <div class="business-info-card">
+                                        <div class="info-header">
+                                            <!-- <div class="info-icon">
+                                                <i class="fas fa-hashtag"></i>
+                                            </div> -->
+                                            <div class="info-content">
+                                                <h6 class="info-title">Registration Number</h6>
+                                                <p class="info-value">
+                                                    {% if application.registration_number %}
+                                                        <code>{{ application.registration_number }}</code>
+                                                    {% else %}
+                                                        Not provided
+                                                    {% endif %}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="business-info-card">
+                                        <div class="info-header">
+                                            <!-- <div class="info-icon">
+                                                <i class="fas fa-receipt"></i>
+                                            </div> -->
+                                            <div class="info-content">
+                                                <h6 class="info-title">TIN Number</h6>
+                                                <p class="info-value">
+                                                    {% if application.tin_number %}
+                                                        <code>{{ application.tin_number }}</code>
+                                                    {% else %}
+                                                        Not provided
+                                                    {% endif %}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contact Information Section -->
+                        <div class="business-section mb-4">
+                            <div class="section-header">
+                                <h6 class="section-title">
+                                    <i class="fas fa-phone text-info"></i>
+                                    Contact Information
+                                </h6>
+                            </div>
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <div class="business-info-card">
+                                        <div class="info-header">
+                                            <!-- <div class="info-icon">
+                                                <i class="fas fa-envelope"></i>
+                                            </div> -->
+                                            <div class="info-content">
+                                                <h6 class="info-title">Email Address</h6>
+                                                <p class="info-value">
+                                                    <a href="mailto:{{ application.email }}" class="contact-link">
+                                                        <i class="fas fa-envelope me-1"></i>{{ application.email }}
+                                                    </a>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="business-info-card">
+                                        <div class="info-header">
+                                            <!-- <div class="info-icon">
+                                                <i class="fas fa-phone"></i>
+                                            </div> -->
+                                            <div class="info-content">
+                                                <h6 class="info-title">Phone Number</h6>
+                                                <p class="info-value">
+                                                    <a href="tel:{{ application.telephone }}" class="contact-link">
+                                                        <i class="fas fa-phone me-1"></i>{{ application.telephone }}
+                                                    </a>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Location Information Section -->
+                        <div class="business-section mb-4">
+                            <div class="section-header">
+                                <h6 class="section-title">
+                                    <i class="fas fa-map-marker-alt text-warning"></i>
+                                    Location Information
+                                </h6>
+                            </div>
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <div class="business-info-card">
+                                        <div class="info-header">
+                                            <!-- <div class="info-icon">
+                                                <i class="fas fa-map"></i>
+                                            </div> -->
+                                            <div class="info-content">
+                                                <h6 class="info-title">Physical Address</h6>
+                                                <p class="info-value">{{ application.physical_address }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="business-info-card">
+                                        <div class="info-header">
+                                            <!-- <div class="info-icon">
+                                                <i class="fas fa-city"></i>
+                                            </div> -->
+                                            <div class="info-content">
+                                                <h6 class="info-title">City</h6>
+                                                <p class="info-value">{{ application.city }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row mt-3">
+                                <div class="col-lg-6">
+                                    <div class="business-info-card">
+                                        <div class="info-header">
+                                            <!-- <div class="info-icon">
+                                                <i class="fas fa-globe"></i>
+                                            </div> -->
+                                            <div class="info-content">
+                                                <h6 class="info-title">Region</h6>
+                                                <p class="info-value">
+                                                    <span class="badge bg-secondary">{{ application.region.name }}</span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="business-info-card">
+                                        <div class="info-header">
+                                            <!-- <div class="info-icon">
+                                                <i class="fas fa-mail-bulk"></i>
+                                            </div> -->
+                                            <div class="info-content">
+                                                <h6 class="info-title">Postal Code</h6>
+                                                <p class="info-value">
+                                                    {% if application.postal_code %}
+                                                        {{ application.postal_code }}
+                                                    {% else %}
+                                                        Not provided
+                                                    {% endif %}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Business Operations Section -->
+                        <div class="business-section">
+                            <div class="section-header">
+                                <h6 class="section-title">
+                                    <i class="fas fa-warehouse text-danger"></i>
+                                    Business Operations
+                                </h6>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="business-info-card">
+                                        <div class="info-header">
+                                            <!-- <div class="info-icon">
+                                                <i class="fas fa-warehouse"></i>
+                                            </div> -->
+                                            <div class="info-content">
+                                                <h6 class="info-title">Warehouse Location</h6>
+                                                <p class="info-value">{{ application.warehouse_location }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Application Signatory Section -->
+                        {% if application.signer_name or application.signer_designation %}
+                        <div class="business-section mt-4">
+                            <div class="section-header">
+                                <h6 class="section-title">
+                                    <i class="fas fa-signature text-success"></i>
+                                    Application Signatory
+                                </h6>
+                            </div>
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <div class="business-info-card">
+                                        <div class="info-header">
+                                            <div class="info-icon">
+                                                <i class="fas fa-user"></i>
+                                            </div>
+                                            <div class="info-content">
+                                                <h6 class="info-title">Signer Name</h6>
+                                                <p class="info-value">{{ application.signer_name|default:"Not specified" }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="business-info-card">
+                                        <div class="info-header">
+                                            <div class="info-icon">
+                                                <i class="fas fa-user-tie"></i>
+                                            </div>
+                                            <div class="info-content">
+                                                <h6 class="info-title">Signer Designation</h6>
+                                                <p class="info-value">{{ application.signer_designation|default:"Not specified" }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% if application.signed_at %}
+                            <div class="row mt-3">
+                                <div class="col-12">
+                                    <div class="business-info-card">
+                                        <div class="info-header">
+                                            <div class="info-icon">
+                                                <i class="fas fa-calendar-check"></i>
+                                            </div>
+                                            <div class="info-content">
+                                                <h6 class="info-title">Signed At</h6>
+                                                <p class="info-value">{{ application.signed_at|date:"F d, Y \a\t H:i" }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Commodities to Supply Section -->
+                {% if application.commodities_to_supply.exists %}
+                <div class="detail-card mt-4">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-seedling me-2 text-success"></i>
+                                Commodities to Supply
+                            </h5>
+                            <div class="d-flex align-items-center gap-3">
+                                <span class="badge bg-success fs-6">{{ total_commodities }}</span>
+                                <div class="btn-group" role="group" aria-label="View toggle">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" id="card-view-btn" onclick="toggleCommodityView('card')">
+                                        <i class="fas fa-th-large me-1"></i> Cards
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" id="list-view-btn" onclick="toggleCommodityView('list')">
+                                        <i class="fas fa-list me-1"></i> List
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Card View -->
+                        <div id="commodity-card-view" class="commodities-grid-responsive">
+                            {% for commodity in application.commodities_to_supply.all %}
+                            <div class="commodity-card-responsive">
+                                <div class="commodity-image-container-responsive">
+                                    {% if commodity.image %}
+                                        <img src="{{ commodity.image.url }}" alt="{{ commodity.name }}" class="commodity-image-responsive">
+                                        <div class="commodity-overlay-responsive">
+                                            <div class="commodity-status-responsive">
+                                                <i class="fas fa-check-circle"></i>
+                                                <span>Selected</span>
+                                            </div>
+                                        </div>
+                                    {% else %}
+                                        <div class="commodity-placeholder-responsive">
+                                            <i class="fas fa-seedling"></i>
+                                        </div>
+                                        <div class="commodity-overlay-responsive">
+                                            <div class="commodity-status-responsive">
+                                                <i class="fas fa-check-circle"></i>
+                                                <span>Selected</span>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="commodity-content-responsive">
+                                    <h6 class="commodity-title-responsive">{{ commodity.name }}</h6>
+                                    {% if commodity.description %}
+                                        <p class="commodity-description-responsive">{{ commodity.description|truncatechars:60 }}</p>
+                                    {% endif %}
+                                    <div class="commodity-meta-responsive">
+                                        {% if commodity.is_processed_food %}
+                                            <span class="commodity-badge-responsive processed">
+                                                <i class="fas fa-certificate"></i>
+                                                FDA Required
+                                            </span>
+                                        {% else %}
+                                            <span class="commodity-badge-responsive raw">
+                                                <i class="fas fa-leaf"></i>
+                                                Raw Product
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- List View -->
+                        <div id="commodity-list-view" class="commodities-list-responsive" style="display: none;">
+                            {% for commodity in application.commodities_to_supply.all %}
+                            <div class="commodity-list-item">
+                                <div class="commodity-list-image">
+                                    {% if commodity.image %}
+                                        <img src="{{ commodity.image.url }}" alt="{{ commodity.name }}" class="commodity-list-img">
+                                    {% else %}
+                                        <div class="commodity-list-placeholder">
+                                            <i class="fas fa-seedling"></i>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="commodity-list-content">
+                                    <h6 class="commodity-list-title">{{ commodity.name }}</h6>
+                                    {% if commodity.description %}
+                                        <p class="commodity-list-description">{{ commodity.description }}</p>
+                                    {% endif %}
+                                    <div class="commodity-list-badges">
+                                        {% if commodity.is_processed_food %}
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="fas fa-certificate me-1"></i>
+                                                FDA
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-leaf me-1"></i>
+                                                Raw
+                                            </span>
+                                        {% endif %}
+                                        <span class="badge bg-primary">
+                                            <i class="fas fa-check-circle me-1"></i>
+                                            ✓
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        {% if application.other_commodities %}
+                        <div class="other-commodities-section-responsive mt-3">
+                            <div class="other-commodities-header-responsive">
+                                <h6 class="mb-2">
+                                    <i class="fas fa-plus-circle me-2 text-info"></i>
+                                    Additional Commodities
+                                </h6>
+                            </div>
+                            <div class="other-commodities-content-responsive">
+                                <p class="text-muted mb-0 small">{{ application.other_commodities|truncatechars:100 }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="commodities-summary-responsive mt-3">
+                            <div class="row text-center g-2">
+                                <div class="col-4">
+                                    <div class="summary-item-responsive">
+                                        <div class="summary-icon-responsive">
+                                            <i class="fas fa-seedling"></i>
+                                        </div>
+                                        <div class="summary-number-responsive">{{ total_commodities }}</div>
+                                        <div class="summary-label-responsive">Total</div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="summary-item-responsive">
+                                        <div class="summary-icon-responsive">
+                                            <i class="fas fa-certificate"></i>
+                                        </div>
+                                        <div class="summary-number-responsive">{{ processed_commodities_count }}</div>
+                                        <div class="summary-label-responsive">FDA</div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="summary-item-responsive">
+                                        <div class="summary-icon-responsive">
+                                            <i class="fas fa-leaf"></i>
+                                        </div>
+                                        <div class="summary-number-responsive">{{ raw_commodities_count }}</div>
+                                        <div class="summary-label-responsive">Raw</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Team Members -->
+                {% if team_members %}
+                <div class="detail-card">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-users me-2 text-primary"></i>
+                                Team Members
+                            </h5>
+                            <!-- <span class="badge bg-primary fs-9">{{ team_members.count }} Members</span> -->
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        {% for member in team_members %}
+                        <div class="team-member-card">
+                            <div class="member-header">
+                                <div class="member-avatar">
+                                    {{ member.full_name|slice:":1"|upper }}
+                                </div>
+                                <div class="member-info">
+                                    <div class="member-name">{{ member.full_name }}</div>
+                                    <div class="member-role">{{ member.position|default:"Team Member" }}</div>
+                                </div>
+                            </div>
+                            <div class="detail-grid">
+                                <div class="detail-item">
+                                    <div class="detail-label">Experience</div>
+                                    <div class="detail-value">
+                                        {% if member.years_experience %}
+                                            {{ member.years_experience }} years in food supply/distribution
+                                        {% else %}
+                                            Not specified
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Address</div>
+                                    <div class="detail-value">{{ member.address }}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">City</div>
+                                    <div class="detail-value">{{ member.city }}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Region</div>
+                                    <div class="detail-value">{{ member.region.name }}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Phone</div>
+                                    <div class="detail-value">
+                                        {% if member.telephone %}
+                                            <a href="tel:{{ member.telephone }}">{{ member.telephone }}</a>
+                                        {% else %}
+                                            Not provided
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Email</div>
+                                    <div class="detail-value">
+                                        {% if member.email %}
+                                            <a href="mailto:{{ member.email }}">{{ member.email }}</a>
+                                        {% else %}
+                                            Not provided
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">ID Type</div>
+                                    <div class="detail-value">{{ member.get_id_card_type_display|default:"Not specified" }}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">ID Number</div>
+                                    <div class="detail-value">
+                                        {% if member.id_card_number %}
+                                            <code>{{ member.id_card_number }}</code>
+                                        {% else %}
+                                            Not provided
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Bank Account Information -->
+                {% if bank_accounts %}
+
+                <div class="detail-card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-university me-2 text-warning"></i>
+                            Bank Account Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% for bank_account in bank_accounts %}
+                        <div class="bank-account-item mb-4">
+                            {% if bank_accounts|length > 1 %}
+                            <h6 class="text-muted mb-3">
+                                <i class="fas fa-credit-card me-2"></i>
+                                Account {{ forloop.counter }} {% if bank_account.account_index == 1 %}(Primary){% elif bank_account.account_index == 2 %}(Secondary){% endif %}
+                            </h6>
+                            {% endif %}
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="info-item">
+                                        <label>Bank Name</label>
+                                        <p>{{ bank_account.bank_name }}</p>
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Account Number</label>
+                                        <p><code>{{ bank_account.account_number }}</code></p>
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Branch</label>
+                                        <p>{{ bank_account.branch }}</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="info-item">
+                                        <label>Account Name</label>
+                                        <p>{{ bank_account.account_name }}</p>
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Account Type</label>
+                                        <p>{{ bank_account.account_type }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% if not forloop.last %}<hr class="my-3">{% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if next_of_kin %}
+                <div class="detail-card">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-user-friends me-2 text-success"></i>
+                                Next of Kin
+                            </h5>
+                            <!-- <span class="badge bg-success fs-6">{{ next_of_kin.count }} Contact{{ next_of_kin.count|pluralize }}</span> -->
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        {% for kin in next_of_kin %}
+                        <div class="kin-card">
+                            <div class="kin-header">
+                                <div class="kin-avatar">
+                                    {{ kin.full_name|slice:":1"|upper }}
+                                </div>
+                                <div class="kin-info">
+                                    <div class="kin-name">{{ kin.full_name }}</div>
+                                    <div class="kin-relationship">{{ kin.relationship }}</div>
+                                </div>
+                            </div>
+                            <div class="detail-grid">
+                                <div class="detail-item">
+                                    <div class="detail-label">Address</div>
+                                    <div class="detail-value">{{ kin.address }}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Mobile</div>
+                                    <div class="detail-value">
+                                        <a href="tel:{{ kin.mobile }}">{{ kin.mobile }}</a>
+                                    </div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">ID Type</div>
+                                    <div class="detail-value">{{ kin.get_id_card_type_display|default:"Not specified" }}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">ID Number</div>
+                                    <div class="detail-value">
+                                        {% if kin.id_card_number %}
+                                            <code>{{ kin.id_card_number }}</code>
+                                        {% else %}
+                                            Not provided
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Document Status Section -->
+            {% if document_status %}
+            <div class="col-lg-4">
+                <div class="detail-card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-file-alt me-2 text-info"></i>
+                            Document Status
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="document-status-list">
+                            {% for status in document_status %}
+                            <div class="document-status-card {% if status.is_uploaded and status.is_verified %}verified{% elif status.is_uploaded %}pending{% else %}missing{% endif %}">
+                                <div class="status-indicator"></div>
+                                <div class="document-content">
+                                    <div class="document-header">
+                                        <h6 class="document-title">{{ status.requirement.label }}</h6>
+                                        <div class="status-icon">
+                                            {% if status.is_uploaded and status.is_verified %}
+                                                <i class="fas fa-check-circle text-success"></i>
+                                            {% elif status.is_uploaded %}
+                                                <i class="fas fa-arrow-up text-warning"></i>
+                                            {% else %}
+                                                <i class="fas fa-times-circle text-danger"></i>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    {% if status.requirement.code == 'GCX_REGISTRATION_PROOF' and status.is_uploaded %}
+                                        <div class="payment-badge">
+                                            <span class="badge bg-primary">PAYMENT</span>
+                                        </div>
+                                    {% endif %}
+                                    
+                                    <div class="document-description">
+                                        {{ status.requirement.description|default:"Document requirement" }}
+                                    </div>
+                                    
+                                    {% if status.is_uploaded %}
+                                        <!-- Verification Info (if verified) -->
+                                        {% if status.is_verified %}
+                                            <div class="verification-info mt-2">
+                                                <div class="verification-details">
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-user-check me-1"></i>
+                                                        Verified by: {{ status.uploaded_doc.verified_by.get_full_name|default:status.uploaded_doc.verified_by.username }}
+                                                        on {{ status.uploaded_doc.verified_at|date:"M d, Y H:i" }}
+                                                    </small>
+                                                </div>
+                                                {% if status.uploaded_doc.verifier_note %}
+                                                    <div class="verification-notes mt-2">
+                                                        <small class="text-muted">
+                                                            <i class="fas fa-sticky-note me-1"></i>
+                                                            <strong>Notes:</strong> {{ status.uploaded_doc.verifier_note }}
+                                                        </small>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        {% endif %}
+                                        
+                                        <div class="document-actions">
+                                            <a href="{{ status.uploaded_doc.file.url }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                                <i class="fas fa-eye me-1"></i>View
+                                            </a>
+                                            {% if not status.is_verified %}
+                                                <button type="button" class="btn btn-success btn-sm verify-btn" data-document-id="{{ status.uploaded_doc.id }}">
+                                                    <i class="fas fa-check me-1"></i>Verify
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Verification Section (Hidden by default) -->
+                                        {% if not status.is_verified %}
+                                            <div class="verification-section" id="verification-{{ status.uploaded_doc.id }}" style="display: none;">
+                                                <form method="post" action="{% url 'applications:backoffice-verify-document' status.uploaded_doc.id %}" class="verification-form">
+                                                    {% csrf_token %}
+                                                    <div class="mb-3">
+                                                        <label for="verification_notes_{{ status.uploaded_doc.id }}" class="form-label">Verification Notes (Optional)</label>
+                                                        <textarea class="form-control" id="verification_notes_{{ status.uploaded_doc.id }}" 
+                                                                  name="verification_notes" rows="2" 
+                                                                  placeholder="Add any notes about this document..."></textarea>
+                                                    </div>
+                                                    <div class="btn-group w-100" role="group">
+                                                        <button type="submit" name="action" value="approve" class="btn btn-success btn-sm">
+                                                            <i class="fas fa-check me-1"></i>Approve
+                                                        </button>
+                                                        <button type="submit" name="action" value="reject" class="btn btn-danger btn-sm">
+                                                            <i class="fas fa-times me-1"></i>Reject
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <!-- Application Timeline -->
+            {% if timeline_events %}
+        
+            <div class="detail-card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-history me-2 text-info"></i>
+                        Application Timeline
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        {% for event in timeline_events %}
+                        <div class="timeline-item {{ event.type|lower }}">
+                            <div class="timeline-content">
+                                <div class="timeline-header">
+                                    <h6 class="timeline-title">{{ event.title }}</h6>
+                                    <span class="timeline-time">{{ event.timestamp|date:"M d, Y H:i" }}</span>
+                                </div>
+                                <div class="timeline-description">
+                                    {{ event.description|safe }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+
+            
+            <!-- Application Timeline -->
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // Commodity view toggle functionality
+    function toggleCommodityView(viewType) {
+        const cardView = document.getElementById('commodity-card-view');
+        const listView = document.getElementById('commodity-list-view');
+        const cardBtn = document.getElementById('card-view-btn');
+        const listBtn = document.getElementById('list-view-btn');
+        
+        if (viewType === 'card') {
+            cardView.style.display = 'grid';
+            listView.style.display = 'none';
+            cardBtn.classList.add('active');
+            listBtn.classList.remove('active');
+        } else if (viewType === 'list') {
+            cardView.style.display = 'none';
+            listView.style.display = 'grid';
+            cardBtn.classList.remove('active');
+            listBtn.classList.add('active');
+        }
+    }
+
+    // Initialize default view (card view)
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set card view as active by default
+        const cardBtn = document.getElementById('card-view-btn');
+        if (cardBtn) {
+            cardBtn.classList.add('active');
+        }
+    });
+
+    // Document verification functionality
+    function verifyDocument(documentId) {
+        const verificationSection = document.getElementById('verification-' + documentId);
+        if (verificationSection) {
+            if (verificationSection.style.display === 'none' || verificationSection.style.display === '') {
+                verificationSection.style.display = 'block';
+                // Scroll to the verification section
+                verificationSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } else {
+                verificationSection.style.display = 'none';
+            }
+        }
+    }
+
+    // Handle verify button clicks
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('verify-btn') || e.target.closest('.verify-btn')) {
+            const button = e.target.classList.contains('verify-btn') ? e.target : e.target.closest('.verify-btn');
+            const documentId = button.getAttribute('data-document-id');
+            const documentName = button.closest('.document-status-card').querySelector('.document-title').textContent;
+            
+            if (documentId) {
+                showVerifyModal(documentId, documentName);
+            }
+        }
+    });
+
+    // Show verification confirmation modal
+    function showVerifyModal(documentId, documentName) {
+        // Set document name in modal
+        const documentNameElement = document.getElementById('modal-document-name');
+        if (documentNameElement) {
+            documentNameElement.textContent = documentName;
+        }
+        
+        // Clear previous notes
+        const notesElement = document.getElementById('modal-verification-notes');
+        if (notesElement) {
+            notesElement.value = '';
+        }
+        
+        // Store document ID for later use
+        const confirmBtn = document.getElementById('confirm-verify-btn');
+        if (confirmBtn) {
+            confirmBtn.setAttribute('data-document-id', documentId);
+        }
+        
+        // Show modal
+        const modalElement = document.getElementById('verifyModal');
+        if (modalElement) {
+            const modal = new bootstrap.Modal(modalElement, {
+                focus: true,
+                keyboard: true
+            });
+            
+            // Handle modal events to fix ARIA issues
+            modalElement.addEventListener('shown.bs.modal', function() {
+                // Ensure aria-hidden is removed when modal is shown
+                modalElement.removeAttribute('aria-hidden');
+                // Focus the first input field
+                const firstInput = modalElement.querySelector('textarea');
+                if (firstInput) {
+                    setTimeout(() => {
+                        firstInput.focus();
+                    }, 100);
+                }
+            });
+            
+            modalElement.addEventListener('hidden.bs.modal', function() {
+                // Add aria-hidden back when modal is completely hidden
+                setTimeout(() => {
+                    modalElement.setAttribute('aria-hidden', 'true');
+                }, 300);
+            });
+            
+            modal.show();
+        }
+    }
+
+    // Handle confirm verification using event delegation
+    document.addEventListener('click', function(e) {
+        if (e.target && e.target.id === 'confirm-verify-btn') {
+            const documentId = e.target.getAttribute('data-document-id');
+            const notes = document.getElementById('modal-verification-notes').value;
+            
+            // Hide modal
+            const modalElement = document.getElementById('verifyModal');
+            if (modalElement) {
+                const modal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
+                modal.hide();
+                
+                // The modal will handle aria-hidden through its own events
+            }
+            
+            // Auto-submit the verification form with 'approve' action (since backend only accepts approve)
+            setTimeout(() => {
+                submitVerification(documentId, 'approve', notes);
+            }, 500);
+        }
+    });
+
+    // Show verification form with pre-filled notes
+    function showVerificationForm(documentId, notes) {
+        const verificationSection = document.getElementById('verification-' + documentId);
+        if (verificationSection) {
+            // Pre-fill notes if provided
+            if (notes) {
+                const notesTextarea = verificationSection.querySelector('textarea[name="verification_notes"]');
+                if (notesTextarea) {
+                    notesTextarea.value = notes;
+                }
+            }
+            
+            // Show verification section
+            verificationSection.style.display = 'block';
+            
+            // Scroll to verification section
+            verificationSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+
+    // Submit verification form via AJAX
+    function submitVerification(documentId, action, notes) {
+        // Try multiple selectors to find the verification form
+        let form = document.querySelector(`form[action*="/verify/${documentId}/"]`);
+        
+        // If not found, try alternative selectors
+        if (!form) {
+            form = document.querySelector(`form[action*="verify/${documentId}"]`);
+        }
+        
+        if (!form) {
+            form = document.querySelector(`#verification-${documentId} form`);
+        }
+        
+        if (!form) {
+            console.error('Verification form not found for document:', documentId);
+            alert('Verification form not found. Please refresh the page and try again.');
+            return;
+        }
+        
+        // Debug: Log form details
+        console.log('Found form:', form);
+        console.log('Form action attribute:', form.getAttribute('action'));
+        console.log('Form action property:', form.action);
+
+        // Set the action value - the form uses submit buttons with name="action"
+        const actionButton = form.querySelector(`button[name="action"][value="${action}"]`);
+        if (!actionButton) {
+            console.error('Action button not found for:', action);
+            return;
+        }
+
+        // Set the notes value
+        const notesTextarea = form.querySelector('textarea[name="verification_notes"]');
+        if (notesTextarea && notes) {
+            notesTextarea.value = notes;
+        }
+
+        // Get CSRF token
+        const csrfElement = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (!csrfElement) {
+            console.error('CSRF token not found');
+            return;
+        }
+        const csrfToken = csrfElement.value;
+
+        // Show loading state
+        const verifyBtn = document.querySelector(`button[data-document-id="${documentId}"]`);
+        if (verifyBtn) {
+            verifyBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Verifying...';
+            verifyBtn.disabled = true;
+        }
+
+        // Submit form via fetch
+        const formData = new FormData(form);
+        // The form already has the action button, so we just need to ensure the right one is "clicked"
+        // Remove all action values first
+        formData.delete('action');
+        // Add the specific action
+        formData.set('action', action);
+        if (notes) {
+            formData.set('verification_notes', notes);
+        }
+
+        // Get the form action URL - use getAttribute to avoid RadioNodeList issues
+        const formActionUrl = form.getAttribute('action');
+        console.log('Form action URL:', formActionUrl);
+        
+        if (!formActionUrl) {
+            console.error('Form action URL is empty');
+            alert('Invalid form action. Please refresh the page and try again.');
+            return;
+        }
+        
+        fetch(formActionUrl, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': csrfToken,
+            },
+        })
+        .then(response => {
+            if (response.ok) {
+                // Success - reload page to show updated status
+                window.location.reload();
+            } else {
+                throw new Error('Verification failed');
+            }
+        })
+        .catch(error => {
+            console.error('Verification error:', error);
+            alert('Failed to verify document. Please try again.');
+            
+            // Reset button state
+            if (verifyBtn) {
+                verifyBtn.innerHTML = '<i class="fas fa-check me-1"></i>Verify';
+                verifyBtn.disabled = false;
+            }
+        });
+    }
+
+    // Timeline animation
+    document.addEventListener('DOMContentLoaded', function() {
+        const timelineItems = document.querySelectorAll('.timeline-item');
+        
+        timelineItems.forEach((item, index) => {
+            item.style.opacity = '0';
+            item.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                item.style.transition = 'all 0.6s ease';
+                item.style.opacity = '1';
+                item.style.transform = 'translateY(0)';
+            }, index * 100);
+        });
+    });
+
+    // Export to PDF function
+    function exportToPDF() {
+        // Implementation for PDF export
+        window.print();
+    }
+
+    // Application Actions Handler
+    function performAction(action) {
+        const applicationId = {{ application.id }};
+        
+        switch(action) {
+            case 'approve':
+                showApprovalModal();
+                break;
+                
+            case 'reject':
+                showActionModal('reject', 'Reject Application', 
+                    '<div class="alert alert-danger"><i class="fas fa-times-circle me-2"></i><strong>Application:</strong> {{ application.business_name }}</div>' +
+                    '<p>Are you sure you want to reject this application?</p>' +
+                    '<div class="mb-3"><label for="rejectReason" class="form-label">Rejection Reason <span class="text-danger">*</span></label>' +
+                    '<textarea class="form-control" id="rejectReason" rows="3" placeholder="Please provide a reason for rejection..." required></textarea></div>');
+                break;
+                
+            case 'request_documents':
+                showActionModal('request_documents', 'Request Documents', 
+                    '<div class="alert alert-warning"><i class="fas fa-file-alt me-2"></i><strong>Application:</strong> {{ application.business_name }}</div>' +
+                    '<p>Specify which documents are needed from the supplier.</p>' +
+                    '<div class="mb-3"><label for="documentRequest" class="form-label">Document Request <span class="text-danger">*</span></label>' +
+                    '<textarea class="form-control" id="documentRequest" rows="3" placeholder="Please specify which documents are needed..." required></textarea></div>');
+                break;
+                
+            case 'activate_account':
+                showActionModal('activate_account', 'Activate Account', 
+                    '<div class="alert alert-info"><i class="fas fa-user-check me-2"></i><strong>Application:</strong> {{ application.business_name }}</div>' +
+                    '<p>Are you sure you want to activate this supplier account? This will allow them to login to the system.</p>');
+                break;
+                
+            case 'send_notification':
+                showActionModal('send_notification', 'Send Notification', 
+                    '<div class="alert alert-primary"><i class="fas fa-bell me-2"></i><strong>Application:</strong> {{ application.business_name }}</div>' +
+                    '<p>Send a notification message to the supplier.</p>' +
+                    '<div class="mb-3"><label for="notificationMessage" class="form-label">Message <span class="text-danger">*</span></label>' +
+                    '<textarea class="form-control" id="notificationMessage" rows="3" placeholder="Enter notification message..." required></textarea></div>');
+                break;
+                
+            case 'add_notes':
+                showActionModal('add_notes', 'Add Notes', 
+                    '<div class="alert alert-secondary"><i class="fas fa-sticky-note me-2"></i><strong>Application:</strong> {{ application.business_name }}</div>' +
+                    '<p>Add internal notes to this application.</p>' +
+                    '<div class="mb-3"><label for="notes" class="form-label">Notes <span class="text-danger">*</span></label>' +
+                    '<textarea class="form-control" id="notes" rows="3" placeholder="Add notes for this application..." required></textarea></div>');
+                break;
+                
+            case 'change_status':
+                showActionModal('change_status', 'Change Status', 
+                    '<div class="alert alert-info"><i class="fas fa-edit me-2"></i><strong>Application:</strong> {{ application.business_name }}</div>' +
+                    '<p>Change the application status.</p>' +
+                    '<div class="mb-3"><label for="newStatus" class="form-label">New Status <span class="text-danger">*</span></label>' +
+                    '<select class="form-select" id="newStatus" required>' +
+                    '<option value="">Select new status...</option>' +
+                    '<option value="PENDING_REVIEW">Pending Review</option>' +
+                    '<option value="UNDER_REVIEW">Under Review</option>' +
+                    '<option value="APPROVED">Approved</option>' +
+                    '<option value="REJECTED">Rejected</option>' +
+                    '</select></div>' +
+                    '<div class="mb-3"><label for="statusNotes" class="form-label">Notes (Optional)</label>' +
+                    '<textarea class="form-control" id="statusNotes" rows="2" placeholder="Add notes about the status change..."></textarea></div>');
+                break;
+                
+            case 'export_pdf':
+                window.open(`/backoffice/applications/${applicationId}/export/pdf/`, '_blank');
+                break;
+                
+            case 'print':
+                window.print();
+                break;
+                
+            default:
+                console.log('Unknown action:', action);
+        }
+    }
+
+    // Show Approval Modal
+    function showApprovalModal() {
+        const modal = new bootstrap.Modal(document.getElementById('approvalModal'));
+        modal.show();
+    }
+
+    // Show Dynamic Action Modal
+    function showActionModal(action, title, content) {
+        document.getElementById('actionModalTitle').textContent = title;
+        document.getElementById('actionModalContent').innerHTML = content;
+        document.getElementById('confirmActionText').textContent = title.split(' ')[0]; // First word as button text
+        
+        // Store current action for later use
+        document.getElementById('confirmActionBtn').setAttribute('data-action', action);
+        
+        const modal = new bootstrap.Modal(document.getElementById('actionModal'));
+        modal.show();
+    }
+
+    // Event Handlers for Modal Confirmations
+    document.addEventListener('DOMContentLoaded', function() {
+        // Approval Modal Confirmation
+        document.getElementById('confirmApprovalBtn').addEventListener('click', function() {
+            const activateAccount = document.getElementById('activateAccountCheckbox').checked;
+            const notes = document.getElementById('approvalNotes').value;
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('approvalModal'));
+            modal.hide();
+            
+            // Process approval
+            processApproval(activateAccount, notes);
+        });
+        
+        // Dynamic Action Modal Confirmation
+        document.getElementById('confirmActionBtn').addEventListener('click', function() {
+            const action = this.getAttribute('data-action');
+            processDynamicAction(action);
+        });
+    });
+
+    // Get CSRF token from multiple sources
+    function getCSRFToken() {
+        // Try to get from meta tag first
+        const metaToken = document.querySelector('meta[name="csrf-token"]');
+        if (metaToken) {
+            return metaToken.getAttribute('content');
+        }
+        
+        // Try to get from hidden form input
+        const csrfElement = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (csrfElement) {
+            return csrfElement.value;
+        }
+        
+        // Try to get from any form on the page
+        const anyForm = document.querySelector('form');
+        if (anyForm) {
+            const formCsrf = anyForm.querySelector('[name=csrfmiddlewaretoken]');
+            if (formCsrf) {
+                return formCsrf.value;
+            }
+        }
+        
+        return null;
+    }
+
+    // Process Approval
+    function processApproval(activateAccount, notes) {
+        const applicationId = {{ application.id }};
+        const csrfToken = getCSRFToken();
+        if (!csrfToken) {
+            alert('CSRF token not found. Please refresh the page and try again.');
+            return;
+        }
+        
+        fetch(`/backoffice/applications/${applicationId}/approve/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
+            },
+            body: JSON.stringify({
+                activate_account: activateAccount,
+                notes: notes
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success toast with email status
+                if (data.email_sent) {
+                    ToastNotifications.success(
+                        'Application Approved', 
+                        data.message || 'Application has been approved successfully!',
+                        5000
+                    );
+                } else {
+                    ToastNotifications.warning(
+                        'Application Approved', 
+                        data.message || 'Application approved but email notification failed.',
+                        6000
+                    );
+                }
+                
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                ToastNotifications.error(
+                    'Approval Failed', 
+                    data.message || 'Failed to approve application'
+                );
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            ToastNotifications.error(
+                'Network Error', 
+                'Failed to approve application. Please try again.'
+            );
+        });
+    }
+
+    // Process Dynamic Action
+    function processDynamicAction(action) {
+        const applicationId = {{ application.id }};
+        const csrfToken = getCSRFToken();
+        if (!csrfToken) {
+            alert('CSRF token not found. Please refresh the page and try again.');
+            return;
+        }
+        
+        // Get form data based on action
+        let formData = {};
+        let endpoint = '';
+        
+        switch(action) {
+            case 'reject':
+                const rejectReasonElement = document.getElementById('rejectReason');
+                if (!rejectReasonElement) {
+                    alert('Rejection reason field not found. Please refresh the page and try again.');
+                    return;
+                }
+                const rejectReason = rejectReasonElement.value;
+                if (!rejectReason.trim()) {
+                    ToastNotifications.warning('Validation Error', 'Please provide a rejection reason.');
+                    return;
+                }
+                formData = { status: 'REJECTED', notes: rejectReason };
+                endpoint = `/backoffice/applications/${applicationId}/update-status/`;
+                break;
+                
+            case 'request_documents':
+                const documentRequestElement = document.getElementById('documentRequest');
+                if (!documentRequestElement) {
+                    alert('Document request field not found. Please refresh the page and try again.');
+                    return;
+                }
+                const documentRequest = documentRequestElement.value;
+                if (!documentRequest.trim()) {
+                    ToastNotifications.warning('Validation Error', 'Please specify which documents are needed.');
+                    return;
+                }
+                formData = { message: documentRequest };
+                endpoint = `/backoffice/applications/${applicationId}/request-documents/`;
+                break;
+                
+            case 'activate_account':
+                formData = {};
+                endpoint = `/backoffice/applications/${applicationId}/activate-account/`;
+                break;
+                
+            case 'send_notification':
+                const notificationMessageElement = document.getElementById('notificationMessage');
+                if (!notificationMessageElement) {
+                    alert('Notification message field not found. Please refresh the page and try again.');
+                    return;
+                }
+                const notificationMessage = notificationMessageElement.value;
+                if (!notificationMessage.trim()) {
+                    ToastNotifications.warning('Validation Error', 'Please enter a notification message.');
+                    return;
+                }
+                formData = { message: notificationMessage };
+                endpoint = `/backoffice/applications/${applicationId}/send-notification/`;
+                break;
+                
+            case 'add_notes':
+                const notesElement = document.getElementById('notes');
+                if (!notesElement) {
+                    alert('Notes field not found. Please refresh the page and try again.');
+                    return;
+                }
+                const notes = notesElement.value;
+                if (!notes.trim()) {
+                    ToastNotifications.warning('Validation Error', 'Please add some notes.');
+                    return;
+                }
+                formData = { notes: notes };
+                endpoint = `/backoffice/applications/${applicationId}/add-notes/`;
+                break;
+                
+            case 'change_status':
+                const newStatusElement = document.getElementById('newStatus');
+                const statusNotesElement = document.getElementById('statusNotes');
+                if (!newStatusElement || !statusNotesElement) {
+                    alert('Status fields not found. Please refresh the page and try again.');
+                    return;
+                }
+                const newStatus = newStatusElement.value;
+                const statusNotes = statusNotesElement.value;
+                if (!newStatus) {
+                    ToastNotifications.warning('Validation Error', 'Please select a new status.');
+                    return;
+                }
+                formData = { status: newStatus, notes: statusNotes };
+                endpoint = `/backoffice/applications/${applicationId}/update-status/`;
+                break;
+                
+            default:
+                ToastNotifications.error('Unknown Action', 'Unknown action: ' + action);
+                return;
+        }
+        
+        // Close modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('actionModal'));
+        modal.hide();
+        
+        // Send request
+        fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const actionTitles = {
+                    'reject': 'Application Rejected',
+                    'request_documents': 'Document Request Sent',
+                    'activate_account': 'Account Activated',
+                    'send_notification': 'Notification Sent',
+                    'add_notes': 'Notes Added',
+                    'change_status': 'Status Updated'
+                };
+                
+                ToastNotifications.success(
+                    actionTitles[action] || 'Action Completed', 
+                    data.message || 'Action completed successfully!',
+                    4000
+                );
+                
+                if (action !== 'send_notification') {
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                }
+            } else {
+                ToastNotifications.error(
+                    'Action Failed', 
+                    data.message || 'Failed to complete action'
+                );
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            ToastNotifications.error(
+                'Network Error', 
+                'Failed to complete action. Please try again.'
+            );
+        });
+    }
+
+    // Legacy function for backward compatibility
+    function updateApplicationStatus(status, successMessage, notes = '') {
+        const applicationId = {{ application.id }};
+        const csrfToken = getCSRFToken();
+        if (!csrfToken) {
+            alert('CSRF token not found. Please refresh the page and try again.');
+            return;
+        }
+        
+        fetch(`/backoffice/applications/${applicationId}/update-status/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
+            },
+            body: JSON.stringify({
+                status: status,
+                notes: notes
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(successMessage);
+                window.location.reload();
+            } else {
+                alert('Error: ' + (data.message || 'Failed to update application status'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to update application status. Please try again.');
+        });
+    }
+
+    // Request Documents
+    function requestDocuments(documentRequest) {
+        const applicationId = {{ application.id }};
+        const csrfToken = getCSRFToken();
+        if (!csrfToken) {
+            alert('CSRF token not found. Please refresh the page and try again.');
+            return;
+        }
+        
+        fetch(`/backoffice/applications/${applicationId}/request-documents/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
+            },
+            body: JSON.stringify({
+                message: documentRequest
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Document request has been sent to the supplier.');
+                window.location.reload();
+            } else {
+                alert('Error: ' + (data.message || 'Failed to send document request'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to send document request. Please try again.');
+        });
+    }
+
+    // Activate Account
+    function activateAccount() {
+        const applicationId = {{ application.id }};
+        const csrfToken = getCSRFToken();
+        if (!csrfToken) {
+            alert('CSRF token not found. Please refresh the page and try again.');
+            return;
+        }
+        
+        fetch(`/backoffice/applications/${applicationId}/activate-account/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Supplier account has been activated successfully.');
+                window.location.reload();
+            } else {
+                alert('Error: ' + (data.message || 'Failed to activate account'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to activate account. Please try again.');
+        });
+    }
+
+    // Send Notification
+    function sendNotification(message) {
+        const applicationId = {{ application.id }};
+        const csrfToken = getCSRFToken();
+        if (!csrfToken) {
+            alert('CSRF token not found. Please refresh the page and try again.');
+            return;
+        }
+        
+        fetch(`/backoffice/applications/${applicationId}/send-notification/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
+            },
+            body: JSON.stringify({
+                message: message
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Notification has been sent to the supplier.');
+            } else {
+                alert('Error: ' + (data.message || 'Failed to send notification'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to send notification. Please try again.');
+        });
+    }
+
+    // Add Notes
+    function addNotes(notes) {
+        const applicationId = {{ application.id }};
+        const csrfToken = getCSRFToken();
+        if (!csrfToken) {
+            alert('CSRF token not found. Please refresh the page and try again.');
+            return;
+        }
+        
+        fetch(`/backoffice/applications/${applicationId}/add-notes/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
+            },
+            body: JSON.stringify({
+                notes: notes
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Notes have been added to the application.');
+                window.location.reload();
+            } else {
+                alert('Error: ' + (data.message || 'Failed to add notes'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to add notes. Please try again.');
+        });
+    }
+</script>
+
+<!-- Approval Confirmation Modal -->
+<div class="modal fade" id="approvalModal" tabindex="-1" aria-labelledby="approvalModalLabel" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="approvalModalLabel">
+                    <i class="fas fa-check-circle me-2 text-success"></i>
+                    Confirm Application Approval
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-success">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Application:</strong> {{ application.business_name }}
+                </div>
+                
+                {% if all_documents_uploaded and all_documents_verified %}
+                <div class="alert alert-info">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>All documents verified!</strong> This application is ready for approval.
+                </div>
+                {% endif %}
+                
+                <p>Are you sure you want to approve this application? This action will:</p>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-success me-2"></i>Mark the application as approved</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Send approval notification to supplier</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Update application status</li>
+                </ul>
+                
+                <div class="form-check mt-3">
+                    <input class="form-check-input" type="checkbox" id="activateAccountCheckbox">
+                    <label class="form-check-label" for="activateAccountCheckbox">
+                        <strong>Activate Supplier Account</strong>
+                        <br><small class="text-muted">Check this to immediately activate the supplier's account for login</small>
+                    </label>
+                </div>
+                
+                <div class="mt-3">
+                    <label for="approvalNotes" class="form-label">Approval Notes (Optional)</label>
+                    <textarea class="form-control" id="approvalNotes" rows="3" 
+                              placeholder="Add any notes about this approval..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-success" id="confirmApprovalBtn">
+                    <i class="fas fa-check me-1"></i>Approve Application
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dynamic Action Modal -->
+<div class="modal fade" id="actionModal" tabindex="-1" aria-labelledby="actionModalLabel" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="actionModalLabel">
+                    <i class="fas fa-cog me-2"></i>
+                    <span id="actionModalTitle">Action</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="actionModalContent">
+                    <!-- Dynamic content will be inserted here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-primary" id="confirmActionBtn">
+                    <i class="fas fa-check me-1"></i><span id="confirmActionText">Confirm</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Verification Confirmation Modal -->
+<div class="modal fade" id="verifyModal" tabindex="-1" aria-labelledby="verifyModalLabel" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="verifyModalLabel">
+                    <i class="fas fa-check-circle me-2 text-success"></i>
+                    Confirm Document Verification
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Document:</strong> <span id="modal-document-name"></span>
+                </div>
+                <p>Are you sure you want to confirm this document? This action will mark the document as verified and cannot be undone.</p>
+                <div class="mb-3">
+                    <label for="modal-verification-notes" class="form-label">Verification Notes (Optional)</label>
+                    <textarea class="form-control" id="modal-verification-notes" rows="3" 
+                              placeholder="Add any notes about this document verification..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-success" id="confirm-verify-btn">
+                    <i class="fas fa-check me-1"></i>Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,469 @@
+{% extends 'backoffice/base.html' %}
+{% load static %}
+
+{% block title %}Audit Log Details - GCX Admin Portal{% endblock %}
+
+{% block page_icon %}<i class="fas fa-clipboard-list"></i>{% endblock %}
+{% block page_title %}Audit Log Details{% endblock %}
+
+{% block page_header_container %}
+<div class="page-header-container">
+    <div class="page-header-content">
+        <div class="page-header-info">
+            <div class="page-header-breadcrumb">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'applications:backoffice-dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'core:audit-logs' %}">Audit Logs</a></li>
+                        <li class="breadcrumb-item active">Log Details</li>
+                    </ol>
+                </nav>
+            </div>
+            <h1 class="page-header-title">Audit Log Details</h1>
+            <p class="page-header-subtitle">Detailed information about this system activity</p>
+        </div>
+        <div class="page-header-actions">
+            <a href="{% url 'core:audit-logs' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Logs
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<style>
+    .detail-content {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+    
+    .detail-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        margin-bottom: 1.5rem;
+    }
+    
+    .detail-card h3 {
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+        font-size: 1.25rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .detail-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .detail-item:last-child {
+        border-bottom: none;
+    }
+    
+    .detail-label {
+        font-weight: 600;
+        color: var(--text-dark);
+        flex: 1;
+    }
+    
+    .detail-value {
+        color: var(--text-muted);
+        text-align: right;
+        flex: 1;
+    }
+    
+    .action-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .action-badge.create { background: #d4edda; color: #155724; }
+    .action-badge.update { background: #fff3cd; color: #856404; }
+    .action-badge.delete { background: #f8d7da; color: #721c24; }
+    .action-badge.login { background: #d1ecf1; color: #0c5460; }
+    .action-badge.logout { background: #e2e3e5; color: #383d41; }
+    .action-badge.view { background: #cce5ff; color: #004085; }
+    .action-badge.download { background: #d1ecf1; color: #0c5460; }
+    .action-badge.upload { background: #d4edda; color: #155724; }
+    .action-badge.approve { background: #d4edda; color: #155724; }
+    .action-badge.reject { background: #f8d7da; color: #721c24; }
+    .action-badge.send_email { background: #cce5ff; color: #004085; }
+    .action-badge.send_sms { background: #d1ecf1; color: #0c5460; }
+    .action-badge.export { background: #d4edda; color: #155724; }
+    .action-badge.import { background: #fff3cd; color: #856404; }
+    .action-badge.settings_change { background: #f8d7da; color: #721c24; }
+    .action-badge.password_change { background: #d1ecf1; color: #0c5460; }
+    .action-badge.permission_change { background: #fff3cd; color: #856404; }
+    .action-badge.system_error { background: #f8d7da; color: #721c24; }
+    .action-badge.security_event { background: #f8d7da; color: #721c24; }
+    
+    .severity-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .severity-badge.low { background: #d4edda; color: #155724; }
+    .severity-badge.medium { background: #fff3cd; color: #856404; }
+    .severity-badge.high { background: #f8d7da; color: #721c24; }
+    .severity-badge.critical { background: #721c24; color: white; }
+    
+    .json-content {
+        background: var(--bg-light);
+        border-radius: 8px;
+        padding: 1rem;
+        font-family: 'Courier New', monospace;
+        font-size: 0.85rem;
+        white-space: pre-wrap;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    
+    .timestamp {
+        font-family: 'Courier New', monospace;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+    }
+    
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .user-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--primary-color);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+    
+    .object-info {
+        background: var(--bg-light);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 0.5rem;
+    }
+    
+    .object-type {
+        font-weight: 600;
+        color: var(--primary-color);
+        font-size: 1.1rem;
+    }
+    
+    .object-name {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        margin-top: 0.25rem;
+    }
+    
+    .request-info {
+        background: var(--bg-light);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 0.5rem;
+    }
+    
+    .request-method {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .request-method.get { background: #d4edda; color: #155724; }
+    .request-method.post { background: #fff3cd; color: #856404; }
+    .request-method.put { background: #cce5ff; color: #004085; }
+    .request-method.delete { background: #f8d7da; color: #721c24; }
+    .request-method.patch { background: #d1ecf1; color: #0c5460; }
+    
+    .response-info {
+        background: var(--bg-light);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 0.5rem;
+    }
+    
+    .response-status {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .response-status.success { background: #d4edda; color: #155724; }
+    .response-status.error { background: #f8d7da; color: #721c24; }
+    .response-status.warning { background: #fff3cd; color: #856404; }
+    .response-status.info { background: #d1ecf1; color: #0c5460; }
+    
+    .metadata-content {
+        background: var(--bg-light);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 0.5rem;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+    
+    .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+    
+    .tag {
+        background: var(--primary-color);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    
+    @media (max-width: 768px) {
+        .detail-content {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="container">
+    <div class="detail-content">
+        <!-- Main Details -->
+        <div>
+            <!-- Basic Information -->
+            <div class="detail-card">
+                <h3><i class="fas fa-info-circle"></i> Basic Information</h3>
+                <div class="detail-item">
+                    <span class="detail-label">Timestamp</span>
+                    <span class="detail-value timestamp">{{ log.timestamp|date:"Y-m-d H:i:s" }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">User</span>
+                    <span class="detail-value">
+                        {% if log.user %}
+                            <div class="user-info">
+                                <div class="user-avatar">{{ log.user.username|first|upper }}</div>
+                                <div>
+                                    <div>{{ log.user.get_full_name|default:log.user.username }}</div>
+                                    <small>{{ log.user.email|default:"No email" }}</small>
+                                </div>
+                            </div>
+                        {% else %}
+                            <span style="color: var(--text-muted);">System</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Action</span>
+                    <span class="detail-value">
+                        <span class="action-badge {{ log.action|lower }}">{{ log.get_action_display }}</span>
+                    </span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Severity</span>
+                    <span class="detail-value">
+                        <span class="severity-badge {{ log.severity|lower }}">{{ log.get_severity_display }}</span>
+                    </span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Description</span>
+                    <span class="detail-value">{{ log.description|default:"No description" }}</span>
+                </div>
+            </div>
+
+            <!-- Object Information -->
+            {% if log.object_type or log.object_name %}
+            <div class="detail-card">
+                <h3><i class="fas fa-cube"></i> Object Information</h3>
+                {% if log.object_type %}
+                <div class="detail-item">
+                    <span class="detail-label">Object Type</span>
+                    <span class="detail-value object-type">{{ log.object_type }}</span>
+                </div>
+                {% endif %}
+                {% if log.object_id %}
+                <div class="detail-item">
+                    <span class="detail-label">Object ID</span>
+                    <span class="detail-value">{{ log.object_id }}</span>
+                </div>
+                {% endif %}
+                {% if log.object_name %}
+                <div class="detail-item">
+                    <span class="detail-label">Object Name</span>
+                    <span class="detail-value object-name">{{ log.object_name }}</span>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- Request Information -->
+            {% if log.request_path or log.request_method %}
+            <div class="detail-card">
+                <h3><i class="fas fa-globe"></i> Request Information</h3>
+                {% if log.request_path %}
+                <div class="detail-item">
+                    <span class="detail-label">Request Path</span>
+                    <span class="detail-value">{{ log.request_path }}</span>
+                </div>
+                {% endif %}
+                {% if log.request_method %}
+                <div class="detail-item">
+                    <span class="detail-label">Request Method</span>
+                    <span class="detail-value">
+                        <span class="request-method {{ log.request_method|lower }}">{{ log.request_method }}</span>
+                    </span>
+                </div>
+                {% endif %}
+                {% if log.ip_address %}
+                <div class="detail-item">
+                    <span class="detail-label">IP Address</span>
+                    <span class="detail-value">{{ log.ip_address }}</span>
+                </div>
+                {% endif %}
+                {% if log.user_agent %}
+                <div class="detail-item">
+                    <span class="detail-label">User Agent</span>
+                    <span class="detail-value" style="font-size: 0.85rem; word-break: break-all;">{{ log.user_agent }}</span>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- Response Information -->
+            {% if log.response_status or log.response_message %}
+            <div class="detail-card">
+                <h3><i class="fas fa-reply"></i> Response Information</h3>
+                {% if log.response_status %}
+                <div class="detail-item">
+                    <span class="detail-label">Response Status</span>
+                    <span class="detail-value">
+                        <span class="response-status 
+                            {% if log.response_status < 400 %}success
+                            {% elif log.response_status < 500 %}warning
+                            {% else %}error{% endif %}">
+                            {{ log.response_status }}
+                        </span>
+                    </span>
+                </div>
+                {% endif %}
+                {% if log.response_message %}
+                <div class="detail-item">
+                    <span class="detail-label">Response Message</span>
+                    <span class="detail-value">{{ log.response_message }}</span>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- Metadata -->
+            {% if log.metadata %}
+            <div class="detail-card">
+                <h3><i class="fas fa-database"></i> Metadata</h3>
+                <div class="metadata-content">
+                    <pre class="json-content">{{ log.metadata|pprint }}</pre>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div>
+            <!-- Quick Info -->
+            <div class="detail-card">
+                <h3><i class="fas fa-clock"></i> Quick Info</h3>
+                <div class="detail-item">
+                    <span class="detail-label">Created</span>
+                    <span class="detail-value timestamp">{{ log.timestamp|timesince }} ago</span>
+                </div>
+                {% if log.session_key %}
+                <div class="detail-item">
+                    <span class="detail-label">Session</span>
+                    <span class="detail-value" style="font-family: monospace; font-size: 0.8rem;">{{ log.session_key|truncatechars:20 }}</span>
+                </div>
+                {% endif %}
+                {% if log.server_name %}
+                <div class="detail-item">
+                    <span class="detail-label">Server</span>
+                    <span class="detail-value">{{ log.server_name }}</span>
+                </div>
+                {% endif %}
+                {% if log.process_id %}
+                <div class="detail-item">
+                    <span class="detail-label">Process ID</span>
+                    <span class="detail-value">{{ log.process_id }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Tags -->
+            {% if log.tags %}
+            <div class="detail-card">
+                <h3><i class="fas fa-tags"></i> Tags</h3>
+                <div class="tags">
+                    {% if log.tags %}
+                        <span class="tag">{{ log.tags }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Actions -->
+            <div class="detail-card">
+                <h3><i class="fas fa-cog"></i> Actions</h3>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <a href="{% url 'core:audit-logs' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Logs
+                    </a>
+                    <a href="{% url 'core:audit-log-export' %}?log_id={{ log.id }}" class="btn btn-primary">
+                        <i class="fas fa-download"></i> Export This Log
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Add any specific JavaScript for the detail page here
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-refresh timestamp every minute
+    setInterval(function() {
+        const timestampElements = document.querySelectorAll('.timestamp');
+        timestampElements.forEach(element => {
+            // This would need server-side support for real-time updates
+            // For now, just a placeholder
+        });
+    }, 60000);
+});
+</script>
+{% endblock %}

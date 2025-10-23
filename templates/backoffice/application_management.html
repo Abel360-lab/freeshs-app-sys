@@ -107,34 +107,40 @@
 
 {% block page_icon %}<i class="fas fa-file-alt"></i>{% endblock %}
 {% block page_title %}Application Management{% endblock %}
-{% block page_subtitle %}Review, manage and process supplier applications{% endblock %}
 
-{% block breadcrumb %}
-<nav aria-label="breadcrumb">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'applications:backoffice-dashboard' %}">Dashboard</a></li>
-        <li class="breadcrumb-item active">Applications</li>
-    </ol>
-</nav>
-{% endblock %}
-
-{% block page_actions %}
-<div class="d-flex gap-2">
-    <button class="btn btn-outline-primary btn-sm" onclick="exportApplications()">
-        <i class="fas fa-download"></i> Export
-    </button>
-    <div class="dropdown">
-        <button class="btn btn-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
-            <i class="fas fa-filter"></i> Filter
-        </button>
-        <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="?status=pending">Pending Review</a></li>
-            <li><a class="dropdown-item" href="?status=under_review">Under Review</a></li>
-            <li><a class="dropdown-item" href="?status=approved">Approved</a></li>
-            <li><a class="dropdown-item" href="?status=rejected">Rejected</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="?">All Applications</a></li>
-        </ul>
+{% block page_header_container %}
+<div class="page-header-container">
+    <div class="page-header-content">
+        <div class="page-header-info">
+            <div class="page-header-breadcrumb">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'applications:backoffice-dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Applications</li>
+                    </ol>
+                </nav>
+            </div>
+            <h1 class="page-header-title">Application Management</h1>
+            <p class="page-header-subtitle">Review, manage and process supplier applications</p>
+        </div>
+        <div class="page-header-actions">
+            <button class="btn btn-outline-primary" onclick="exportApplications()">
+                <i class="fas fa-download"></i> Export
+            </button>
+            <div class="dropdown">
+                <button class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
+                    <i class="fas fa-filter"></i> Filter
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="?status=pending">Pending Review</a></li>
+                    <li><a class="dropdown-item" href="?status=under_review">Under Review</a></li>
+                    <li><a class="dropdown-item" href="?status=approved">Approved</a></li>
+                    <li><a class="dropdown-item" href="?status=rejected">Rejected</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="?">All Applications</a></li>
+                </ul>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}

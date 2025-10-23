@@ -5,263 +5,669 @@
 
 {% block page_icon %}<i class="fas fa-tachometer-alt"></i>{% endblock %}
 {% block page_title %}Dashboard{% endblock %}
-{% block page_subtitle %}Real-time overview of supplier applications and system performance{% endblock %}
 
-{% block breadcrumb %}
-<nav aria-label="breadcrumb">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item active">Dashboard</li>
-    </ol>
-</nav>
-{% endblock %}
-
-{% block page_actions %}
-<button class="btn btn-outline-primary btn-sm" onclick="refreshDashboard()">
-    <i class="fas fa-sync-alt"></i> Refresh
-</button>
-<button class="btn btn-primary btn-sm" onclick="exportDashboard()">
-    <i class="fas fa-download"></i> Export Report
-</button>
+{% block page_header_container %}
+<div class="page-header-container">
+    <div class="page-header-content">
+        <div class="page-header-info">
+            <div class="page-header-breadcrumb">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item active">Dashboard</li>
+                    </ol>
+                </nav>
+            </div>
+            <h1 class="page-header-title">Welcome back, {{ user.get_full_name|default:user.username }}!</h1>
+            <p class="page-header-subtitle">Here's your overview for today, {{ today|date:"l, F j, Y" }}</p>
+        </div>
+        <div class="page-header-actions">
+            <button class="btn btn-outline-secondary" onclick="refreshDashboard()">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+            <button class="btn btn-primary" onclick="exportDashboard()">
+                <i class="fas fa-download"></i> Export Report
+            </button>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block content %}
-<!-- Welcome Section -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="welcome-banner" style="background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%); border-radius: var(--border-radius); padding: 2rem; color: white; margin-bottom: 2rem;">
-            <div class="row align-items-center">
-                <div class="col-md-8">
-                    <h2 style="margin: 0; font-weight: 600;">Welcome back, {{ user.get_full_name|default:user.username }}!</h2>
-                    <p style="margin: 0.5rem 0 0 0; opacity: 0.9;">Here's what's happening with your supplier applications today.</p>
-                </div>
-                <div class="col-md-4 text-md-end">
-                    <div style="font-size: 0.875rem; opacity: 0.85;">
-                        <i class="fas fa-calendar-alt me-2"></i>{{ today|date:"l, F j, Y" }}
-                    </div>
-                    <div style="font-size: 0.875rem; opacity: 0.85; margin-top: 0.5rem;">
-                        <i class="fas fa-clock me-2"></i><span id="current-time">--:--</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+<style>
+/* Modern Dashboard Styles */
+.modern-stat-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.2s ease;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.modern-stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--primary-color);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+}
+
+.modern-stat-card:hover::before {
+    transform: scaleX(1);
+}
+
+.modern-stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
+}
+
+.stat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.stat-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.stat-value-wrapper {
+    margin-top: 0.75rem;
+}
+
+.stat-value-main {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #111827;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label-main {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.stat-trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: 6px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+}
+
+.stat-trend.positive {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.stat-trend.warning {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.stat-trend.neutral {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+/* Quick Actions Grid */
+.quick-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.quick-action-card {
+    background: #ffffff;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.quick-action-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: linear-gradient(135deg, transparent, rgba(0,0,0,0.02));
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.quick-action-card:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+}
+
+.quick-action-card:hover::after {
+    opacity: 1;
+}
+
+.quick-action-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.quick-action-content h6 {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0 0 0.25rem 0;
+}
+
+.quick-action-content small {
+    font-size: 0.8125rem;
+    color: #6b7280;
+}
+
+/* Modern Card */
+.modern-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+    height: 100%;
+}
+
+.modern-card-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.modern-card-title {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.modern-card-body {
+    padding: 1.5rem;
+}
+
+/* Modern Table */
+.modern-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.modern-table thead th {
+    padding: 0.75rem 1rem;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: left;
+}
+
+.modern-table thead th:first-child {
+    border-top-left-radius: 8px;
+}
+
+.modern-table thead th:last-child {
+    border-top-right-radius: 8px;
+}
+
+.modern-table tbody td {
+    padding: 1rem;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 0.875rem;
+    color: #374151;
+}
+
+.modern-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.modern-table tbody tr:hover {
+    background: #f9fafb;
+}
+
+/* Avatar */
+.avatar-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #ffffff;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+}
+
+/* Badge Modern */
+.badge-modern {
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.badge-modern.success {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.badge-modern.warning {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.badge-modern.info {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.badge-modern.danger {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+/* Activity Timeline */
+.activity-timeline {
+    position: relative;
+    padding-left: 2.5rem;
+}
+
+.activity-timeline::before {
+    content: '';
+    position: absolute;
+    left: 0.875rem;
+    top: 0.5rem;
+    bottom: 0.5rem;
+    width: 2px;
+    background: #e5e7eb;
+}
+
+.activity-timeline-item {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.activity-timeline-item:last-child {
+    margin-bottom: 0;
+}
+
+.activity-timeline-icon {
+    position: absolute;
+    left: -2.5rem;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    border: 2px solid #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.activity-timeline-content p {
+    margin: 0 0 0.25rem 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #111827;
+}
+
+.activity-timeline-content small {
+    font-size: 0.8125rem;
+    color: #6b7280;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1.5rem;
+}
+
+.empty-state-icon {
+    font-size: 3rem;
+    color: #d1d5db;
+    margin-bottom: 1rem;
+}
+
+.empty-state-text {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin: 0;
+}
+
+/* Chart Container */
+.chart-container {
+    min-height: 300px;
+    width: 100%;
+}
+
+/* Responsive Grid */
+@media (max-width: 768px) {
+    .quick-actions-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stat-value-main {
+        font-size: 1.75rem;
+    }
+}
+</style>
 
 <!-- Key Metrics -->
 <div class="row mb-4">
-    <div class="col-lg-3 col-md-6 mb-3">
-        <div class="stat-card">
-            <i class="fas fa-file-alt stat-icon"></i>
-            <div class="stat-value">{{ total_applications|default:"0" }}</div>
-            <div class="stat-label">Total Applications</div>
-            <div class="stat-change positive">
-                <i class="fas fa-arrow-up"></i> 
-                <span>+{{ new_this_week|default:"0" }}</span>
-                <small>this week</small>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-lg-3 col-md-6 mb-3">
-        <div class="stat-card warning">
-            <i class="fas fa-hourglass-half stat-icon"></i>
-            <div class="stat-value">
-                {% for status in status_counts %}
-                    {% if status.status == 'PENDING_REVIEW' %}{{ status.count }}{% endif %}
-                {% empty %}0{% endfor %}
-            </div>
-            <div class="stat-label">Pending Review</div>
-            <div class="stat-change">
-                <i class="fas fa-clock"></i>
-                <span>Awaiting action</span>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-lg-3 col-md-6 mb-3">
-        <div class="stat-card success">
-            <i class="fas fa-check-circle stat-icon"></i>
-            <div class="stat-value">
-                {% for status in status_counts %}
-                    {% if status.status == 'APPROVED' %}{{ status.count }}{% endif %}
-                {% empty %}0{% endfor %}
-            </div>
-            <div class="stat-label">Approved Suppliers</div>
-            <div class="stat-change positive">
-                <i class="fas fa-trophy"></i>
-                <span>Active</span>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-lg-3 col-md-6 mb-3">
-        <div class="stat-card info">
-            <i class="fas fa-folder-open stat-icon"></i>
-            <div class="stat-value">
-                {% for status in status_counts %}
-                    {% if status.status == 'UNDER_REVIEW' %}{{ status.count }}{% endif %}
-                {% empty %}0{% endfor %}
-            </div>
-            <div class="stat-label">Under Review</div>
-            <div class="stat-change">
-                <i class="fas fa-exclamation-triangle"></i>
-                <span>Action required</span>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Quick Actions Panel -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card" style="background: linear-gradient(135deg, rgba(30, 58, 95, 0.03) 0%, rgba(30, 58, 95, 0.01) 100%);">
-            <div class="card-body">
-                <h5 class="card-title mb-3">
-                    <i class="fas fa-bolt text-warning"></i>
-                    Quick Actions
-                </h5>
-                <div class="row">
-                    <div class="col-md-3 col-sm-6 mb-2">
-                        <a href="{% url 'applications:backoffice-applications' %}?status=pending" 
-                           class="quick-action-btn d-flex align-items-center p-3 text-decoration-none"
-                           style="background: white; border: 2px solid var(--warning-color); border-radius: var(--border-radius-sm); transition: var(--transition);">
-                            <div class="flex-shrink-0">
-                                <div style="width: 45px; height: 45px; background: rgba(255, 193, 7, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                                    <i class="fas fa-clock" style="color: var(--warning-color); font-size: 1.25rem;"></i>
-                                </div>
-                            </div>
-                            <div class="flex-grow-1 ms-3">
-                                <h6 class="mb-0" style="color: var(--text-color); font-weight: 600;">Review Pending</h6>
-                                <small class="text-muted">{{ pending_count|default:"0" }} applications</small>
-                            </div>
-                            <i class="fas fa-arrow-right" style="color: var(--warning-color);"></i>
-                        </a>
-                    </div>
-                    
-                    <div class="col-md-3 col-sm-6 mb-2">
-                        <a href="{% url 'applications:backoffice-documents' %}" 
-                           class="quick-action-btn d-flex align-items-center p-3 text-decoration-none"
-                           style="background: white; border: 2px solid var(--info-color); border-radius: var(--border-radius-sm); transition: var(--transition);">
-                            <div class="flex-shrink-0">
-                                <div style="width: 45px; height: 45px; background: rgba(23, 162, 184, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                                    <i class="fas fa-check-circle" style="color: var(--info-color); font-size: 1.25rem;"></i>
-                                </div>
-                            </div>
-                            <div class="flex-grow-1 ms-3">
-                                <h6 class="mb-0" style="color: var(--text-color); font-weight: 600;">Verify Documents</h6>
-                                <small class="text-muted">{{ docs_pending|default:"0" }} pending</small>
-                            </div>
-                            <i class="fas fa-arrow-right" style="color: var(--info-color);"></i>
-                        </a>
-                    </div>
-                    
-                    <div class="col-md-3 col-sm-6 mb-2">
-                        <a href="{% url 'applications:backoffice-suppliers' %}" 
-                           class="quick-action-btn d-flex align-items-center p-3 text-decoration-none"
-                           style="background: white; border: 2px solid var(--accent-color); border-radius: var(--border-radius-sm); transition: var(--transition);">
-                            <div class="flex-shrink-0">
-                                <div style="width: 45px; height: 45px; background: rgba(40, 167, 69, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                                    <i class="fas fa-users" style="color: var(--accent-color); font-size: 1.25rem;"></i>
-                                </div>
-                            </div>
-                            <div class="flex-grow-1 ms-3">
-                                <h6 class="mb-0" style="color: var(--text-color); font-weight: 600;">Active Suppliers</h6>
-                                <small class="text-muted">{{ active_suppliers|default:"0" }} total</small>
-                            </div>
-                            <i class="fas fa-arrow-right" style="color: var(--accent-color);"></i>
-                        </a>
-                    </div>
-                    
-                    <div class="col-md-3 col-sm-6 mb-2">
-                        <a href="{% url 'applications:backoffice-analytics' %}" 
-                           class="quick-action-btn d-flex align-items-center p-3 text-decoration-none"
-                           style="background: white; border: 2px solid var(--primary-color); border-radius: var(--border-radius-sm); transition: var(--transition);">
-                            <div class="flex-shrink-0">
-                                <div style="width: 45px; height: 45px; background: rgba(30, 58, 95, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                                    <i class="fas fa-chart-line" style="color: var(--primary-color); font-size: 1.25rem;"></i>
-                                </div>
-                            </div>
-                            <div class="flex-grow-1 ms-3">
-                                <h6 class="mb-0" style="color: var(--text-color); font-weight: 600;">View Analytics</h6>
-                                <small class="text-muted">Full reports</small>
-                            </div>
-                            <i class="fas fa-arrow-right" style="color: var(--primary-color);"></i>
-                        </a>
-                    </div>
+    <div class="col-xl-3 col-lg-6 col-md-6 mb-3">
+        <div class="modern-stat-card">
+            <div class="stat-header">
+                <div class="stat-icon-wrapper" style="background: #eff6ff; color: #1e40af;">
+                    <i class="fas fa-file-alt"></i>
                 </div>
+                <span class="stat-trend positive">
+                    <i class="fas fa-arrow-up"></i>
+                    +{{ new_this_week|default:"0" }}
+                </span>
+            </div>
+            <div class="stat-value-wrapper">
+                <div class="stat-value-main">{{ total_applications|default:"0" }}</div>
+                <div class="stat-label-main">Total Applications</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-lg-6 col-md-6 mb-3">
+        <div class="modern-stat-card">
+            <div class="stat-header">
+                <div class="stat-icon-wrapper" style="background: #fef3c7; color: #92400e;">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <span class="stat-trend warning">
+                    <i class="fas fa-exclamation-circle"></i>
+                    Action Needed
+                </span>
+            </div>
+            <div class="stat-value-wrapper">
+                <div class="stat-value-main">
+                    {% for status in status_counts %}
+                        {% if status.status == 'PENDING_REVIEW' %}{{ status.count }}{% endif %}
+                    {% empty %}0{% endfor %}
+                </div>
+                <div class="stat-label-main">Pending Review</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-lg-6 col-md-6 mb-3">
+        <div class="modern-stat-card">
+            <div class="stat-header">
+                <div class="stat-icon-wrapper" style="background: #dcfce7; color: #166534;">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <span class="stat-trend positive">
+                    <i class="fas fa-trophy"></i>
+                    Active
+                </span>
+            </div>
+            <div class="stat-value-wrapper">
+                <div class="stat-value-main">
+                    {% for status in status_counts %}
+                        {% if status.status == 'APPROVED' %}{{ status.count }}{% endif %}
+                    {% empty %}0{% endfor %}
+                </div>
+                <div class="stat-label-main">Approved Suppliers</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-lg-6 col-md-6 mb-3">
+        <div class="modern-stat-card">
+            <div class="stat-header">
+                <div class="stat-icon-wrapper" style="background: #dbeafe; color: #1e40af;">
+                    <i class="fas fa-folder-open"></i>
+                </div>
+                <span class="stat-trend neutral">
+                    <i class="fas fa-eye"></i>
+                    In Progress
+                </span>
+            </div>
+            <div class="stat-value-wrapper">
+                <div class="stat-value-main">
+                    {% for status in status_counts %}
+                        {% if status.status == 'UNDER_REVIEW' %}{{ status.count }}{% endif %}
+                    {% empty %}0{% endfor %}
+                </div>
+                <div class="stat-label-main">Under Review</div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Analytics Row -->
+<!-- Secondary Metrics -->
 <div class="row mb-4">
-    <!-- Trends Chart -->
+    <div class="col-xl-3 col-lg-6 col-md-6 mb-3">
+        <div class="modern-stat-card">
+            <div class="stat-header">
+                <div class="stat-icon-wrapper" style="background: #f3e8ff; color: #7c3aed;">
+                    <i class="fas fa-truck"></i>
+                </div>
+                <span class="stat-trend positive">
+                    <i class="fas fa-arrow-up"></i>
+                    +{{ delivery_this_week|default:"0" }}
+                </span>
+            </div>
+            <div class="stat-value-wrapper">
+                <div class="stat-value-main">{{ total_deliveries|default:"0" }}</div>
+                <div class="stat-label-main">Total Deliveries</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-lg-6 col-md-6 mb-3">
+        <div class="modern-stat-card">
+            <div class="stat-header">
+                <div class="stat-icon-wrapper" style="background: #fce7f3; color: #be123c;">
+                    <i class="fas fa-file-contract"></i>
+                </div>
+                <span class="stat-trend positive">
+                    <i class="fas fa-arrow-up"></i>
+                    +{{ contract_this_week|default:"0" }}
+                </span>
+            </div>
+            <div class="stat-value-wrapper">
+                <div class="stat-value-main">{{ total_contracts|default:"0" }}</div>
+                <div class="stat-label-main">Active Contracts</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-lg-6 col-md-6 mb-3">
+        <div class="modern-stat-card">
+            <div class="stat-header">
+                <div class="stat-icon-wrapper" style="background: #dcfce7; color: #166534;">
+                    <i class="fas fa-check-double"></i>
+                </div>
+                <span class="stat-trend positive">
+                    <i class="fas fa-shield-alt"></i>
+                    Verified
+                </span>
+            </div>
+            <div class="stat-value-wrapper">
+                <div class="stat-value-main">{{ verified_deliveries|default:"0" }}</div>
+                <div class="stat-label-main">Verified Deliveries</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-lg-6 col-md-6 mb-3">
+        <div class="modern-stat-card">
+            <div class="stat-header">
+                <div class="stat-icon-wrapper" style="background: #e0f2fe; color: #075985;">
+                    <i class="fas fa-users"></i>
+                </div>
+                <span class="stat-trend positive">
+                    <i class="fas fa-user-check"></i>
+                    Operational
+                </span>
+            </div>
+            <div class="stat-value-wrapper">
+                <div class="stat-value-main">{{ active_suppliers|default:"0" }}</div>
+                <div class="stat-label-main">Active Suppliers</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="quick-actions-grid mb-4">
+    <a href="{% url 'applications:backoffice-applications' %}?status=pending" class="quick-action-card">
+        <div class="quick-action-icon" style="background: #fef3c7; color: #92400e;">
+            <i class="fas fa-clock"></i>
+        </div>
+        <div class="quick-action-content flex-grow-1">
+            <h6>Review Pending</h6>
+            <small>{{ pending_count|default:"0" }} applications awaiting review</small>
+        </div>
+        <i class="fas fa-arrow-right" style="color: #92400e;"></i>
+    </a>
+    
+    <a href="{% url 'applications:backoffice-documents' %}" class="quick-action-card">
+        <div class="quick-action-icon" style="background: #dbeafe; color: #1e40af;">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="quick-action-content flex-grow-1">
+            <h6>Verify Documents</h6>
+            <small>{{ docs_pending|default:"0" }} documents pending</small>
+        </div>
+        <i class="fas fa-arrow-right" style="color: #1e40af;"></i>
+    </a>
+    
+    <a href="{% url 'applications:backoffice-suppliers' %}" class="quick-action-card">
+        <div class="quick-action-icon" style="background: #dcfce7; color: #166534;">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="quick-action-content flex-grow-1">
+            <h6>Manage Suppliers</h6>
+            <small>{{ active_suppliers|default:"0" }} active suppliers</small>
+        </div>
+        <i class="fas fa-arrow-right" style="color: #166534;"></i>
+    </a>
+    
+    <a href="{% url 'applications:backoffice-reports' %}" class="quick-action-card">
+        <div class="quick-action-icon" style="background: #f3e8ff; color: #7c3aed;">
+            <i class="fas fa-chart-bar"></i>
+        </div>
+        <div class="quick-action-content flex-grow-1">
+            <h6>View Reports</h6>
+            <small>Analytics & insights</small>
+        </div>
+        <i class="fas fa-arrow-right" style="color: #7c3aed;"></i>
+    </a>
+</div>
+
+<!-- Charts and Data -->
+<div class="row mb-4">
+    <!-- Application Trends -->
     <div class="col-lg-8 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title">
+        <div class="modern-card">
+            <div class="modern-card-header">
+                <h5 class="modern-card-title">
                     <i class="fas fa-chart-line"></i>
                     Application Trends
                 </h5>
-                <div class="card-actions">
-                    <select class="form-select form-select-sm" style="width: auto;" onchange="updateTrendsChart(this.value)">
-                        <option value="6">Last 6 Months</option>
-                        <option value="3">Last 3 Months</option>
-                        <option value="12">Last Year</option>
-                    </select>
-                </div>
+                <select class="form-select form-select-sm" style="width: auto;" onchange="updateTrendsChart(this.value)">
+                    <option value="6">Last 6 Months</option>
+                    <option value="3">Last 3 Months</option>
+                    <option value="12">Last Year</option>
+                </select>
             </div>
-            <div class="card-body">
-                <div id="trendsChart"></div>
+            <div class="modern-card-body">
+                <div id="trendsChart" class="chart-container"></div>
             </div>
         </div>
     </div>
     
     <!-- Status Distribution -->
     <div class="col-lg-4 mb-4">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="card-title">
+        <div class="modern-card">
+            <div class="modern-card-header">
+                <h5 class="modern-card-title">
                     <i class="fas fa-chart-pie"></i>
                     Status Distribution
                 </h5>
-                <div class="d-flex align-items-center">
-                    <span id="connection-status" class="me-2">
-                        <i class="fas fa-circle text-success"></i> Connected
-                    </span>
-                    <button id="refresh-dashboard" class="btn btn-sm btn-outline-primary">
-                        <i class="fas fa-sync-alt"></i>
-                    </button>
-                </div>
+                <button id="refresh-dashboard" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
             </div>
-            <div class="card-body">
-                <div id="statusChart"></div>
+            <div class="modern-card-body">
+                <div id="statusChart" class="chart-container" style="min-height: 250px;"></div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Data Tables Row -->
-<div class="row">
-    <!-- Recent Applications -->
+<!-- Recent Applications -->
+<div class="row mb-4">
     <div class="col-lg-8 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title">
+        <div class="modern-card">
+            <div class="modern-card-header">
+                <h5 class="modern-card-title">
                     <i class="fas fa-history"></i>
                     Recent Applications
                 </h5>
-                <div class="card-actions">
-                    <a href="{% url 'applications:backoffice-applications' %}" class="btn btn-primary btn-sm">
-                        View All <i class="fas fa-arrow-right ms-1"></i>
-                    </a>
-                </div>
+                <a href="{% url 'applications:backoffice-applications' %}" class="btn btn-sm btn-primary">
+                    View All <i class="fas fa-arrow-right ms-1"></i>
+                </a>
             </div>
-            <div class="card-body">
+            <div class="modern-card-body" style="padding: 0;">
                 {% if recent_applications %}
                 <div class="table-responsive">
-                    <table class="table">
+                    <table class="modern-table">
                         <thead>
                             <tr>
                                 <th>Business</th>
@@ -275,31 +681,26 @@
                             {% for app in recent_applications|slice:":5" %}
                             <tr>
                                 <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="flex-shrink-0">
-                                            <div style="width: 40px; height: 40px; background: linear-gradient(135deg, var(--primary-color), var(--primary-light)); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600;">
-                                                {{ app.business_name|first|upper }}
-                                            </div>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="avatar-circle">
+                                            {{ app.business_name|first|upper }}
                                         </div>
-                                        <div class="flex-grow-1 ms-3">
-                                            <h6 class="mb-0" style="font-weight: 600;">{{ app.business_name|truncatechars:25 }}</h6>
-                                            <small class="text-muted">{{ app.tracking_code }}</small>
+                                        <div>
+                                            <div style="font-weight: 600; color: #111827;">{{ app.business_name|truncatechars:30 }}</div>
+                                            <small style="color: #6b7280;">{{ app.tracking_code }}</small>
                                         </div>
                                     </div>
                                 </td>
                                 <td>{{ app.region.name|default:"--" }}</td>
                                 <td>
-                                    <span class="badge badge-status badge-{{ app.status }}">
+                                    <span class="badge-modern {% if app.status == 'APPROVED' %}success{% elif app.status == 'PENDING_REVIEW' %}warning{% elif app.status == 'REJECTED' %}danger{% else %}info{% endif %}">
                                         {{ app.get_status_display }}
                                     </span>
                                 </td>
-                                <td>
-                                    <small>{{ app.created_at|date:"M d, Y" }}</small>
-                                </td>
+                                <td><small>{{ app.created_at|date:"M d, Y" }}</small></td>
                                 <td>
                                     <a href="{% url 'applications:backoffice-application-detail' app.pk %}" 
-                                       class="btn btn-icon btn-sm btn-outline-primary"
-                                       data-bs-toggle="tooltip" 
+                                       class="btn btn-sm btn-outline-primary"
                                        title="View Details">
                                         <i class="fas fa-eye"></i>
                                     </a>
@@ -310,407 +711,175 @@
                     </table>
                 </div>
                 {% else %}
-                <div class="text-center py-5">
-                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                    <p class="text-muted">No recent applications</p>
+                <div class="empty-state">
+                    <i class="fas fa-inbox empty-state-icon"></i>
+                    <p class="empty-state-text">No recent applications</p>
                 </div>
                 {% endif %}
             </div>
         </div>
     </div>
     
-    <!-- Regional Distribution -->
+    <!-- Recent Activity -->
     <div class="col-lg-4 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title">
-                    <i class="fas fa-map-marked-alt"></i>
-                    Regional Distribution
-                </h5>
-            </div>
-            <div class="card-body">
-                <div id="regionalChart"></div>
-                {% if region_stats %}
-                <div class="mt-3" style="max-height: 200px; overflow-y: auto;">
-                    {% for region in region_stats|slice:":5" %}
-                    <div class="d-flex justify-content-between align-items-center mb-2 p-2" style="background: var(--background-light); border-radius: var(--border-radius-sm);">
-                        <div class="d-flex align-items-center">
-                            <div style="width: 8px; height: 8px; background: var(--primary-color); border-radius: 50%; margin-right: 0.5rem;"></div>
-                            <span style="font-size: 0.875rem;">{{ region.region__name|default:"Unknown" }}</span>
-                        </div>
-                        <strong style="font-size: 0.875rem;">{{ region.count }}</strong>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Activity Feed -->
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title">
+        <div class="modern-card">
+            <div class="modern-card-header">
+                <h5 class="modern-card-title">
                     <i class="fas fa-stream"></i>
                     Recent Activity
                 </h5>
-                <div class="card-actions">
-                    <button class="btn btn-outline-primary btn-sm" onclick="loadMoreActivity()">
-                        <i class="fas fa-sync-alt"></i> Refresh
-                    </button>
-                </div>
+                <button class="btn btn-sm btn-outline-secondary" onclick="refreshActivity()">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
             </div>
-            <div class="card-body">
-                <div class="activity-feed">
-                    <div class="activity-item">
-                        <div class="activity-icon" style="background: rgba(40, 167, 69, 0.15); color: var(--accent-color);">
-                            <i class="fas fa-check"></i>
+            <div class="modern-card-body">
+                <div class="activity-timeline">
+                    {% if recent_activities %}
+                        {% for activity in recent_activities|slice:":6" %}
+                        <div class="activity-timeline-item">
+                            <div class="activity-timeline-icon" style="background: {% if activity.color == 'success' %}#dcfce7; color: #166534{% elif activity.color == 'warning' %}#fef3c7; color: #92400e{% elif activity.color == 'danger' %}#fee2e2; color: #991b1b{% else %}#dbeafe; color: #1e40af{% endif %};">
+                                <i class="{{ activity.icon|default:'fas fa-check' }}"></i>
+                            </div>
+                            <div class="activity-timeline-content">
+                                <p>{{ activity.action|title }}</p>
+                                <small>{{ activity.description }} - {{ activity.timestamp|timesince }} ago</small>
+                            </div>
                         </div>
-                        <div class="activity-content">
-                            <p><strong>New application approved</strong></p>
-                            <small class="text-muted">ABC Trading Ltd. - 5 minutes ago</small>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-history empty-state-icon"></i>
+                            <p class="empty-state-text">No recent activity</p>
                         </div>
-                    </div>
-                    <div class="activity-item">
-                        <div class="activity-icon" style="background: rgba(255, 193, 7, 0.15); color: var(--warning-color);">
-                            <i class="fas fa-file-upload"></i>
-                        </div>
-                        <div class="activity-content">
-                            <p><strong>Documents uploaded</strong></p>
-                            <small class="text-muted">XYZ Suppliers - 15 minutes ago</small>
-                        </div>
-                    </div>
-                    <div class="activity-item">
-                        <div class="activity-icon" style="background: rgba(23, 162, 184, 0.15); color: var(--info-color);">
-                            <i class="fas fa-user-plus"></i>
-                        </div>
-                        <div class="activity-content">
-                            <p><strong>New application received</strong></p>
-                            <small class="text-muted">Global Commodities - 1 hour ago</small>
-                        </div>
-                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-<style>
-    .quick-action-btn:hover {
-        transform: translateY(-3px);
-        box-shadow: var(--shadow-md) !important;
-    }
-    
-    
-    .activity-feed {
-        position: relative;
-        padding-left: 3rem;
-    }
-    
-    .activity-feed::before {
-        content: '';
-        position: absolute;
-        left: 1.25rem;
-        top: 0;
-        bottom: 0;
-        width: 2px;
-        background: var(--background-light);
-    }
-    
-    .activity-item {
-        position: relative;
-        margin-bottom: 1.5rem;
-    }
-    
-    .activity-icon {
-        position: absolute;
-        left: -2rem;
-        width: 2.5rem;
-        height: 2.5rem;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: white;
-        border: 2px solid white;
-    }
-    
-    .activity-content p {
-        margin: 0;
-        font-size: 0.95rem;
-    }
-    
-    /* Chart container fixes */
-    #trendsChart, #statusChart, #regionalChart {
-        min-height: 200px;
-        width: 100%;
-    }
-    
-    #statusChart {
-        min-height: 250px;
-    }
-    
-    #trendsChart {
-        min-height: 350px;
-    }
-</style>
 {% endblock %}
 
 {% block extrajs %}
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script src="{% static 'js/realtime-dashboard.js' %}"></script>
 <script>
-// Chart instances for global access
-let trendsChart, statusChart, regionalChart;
+// Chart instances
+let trendsChart, statusChart;
 
-// Function to check if element is visible
-function isElementVisible(element) {
-    if (!element) return false;
-    const rect = element.getBoundingClientRect();
-    return rect.width > 0 && rect.height > 0;
-}
-
-// Function to initialize all charts
 function initializeCharts() {
-    // Destroy existing charts first to prevent duplicates
-    destroyCharts();
+    // Trends Chart
+    const trendsOptions = {
+        series: [{
+            name: 'Applications',
+            data: {{ monthly_data|default:"[0,0,0,0,0,0]"|safe }}
+        }],
+        chart: {
+            type: 'area',
+            height: 300,
+            toolbar: { show: false },
+            animations: {
+                enabled: true,
+                easing: 'easeinout',
+                speed: 800
+            }
+        },
+        colors: ['#1e40af'],
+        dataLabels: { enabled: false },
+        stroke: { curve: 'smooth', width: 3 },
+        fill: {
+            type: 'gradient',
+            gradient: {
+                shadeIntensity: 1,
+                opacityFrom: 0.3,
+                opacityTo: 0.05,
+                stops: [0, 90, 100]
+            }
+        },
+        xaxis: {
+            categories: {{ monthly_labels|default:"['Jan','Feb','Mar','Apr','May','Jun']"|safe }}
+        },
+        yaxis: {
+            title: { text: 'Applications' }
+        },
+        grid: {
+            borderColor: '#e5e7eb',
+            strokeDashArray: 4
+        },
+        tooltip: {
+            x: { format: 'MMM yyyy' }
+        }
+    };
     
-    // Prevent multiple initializations
-    if (trendsChart && statusChart && regionalChart) {
-        return;
+    if (document.querySelector("#trendsChart")) {
+        trendsChart = new ApexCharts(document.querySelector("#trendsChart"), trendsOptions);
+        trendsChart.render();
     }
     
-    // Wait for containers to be visible and have dimensions
-    const checkAndInit = () => {
-        const trendsElement = document.querySelector("#trendsChart");
-        const statusElement = document.querySelector("#statusChart");
-        const regionalElement = document.querySelector("#regionalChart");
-        
-        if (isElementVisible(trendsElement) && isElementVisible(statusElement) && isElementVisible(regionalElement)) {
-        // Trends Chart
-        const trendsOptions = {
-            series: [{
-                name: 'Applications',
-                data: {{ monthly_data|default:"[0,0,0,0,0,0]"|safe }}
-            }],
-            chart: {
-                type: 'area',
-                height: 350,
-                toolbar: {
-                    show: false
-                },
-                animations: {
-                    enabled: true,
-                    easing: 'easeinout',
-                    speed: 800
-                }
-            },
-            colors: ['#1e3a5f'],
-            dataLabels: {
-                enabled: false
-            },
-            stroke: {
-                curve: 'smooth',
-                width: 3
-            },
-            fill: {
-                type: 'gradient',
-                gradient: {
-                    shadeIntensity: 1,
-                    opacityFrom: 0.4,
-                    opacityTo: 0.1,
-                    stops: [0, 90, 100]
-                }
-            },
-            xaxis: {
-                categories: {{ monthly_labels|default:"['Jan','Feb','Mar','Apr','May','Jun']"|safe }}
-            },
-            yaxis: {
-                title: {
-                    text: 'Applications'
-                }
-            },
-            tooltip: {
-                x: {
-                    format: 'MMM yyyy'
-                }
+    // Status Distribution Chart
+    const statusOptions = {
+        series: [
+            {{ pending_count|default:"0" }},
+            {{ approved_count|default:"0" }},
+            {{ review_count|default:"0" }},
+            {{ rejected_count|default:"0" }}
+        ],
+        chart: {
+            type: 'donut',
+            height: 250,
+            animations: {
+                enabled: true,
+                easing: 'easeinout',
+                speed: 800
             }
-        };
-        
-        if (document.querySelector("#trendsChart") && !trendsChart) {
-            trendsChart = new ApexCharts(document.querySelector("#trendsChart"), trendsOptions);
-            trendsChart.render();
-        }
-        
-        // Status Distribution Chart
-        const statusOptions = {
-            series: [
-                {{ pending_count|default:"0" }},
-                {{ approved_count|default:"0" }},
-                {{ review_count|default:"0" }},
-                {{ rejected_count|default:"0" }}
-            ],
-            chart: {
-                type: 'donut',
-                height: 250,
-                animations: {
-                    enabled: true,
-                    easing: 'easeinout',
-                    speed: 800
-                }
-            },
-            labels: ['Pending Review', 'Approved', 'Under Review', 'Rejected'],
-            colors: ['#ffc107', '#28a745', '#17a2b8', '#dc3545'],
-            dataLabels: {
-                enabled: false
-            },
-            plotOptions: {
-                pie: {
-                    donut: {
-                        size: '70%',
-                        labels: {
+        },
+        labels: ['Pending', 'Approved', 'Under Review', 'Rejected'],
+        colors: ['#f59e0b', '#10b981', '#3b82f6', '#ef4444'],
+        dataLabels: { enabled: false },
+        plotOptions: {
+            pie: {
+                donut: {
+                    size: '70%',
+                    labels: {
+                        show: true,
+                        total: {
                             show: true,
-                            total: {
-                                show: true,
-                                label: 'Total',
-                                formatter: function (w) {
-                                    return w.globals.seriesTotals.reduce((a, b) => a + b, 0);
-                                }
+                            label: 'Total',
+                            fontFamily: 'inherit',
+                            fontWeight: 600,
+                            formatter: function (w) {
+                                return w.globals.seriesTotals.reduce((a, b) => a + b, 0);
                             }
                         }
                     }
                 }
-            },
-            legend: {
-                show: false
             }
-        };
-        
-        if (document.querySelector("#statusChart") && !statusChart) {
-            statusChart = new ApexCharts(document.querySelector("#statusChart"), statusOptions);
-            statusChart.render();
-            // Store chart reference for real-time updates
-            document.querySelector("#statusChart")._chart = statusChart;
-        }
-        
-        // Regional Chart
-        const regionalOptions = {
-            series: [{
-                data: {{ region_data|default:"[0,0,0,0,0]"|safe }}
-            }],
-            chart: {
-                type: 'bar',
-                height: 200,
-                toolbar: {
-                    show: false
-                },
-                animations: {
-                    enabled: true,
-                    easing: 'easeinout',
-                    speed: 800
-                }
-            },
-            plotOptions: {
-                bar: {
-                    horizontal: true,
-                    borderRadius: 4,
-                    distributed: true
-                }
-            },
-            colors: ['#1e3a5f', '#2c4f7c', '#3498db', '#5dade2', '#85c1e2'],
-            dataLabels: {
-                enabled: false
-            },
-            xaxis: {
-                categories: {{ region_labels|default:"['Region 1','Region 2','Region 3','Region 4','Region 5']"|safe }}
-            },
-            yaxis: {
-                show: false
-            },
-            grid: {
-                show: false
-            },
-            tooltip: {
-                y: {
-                    title: {
-                        formatter: function() {
-                            return 'Applications:'
-                        }
-                    }
-                }
+        },
+        legend: {
+            position: 'bottom',
+            fontFamily: 'inherit',
+            fontSize: '13px',
+            markers: {
+                width: 8,
+                height: 8,
+                radius: 10
             }
-        };
-        
-        if (document.querySelector("#regionalChart") && !regionalChart) {
-            regionalChart = new ApexCharts(document.querySelector("#regionalChart"), regionalOptions);
-            regionalChart.render();
-        }
-        } else {
-            // If elements are not visible yet, try again in 100ms
-            setTimeout(checkAndInit, 100);
         }
     };
     
-    // Start the check
-    checkAndInit();
-}
-
-// Function to destroy existing charts
-function destroyCharts() {
-    if (trendsChart) {
-        trendsChart.destroy();
-        trendsChart = null;
+    if (document.querySelector("#statusChart")) {
+        statusChart = new ApexCharts(document.querySelector("#statusChart"), statusOptions);
+        statusChart.render();
     }
-    if (statusChart) {
-        statusChart.destroy();
-        statusChart = null;
-    }
-    if (regionalChart) {
-        regionalChart.destroy();
-        regionalChart = null;
-    }
-}
-
-// Function to resize charts
-function resizeCharts() {
-    if (trendsChart) trendsChart.resize();
-    if (statusChart) statusChart.resize();
-    if (regionalChart) regionalChart.resize();
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Update current time
-    function updateTime() {
-        const now = new Date();
-        const timeString = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-        const timeElement = document.getElementById('current-time');
-        if (timeElement) {
-            timeElement.textContent = timeString;
-        }
-    }
-    updateTime();
-    setInterval(updateTime, 60000);
+    // Initialize charts
+    setTimeout(initializeCharts, 100);
     
     // Initialize tooltips
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl)
-    });
-    
-    // Initialize charts
-    initializeCharts();
-    
-    // Add resize event listener
-    window.addEventListener('resize', resizeCharts);
-    
-    // Fallback: Initialize charts on window load if not already done
-    window.addEventListener('load', () => {
-        if (!trendsChart || !statusChart || !regionalChart) {
-            initializeCharts();
-        }
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
     });
 });
 
@@ -724,13 +893,11 @@ function exportDashboard() {
 }
 
 function updateTrendsChart(months) {
-    // This would typically make an AJAX call to get new data
     console.log('Updating chart for ' + months + ' months');
 }
 
-function loadMoreActivity() {
-    // This would typically load more activity items via AJAX
-    console.log('Loading more activity...');
+function refreshActivity() {
+    window.location.reload();
 }
 </script>
 {% endblock %}

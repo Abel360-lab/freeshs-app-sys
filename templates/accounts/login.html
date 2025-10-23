@@ -3,10 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Supplier Portal - GCX</title>
+    <title>Supplier Login - GCX Supplier Portal</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        :root {
+            --primary-color: #1a472a;
+            --primary-dark: #0f2847;
+            --primary-light: #2d5a3d;
+            --secondary-color: #e8f0fe;
+            --accent-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --text-color: #2c3e50;
+            --text-muted: #6c757d;
+            --border-color: #dee2e6;
+            --background-light: #f8f9fa;
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.08);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.12);
+            --shadow-lg: 0 8px 24px rgba(0,0,0,0.16);
+            --border-radius: 10px;
+            --border-radius-sm: 6px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            
+            /* GCX Brand Colors */
+            --gcx-primary: #1a472a;
+            --gcx-primary-light: #2d5a3d;
+            --gcx-secondary: #f8b500;
+            --gcx-accent: #ffcd3c;
+            --gcx-success: #28a745;
+            --gcx-dark: #1a472a;
+            
+            /* Light mode colors (default) */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-tertiary: #e9ecef;
+            --text-primary: #2c3e50;
+            --text-secondary: #6c757d;
+            --text-muted: #999999;
+            --border-primary: #dee2e6;
+            --border-secondary: #e9ecef;
+            --card-bg: #ffffff;
+            --input-bg: #ffffff;
+            --header-bg: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+        }
         
         * {
             margin: 0;
@@ -15,141 +55,103 @@
         }
         
         body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
             position: relative;
+            transition: var(--transition);
         }
         
-        .background-pattern {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: 
-                radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
-            pointer-events: none;
-        }
-        
-        .login-container {
-            position: relative;
-            z-index: 1;
-            width: 100%;
-            max-width: 480px;
-        }
-        
-        .company-header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-        
-        .company-logo {
-            width: 120px;
-            height: 60px;
-            background: #2c5aa0;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 1rem;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .company-logo::before {
+        body::before {
             content: '';
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: linear-gradient(135deg, #2c5aa0 0%, #1e3d72 100%);
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            z-index: -1;
         }
         
-        .company-logo i {
-            color: white;
-            font-size: 24px;
-            position: relative;
-            z-index: 1;
-        }
-        
-        .company-name {
-            color: #1e3d72;
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            letter-spacing: -0.5px;
-        }
-        
-        .company-tagline {
-            color: #64748b;
-            font-size: 1.1rem;
-            font-weight: 400;
+        .login-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2rem;
         }
         
         .login-card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 
-                0 4px 6px -1px rgba(0, 0, 0, 0.1),
-                0 2px 4px -1px rgba(0, 0, 0, 0.06),
-                0 0 0 1px rgba(255, 255, 255, 0.05);
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-lg);
+            width: 100%;
+            max-width: 450px;
             overflow: hidden;
-            border: 1px solid rgba(226, 232, 240, 0.8);
+            border: 1px solid var(--border-primary);
         }
         
         .login-header {
-            background: linear-gradient(135deg, #1e3d72 0%, #2c5aa0 100%);
+            background: var(--header-bg);
             padding: 2.5rem 2rem;
             text-align: center;
             position: relative;
         }
         
-        .login-header::before {
+        .login-header::after {
             content: '';
             position: absolute;
-            top: 0;
+            bottom: 0;
             left: 0;
             right: 0;
-            height: 1px;
-            background: rgba(255, 255, 255, 0.1);
+            height: 3px;
+            background: var(--gcx-secondary);
         }
         
-        .portal-icon {
-            width: 64px;
-            height: 64px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
+        .company-logo {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 15px;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto 1.5rem;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: var(--shadow-md);
+            padding: 15px;
         }
         
-        .portal-icon i {
-            color: white;
-            font-size: 28px;
+        .company-logo img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
         }
         
         .login-title {
             color: white;
             font-size: 1.75rem;
-            font-weight: 600;
+            font-weight: 700;
             margin-bottom: 0.5rem;
         }
         
         .login-subtitle {
             color: rgba(255, 255, 255, 0.9);
             font-size: 1rem;
-            font-weight: 400;
+            margin-bottom: 1rem;
+        }
+        
+        .supplier-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
         
         .login-body {
@@ -157,27 +159,37 @@
         }
         
         .alert {
-            background: #fef2f2;
-            border: 1px solid #fecaca;
-            border-radius: 8px;
+            border-radius: var(--border-radius-sm);
             padding: 1rem;
             margin-bottom: 1.5rem;
-            color: #dc2626;
             display: flex;
             align-items: flex-start;
             gap: 0.75rem;
+            font-weight: 500;
+            border: none;
         }
         
-        .alert.alert-success {
+        .alert-danger {
+            background: #fef2f2;
+            color: var(--danger-color);
+            border-left: 4px solid var(--danger-color);
+        }
+        
+        .alert-success {
             background: #f0fdf4;
-            border-color: #bbf7d0;
-            color: #16a34a;
+            color: var(--gcx-success);
+            border-left: 4px solid var(--gcx-success);
         }
         
-        .alert.alert-info {
+        .alert-info {
             background: #eff6ff;
-            border-color: #bfdbfe;
             color: #2563eb;
+            border-left: 4px solid #2563eb;
+        }
+        
+        .alert i {
+            font-size: 1.1rem;
+            margin-top: 0.1rem;
         }
         
         .form-group {
@@ -185,8 +197,8 @@
         }
         
         .form-label {
-            color: #374151;
-            font-weight: 500;
+            color: var(--text-primary);
+            font-weight: 600;
             margin-bottom: 0.5rem;
             display: block;
             font-size: 0.95rem;
@@ -195,27 +207,27 @@
         .form-control {
             width: 100%;
             padding: 0.875rem 1rem;
-            background: #ffffff;
-            border: 2px solid #e5e7eb;
-            border-radius: 8px;
-            color: #374151;
+            background: var(--input-bg);
+            border: 2px solid var(--border-primary);
+            border-radius: var(--border-radius-sm);
+            color: var(--text-primary);
             font-size: 1rem;
-            transition: all 0.2s ease;
+            transition: var(--transition);
             font-family: inherit;
         }
         
         .form-control:focus {
             outline: none;
-            border-color: #2c5aa0;
-            box-shadow: 0 0 0 3px rgba(44, 90, 160, 0.1);
+            border-color: var(--gcx-primary);
+            box-shadow: 0 0 0 3px rgba(26, 71, 42, 0.1);
         }
         
         .form-control:hover:not(:focus) {
-            border-color: #d1d5db;
+            border-color: var(--border-color);
         }
         
         .form-control::placeholder {
-            color: #9ca3af;
+            color: var(--text-muted);
         }
         
         .input-group {
@@ -227,12 +239,34 @@
             left: 1rem;
             top: 50%;
             transform: translateY(-50%);
-            color: #6b7280;
+            color: var(--text-muted);
             font-size: 1rem;
+            z-index: 3;
         }
         
         .input-group .form-control {
             padding-left: 2.75rem;
+        }
+        
+        .password-toggle {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+            z-index: 3;
+            padding: 0.5rem;
+            border-radius: var(--border-radius-sm);
+        }
+        
+        .password-toggle:hover {
+            color: var(--gcx-primary);
+            background: var(--bg-secondary);
         }
         
         .checkbox-container {
@@ -259,20 +293,20 @@
         .checkmark {
             width: 18px;
             height: 18px;
-            background: #ffffff;
-            border: 2px solid #d1d5db;
+            background: var(--input-bg);
+            border: 2px solid var(--border-color);
             border-radius: 4px;
             position: relative;
-            transition: all 0.2s ease;
+            transition: var(--transition);
         }
         
         .custom-checkbox:hover .checkmark {
-            border-color: #9ca3af;
+            border-color: var(--gcx-primary);
         }
         
         .custom-checkbox input:checked + .checkmark {
-            background: #2c5aa0;
-            border-color: #2c5aa0;
+            background: var(--gcx-primary);
+            border-color: var(--gcx-primary);
         }
         
         .checkmark:after {
@@ -293,8 +327,8 @@
         }
         
         .checkbox-label {
-            color: #6b7280;
-            font-size: 0.95rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
             line-height: 1.4;
             cursor: pointer;
             user-select: none;
@@ -302,25 +336,23 @@
         
         .btn-login {
             width: 100%;
-            padding: 0.875rem;
-            background: linear-gradient(135deg, #2c5aa0 0%, #1e3d72 100%);
+            padding: 0.875rem 1.5rem;
+            background: var(--gcx-primary);
             border: none;
-            border-radius: 8px;
+            border-radius: var(--border-radius-sm);
             color: white;
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: var(--transition);
             position: relative;
             overflow: hidden;
-            text-transform: none;
-            letter-spacing: 0;
         }
         
         .btn-login:hover {
-            background: linear-gradient(135deg, #1e3d72 0%, #164a8a 100%);
+            background: var(--gcx-primary-light);
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(44, 90, 160, 0.3);
+            box-shadow: var(--shadow-md);
         }
         
         .btn-login:active {
@@ -334,91 +366,57 @@
         }
         
         .login-footer {
-            background: #f8fafc;
+            background: var(--bg-secondary);
             padding: 1.5rem 2rem;
-            border-top: 1px solid #e5e7eb;
-        }
-        
-        .security-info {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            color: #6b7280;
-            font-size: 0.875rem;
-            margin-bottom: 1rem;
-        }
-        
-        .security-badges {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 1.5rem;
-            flex-wrap: wrap;
-        }
-        
-        .security-badge {
-            display: flex;
-            align-items: center;
-            gap: 0.375rem;
-            color: #059669;
-            font-size: 0.8rem;
-            font-weight: 500;
-            padding: 0.25rem 0.75rem;
-            background: #ecfdf5;
-            border-radius: 20px;
-            border: 1px solid #a7f3d0;
+            border-top: 1px solid var(--border-primary);
         }
         
         .help-links {
             text-align: center;
-            margin-top: 1.5rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid #e5e7eb;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-primary);
         }
         
         .help-link {
-            color: #2c5aa0;
+            color: var(--gcx-primary);
             text-decoration: none;
             font-size: 0.9rem;
             margin: 0 1rem;
-            transition: color 0.2s ease;
+            transition: var(--transition);
+            font-weight: 500;
         }
         
         .help-link:hover {
-            color: #1e3d72;
+            color: var(--gcx-primary-light);
             text-decoration: underline;
         }
         
         .version-info {
             text-align: center;
             margin-top: 1rem;
-            color: #9ca3af;
+            color: var(--text-muted);
             font-size: 0.8rem;
         }
         
-        @media (max-width: 500px) {
+        
+        @media (max-width: 768px) {
             .login-container {
-                margin: 1rem;
-            }
-            
-            .company-name {
-                font-size: 2rem;
+                padding: 1rem;
             }
             
             .login-header,
             .login-body {
-                padding-left: 1.5rem;
-                padding-right: 1.5rem;
+                padding: 1.5rem;
             }
             
             .login-footer {
                 padding: 1.5rem;
             }
             
-            .security-badges {
-                flex-direction: column;
-                gap: 0.75rem;
+            .help-link {
+                display: block;
+                margin: 0.5rem 0;
             }
         }
         
@@ -437,7 +435,7 @@
             height: 16px;
             margin: -8px 0 0 -8px;
             border: 2px solid transparent;
-            border-top: 2px solid #ffffff;
+            border-top: 2px solid white;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
@@ -450,40 +448,67 @@
         .btn-login.loading .btn-text {
             opacity: 0;
         }
+        
+        /* Form validation states */
+        .form-control.is-valid {
+            border-color: var(--gcx-success);
+            box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
+        }
+        
+        .form-control.is-invalid {
+            border-color: var(--danger-color);
+            box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+        }
+        
+        .invalid-feedback {
+            color: var(--danger-color);
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            display: block;
+        }
+        
+        .valid-feedback {
+            color: var(--gcx-success);
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            display: block;
+        }
     </style>
 </head>
 <body>
-    <div class="background-pattern"></div>
-    
     <div class="login-container">
-        <div class="company-header">
-            <div class="company-logo">
-                <i class="fas fa-seedling"></i>
-            </div>
-            <h1 class="company-name">GCX</h1>
-            <p class="company-tagline">Global Commerce Exchange</p>
-        </div>
-        
         <div class="login-card">
             <div class="login-header">
-                <div class="portal-icon">
-                    <i class="fas fa-building"></i>
+                <div class="company-logo">
+                    <img src="/media/logo/logo1.png" alt="GCX Logo">
                 </div>
-                <h2 class="login-title">Supplier Portal</h2>
-                <p class="login-subtitle">Secure access to your business dashboard</p>
+                <h2 class="login-title">Supplier Login</h2>
+                <p class="login-subtitle">Access your supplier account and manage applications</p>
+                <div class="supplier-badge">
+                    <i class="fas fa-user-tie"></i>
+                    <span>Suppliers Only</span>
+                </div>
             </div>
             
             <div class="login-body">
                 {% if messages %}
                     {% for message in messages %}
                         <div class="alert alert-{{ message.tags }}" role="alert">
-                            <i class="fas fa-exclamation-circle"></i>
+                            {% if message.tags == 'error' %}
+                                <i class="fas fa-exclamation-triangle"></i>
+                            {% elif message.tags == 'success' %}
+                                <i class="fas fa-check-circle"></i>
+                            {% elif message.tags == 'info' %}
+                                <i class="fas fa-info-circle"></i>
+                            {% else %}
+                                <i class="fas fa-exclamation-circle"></i>
+                            {% endif %}
                             <div>{{ message }}</div>
                         </div>
                     {% endfor %}
                 {% endif %}
                 
-                <form method="post" id="loginForm">
+                <form method="post" id="loginForm" novalidate>
                     {% csrf_token %}
                     
                     <div class="form-group">
@@ -495,9 +520,11 @@
                                    name="username" 
                                    placeholder="Enter your registered email"
                                    required
-                                   autocomplete="username">
+                                   autocomplete="username"
+                                   value="{{ form.username.value|default:'' }}">
                             <i class="fas fa-envelope input-icon"></i>
                         </div>
+                        <div class="invalid-feedback" id="username-error"></div>
                     </div>
                     
                     <div class="form-group">
@@ -510,17 +537,22 @@
                                    placeholder="Enter your password"
                                    required
                                    autocomplete="current-password">
+                            <button type="button" class="password-toggle" onclick="togglePassword()" title="Toggle password visibility">
+                                <i class="fas fa-eye" id="password-toggle-icon"></i>
+                            </button>
                             <i class="fas fa-lock input-icon"></i>
                         </div>
+                        <div class="invalid-feedback" id="password-error"></div>
                     </div>
                     
                     <div class="checkbox-container">
                         <div class="custom-checkbox">
-                            <input type="checkbox" id="remember">
+                            <input type="checkbox" id="remember" name="remember_me">
                             <span class="checkmark"></span>
                         </div>
                         <label class="checkbox-label" for="remember">
-                            Keep me signed in on this device for up to 30 days. Don't check this if you're using a shared computer.
+                            Keep me signed in on this device for up to 30 days. 
+                            <br><small style="color: var(--text-muted);">Don't check this if you're using a shared computer.</small>
                         </label>
                     </div>
                     
@@ -533,71 +565,204 @@
                 </form>
                 
                 <div class="help-links">
-                    <a href="#" class="help-link">Forgot Password?</a>
-                    <a href="#" class="help-link">Need Help?</a>
-                    <a href="#" class="help-link">Register Account</a>
+                    <a href="{% url 'accounts:password_reset' %}" class="help-link">
+                        <i class="fas fa-key me-1"></i>
+                        Forgot Password?
+                    </a>
+                    <a href="mailto:support@gcx.com" class="help-link">
+                        <i class="fas fa-life-ring me-1"></i>
+                        Need Help?
+                    </a>
+                    <a href="{% url 'applications:application-form' %}" class="help-link">
+                        <i class="fas fa-file-alt me-1"></i>
+                        New Application
+                    </a>
                 </div>
             </div>
             
             <div class="login-footer">
-                <div class="security-info">
-                    <i class="fas fa-shield-alt"></i>
-                    Your connection is secured with industry-standard encryption
-                </div>
-                
-                <div class="security-badges">
-                    <div class="security-badge">
-                        <i class="fas fa-lock"></i>
-                        <span>SSL Encrypted</span>
-                    </div>
-                    <div class="security-badge">
-                        <i class="fas fa-certificate"></i>
-                        <span>SOC 2 Compliant</span>
-                    </div>
-                    <div class="security-badge">
-                        <i class="fas fa-user-shield"></i>
-                        <span>GDPR Protected</span>
-                    </div>
-                </div>
-                
                 <div class="version-info">
-                    Portal Version 2.1.4 | © 2024 Global Commerce Exchange
+                    Portal Version 1.0.0 | © 2025 Ghana Commodity Exchange
                 </div>
             </div>
         </div>
     </div>
     
     <script>
+        // Form validation and submission
         document.getElementById('loginForm').addEventListener('submit', function(e) {
-            const button = document.getElementById('loginBtn');
-            button.classList.add('loading');
+            e.preventDefault();
             
-            // Remove loading state after 5 seconds as fallback
-            setTimeout(() => {
-                button.classList.remove('loading');
-            }, 5000);
+            const button = document.getElementById('loginBtn');
+            const form = this;
+            
+            // Clear previous validation states
+            clearValidation();
+            
+            // Validate form
+            if (validateForm()) {
+                button.classList.add('loading');
+                
+                // Submit form after validation
+                setTimeout(() => {
+                    form.submit();
+                }, 500);
+            }
+        });
+        
+        // Form validation function
+        function validateForm() {
+            let isValid = true;
+            const email = document.getElementById('id_username');
+            const password = document.getElementById('id_password');
+            
+            // Email validation
+            if (!email.value.trim()) {
+                showError(email, 'Email address is required');
+                isValid = false;
+            } else if (!isValidEmail(email.value)) {
+                showError(email, 'Please enter a valid email address');
+                isValid = false;
+            } else {
+                showSuccess(email);
+            }
+            
+            // Password validation
+            if (!password.value.trim()) {
+                showError(password, 'Password is required');
+                isValid = false;
+            } else if (password.value.length < 6) {
+                showError(password, 'Password must be at least 6 characters long');
+                isValid = false;
+            } else {
+                showSuccess(password);
+            }
+            
+            return isValid;
+        }
+        
+        // Email validation helper
+        function isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+        
+        // Show error state
+        function showError(input, message) {
+            input.classList.remove('is-valid');
+            input.classList.add('is-invalid');
+            
+            const errorElement = document.getElementById(input.id + '-error');
+            if (errorElement) {
+                errorElement.textContent = message;
+            }
+        }
+        
+        // Show success state
+        function showSuccess(input) {
+            input.classList.remove('is-invalid');
+            input.classList.add('is-valid');
+            
+            const errorElement = document.getElementById(input.id + '-error');
+            if (errorElement) {
+                errorElement.textContent = '';
+            }
+        }
+        
+        // Clear validation states
+        function clearValidation() {
+            document.querySelectorAll('.form-control').forEach(input => {
+                input.classList.remove('is-valid', 'is-invalid');
+                const errorElement = document.getElementById(input.id + '-error');
+                if (errorElement) {
+                    errorElement.textContent = '';
+                }
+            });
+        }
+        
+        // Real-time validation
+        document.getElementById('id_username').addEventListener('blur', function() {
+            if (this.value.trim()) {
+                if (isValidEmail(this.value)) {
+                    showSuccess(this);
+                } else {
+                    showError(this, 'Please enter a valid email address');
+                }
+            }
+        });
+        
+        document.getElementById('id_password').addEventListener('blur', function() {
+            if (this.value.trim()) {
+                if (this.value.length >= 6) {
+                    showSuccess(this);
+                } else {
+                    showError(this, 'Password must be at least 6 characters long');
+                }
+            }
         });
         
         // Add subtle focus enhancements
         document.querySelectorAll('.form-control').forEach(input => {
             input.addEventListener('focus', function() {
                 this.closest('.input-group').style.transform = 'translateY(-1px)';
+                this.closest('.input-group').style.boxShadow = '0 4px 12px rgba(13, 110, 253, 0.15)';
             });
             
             input.addEventListener('blur', function() {
                 this.closest('.input-group').style.transform = 'translateY(0)';
+                this.closest('.input-group').style.boxShadow = 'none';
             });
         });
         
-        // Validate email format on blur
-        document.getElementById('id_username').addEventListener('blur', function() {
-            const email = this.value;
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        // Password toggle functionality
+        function togglePassword() {
+            const passwordInput = document.getElementById('id_password');
+            const toggleIcon = document.getElementById('password-toggle-icon');
             
-            if (email && !emailRegex.test(email)) {
-                this.style.borderColor = '#dc2626';
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+                toggleIcon.title = 'Hide password';
             } else {
-                this.style.borderColor = '#e5e7eb';
+                passwordInput.type = 'password';
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+                toggleIcon.title = 'Show password';
+            }
+        }
+        
+        // Auto-focus on email field
+        document.addEventListener('DOMContentLoaded', function() {
+            const emailField = document.getElementById('id_username');
+            if (emailField) {
+                emailField.focus();
+            }
+        });
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Enter key on password field submits form
+            if (e.key === 'Enter' && e.target.id === 'id_password') {
+                document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+            }
+        });
+        
+        // Remember me functionality
+        document.getElementById('remember').addEventListener('change', function() {
+            if (this.checked) {
+                // Set longer session timeout
+                console.log('Remember me enabled');
+            } else {
+                console.log('Remember me disabled');
+            }
+        });
+        
+        // Add loading state management
+        window.addEventListener('beforeunload', function() {
+            const button = document.getElementById('loginBtn');
+            if (button.classList.contains('loading')) {
+                button.classList.remove('loading');
             }
         });
     </script>

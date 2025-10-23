@@ -1,28 +1,34 @@
 {% extends "backoffice/base.html" %}
 
-{% block title %}Document Verification - GCX Admin Portal{% endblock %}
+{% block title %}Delivery Receipts - GCX Admin Portal{% endblock %}
 
-{% block page_icon %}<i class="fas fa-folder-open"></i>{% endblock %}
-{% block page_title %}Document Verification{% endblock %}
-{% block page_subtitle %}Review and verify uploaded documents{% endblock %}
+{% block page_icon %}<i class="fas fa-truck"></i>{% endblock %}
+{% block page_title %}Delivery Receipts{% endblock %}
 
-{% block breadcrumb %}
-<nav aria-label="breadcrumb">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'applications:backoffice-dashboard' %}">Dashboard</a></li>
-        <li class="breadcrumb-item active">Documents</li>
-    </ol>
-</nav>
-{% endblock %}
-
-{% block page_actions %}
-<div class="d-flex gap-2">
-    <button class="btn btn-outline-primary btn-sm" onclick="exportDocuments()">
-        <i class="fas fa-download"></i> Export
-    </button>
-    <button class="btn btn-primary btn-sm" onclick="bulkVerify()">
-        <i class="fas fa-check-double"></i> Bulk Verify
-    </button>
+{% block page_header_container %}
+<div class="page-header-container">
+    <div class="page-header-content">
+        <div class="page-header-info">
+            <div class="page-header-breadcrumb">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'applications:backoffice-dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Delivery Receipts</li>
+                    </ol>
+                </nav>
+            </div>
+            <h1 class="page-header-title">Delivery Receipts</h1>
+            <p class="page-header-subtitle">Review and verify supplier delivery receipts</p>
+        </div>
+        <div class="page-header-actions">
+            <button class="btn btn-outline-primary" onclick="exportDeliveries()">
+                <i class="fas fa-download"></i> Export
+            </button>
+            <button class="btn btn-primary" onclick="bulkVerify()">
+                <i class="fas fa-check-double"></i> Bulk Verify
+            </button>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
@@ -36,32 +42,38 @@
                     <div class="col-md-3">
                         <label for="search" class="form-label">Search</label>
                         <input type="text" class="form-control" id="search" name="search" 
-                               value="{{ current_search }}" placeholder="Document name, application...">
+                               value="{{ current_search }}" placeholder="Delivery number, supplier...">
                     </div>
                     <div class="col-md-2">
                         <label for="status" class="form-label">Status</label>
                         <select class="form-select" id="status" name="status">
                             <option value="">All Statuses</option>
-                            <option value="pending" {% if current_status == 'pending' %}selected{% endif %}>Pending</option>
-                            <option value="verified" {% if current_status == 'verified' %}selected{% endif %}>Verified</option>
-                            <option value="rejected" {% if current_status == 'rejected' %}selected{% endif %}>Rejected</option>
+                            <option value="PENDING" {% if current_status == 'PENDING' %}selected{% endif %}>Pending</option>
+                            <option value="COMPLETED" {% if current_status == 'COMPLETED' %}selected{% endif %}>Completed</option>
+                            <option value="VERIFIED" {% if current_status == 'VERIFIED' %}selected{% endif %}>Verified</option>
+                            <option value="REJECTED" {% if current_status == 'REJECTED' %}selected{% endif %}>Rejected</option>
                         </select>
                     </div>
                     <div class="col-md-2">
-                        <label for="application" class="form-label">Application</label>
-                        <select class="form-select" id="application" name="application">
-                            <option value="">All Applications</option>
-                            <!-- This would be populated with applications -->
+                        <label for="supplier" class="form-label">Supplier</label>
+                        <select class="form-select" id="supplier" name="supplier">
+                            <option value="">All Suppliers</option>
+                            {% for supplier in suppliers %}
+                            <option value="{{ supplier.id }}" {% if current_supplier == supplier.id|stringformat:"s" %}selected{% endif %}>
+                                {{ supplier.get_full_name|default:supplier.email }}
+                            </option>
+                            {% endfor %}
                         </select>
                     </div>
                     <div class="col-md-2">
-                        <label for="type" class="form-label">Document Type</label>
-                        <select class="form-select" id="type" name="type">
-                            <option value="">All Types</option>
-                            <option value="business_registration">Business Registration</option>
-                            <option value="vat_certificate">VAT Certificate</option>
-                            <option value="tax_clearance">Tax Clearance</option>
-                            <option value="id_documents">ID Documents</option>
+                        <label for="region" class="form-label">Region</label>
+                        <select class="form-select" id="region" name="region">
+                            <option value="">All Regions</option>
+                            {% for region in regions %}
+                            <option value="{{ region.id }}" {% if current_region == region.id|stringformat:"s" %}selected{% endif %}>
+                                {{ region.name }}
+                            </option>
+                            {% endfor %}
                         </select>
                     </div>
                     <div class="col-md-3">
@@ -78,46 +90,46 @@
     </div>
 </div>
 
-<!-- Document Stats -->
+<!-- Delivery Stats -->
 <div class="row mb-4">
     <div class="col-lg-3 col-md-6 mb-3">
         <div class="stat-card warning">
             <i class="fas fa-clock stat-icon"></i>
-            <div class="stat-value">{{ pending_docs|default:"0" }}</div>
+            <div class="stat-value">{{ pending_deliveries|default:"0" }}</div>
             <div class="stat-label">Pending Review</div>
         </div>
     </div>
     <div class="col-lg-3 col-md-6 mb-3">
         <div class="stat-card success">
             <i class="fas fa-check-circle stat-icon"></i>
-            <div class="stat-value">{{ verified_docs|default:"0" }}</div>
+            <div class="stat-value">{{ verified_deliveries|default:"0" }}</div>
             <div class="stat-label">Verified</div>
         </div>
     </div>
     <div class="col-lg-3 col-md-6 mb-3">
-        <div class="stat-card danger">
-            <i class="fas fa-times-circle stat-icon"></i>
-            <div class="stat-value">{{ rejected_docs|default:"0" }}</div>
-            <div class="stat-label">Rejected</div>
+        <div class="stat-card info">
+            <i class="fas fa-truck stat-icon"></i>
+            <div class="stat-value">{{ completed_deliveries|default:"0" }}</div>
+            <div class="stat-label">Completed</div>
         </div>
     </div>
     <div class="col-lg-3 col-md-6 mb-3">
-        <div class="stat-card info">
-            <i class="fas fa-file-alt stat-icon"></i>
-            <div class="stat-value">{{ total_docs|default:"0" }}</div>
-            <div class="stat-label">Total Documents</div>
+        <div class="stat-card primary">
+            <i class="fas fa-clipboard-list stat-icon"></i>
+            <div class="stat-value">{{ total_deliveries|default:"0" }}</div>
+            <div class="stat-label">Total Deliveries</div>
         </div>
     </div>
 </div>
 
-<!-- Documents Grid -->
+<!-- Delivery Receipts Grid -->
 <div class="row">
     <div class="col-12">
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title">
-                    <i class="fas fa-list"></i>
-                    Documents
+                    <i class="fas fa-truck"></i>
+                    Delivery Receipts
                     <span class="badge bg-primary ms-2">{{ page_obj.paginator.count }}</span>
                 </h5>
                 <div class="card-actions">
@@ -133,89 +145,134 @@
             </div>
             <div class="card-body">
                 {% if page_obj %}
-                <div class="row">
-                    {% for document in page_obj %}
-                    <div class="col-lg-4 col-md-6 mb-4">
-                        <div class="document-card">
-                            <div class="document-card-header">
-                                <div class="d-flex align-items-center">
-                                    <input type="checkbox" class="document-checkbox me-2" value="{{ document.id }}">
-                                    <div class="document-icon">
-                                        <i class="fas fa-file-pdf"></i>
+                <div class="table-responsive">
+                    <table class="table table-hover deliveries-table">
+                        <thead>
+                            <tr>
+                                <th width="30" class="checkbox-col">
+                                    <input type="checkbox" id="selectAllCheckbox" onchange="toggleAll()">
+                                </th>
+                                <th class="delivery-col">Delivery</th>
+                                <th class="supplier-col d-none d-lg-table-cell">Supplier</th>
+                                <th class="location-col d-none d-md-table-cell">Location</th>
+                                <th class="commodities-col d-none d-sm-table-cell">Commodities</th>
+                                <th class="status-col">Status</th>
+                                <th class="date-col d-none d-sm-table-cell">Date</th>
+                                <th class="actions-col">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for delivery in page_obj %}
+                            <tr>
+                                <td class="checkbox-col">
+                                    <input type="checkbox" class="delivery-checkbox" value="{{ delivery.id }}">
+                                </td>
+                                <td class="delivery-col">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0">
+                                            <div class="delivery-avatar">
+                                                <i class="fas fa-truck"></i>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <h6 class="mb-0">{{ delivery.delivery_number }}</h6>
+                                            {% if delivery.srv_number %}
+                                            <small class="text-muted">SRV: {{ delivery.srv_number }}</small>
+                                            {% endif %}
+                                            {% if delivery.waybill_number %}
+                                            <small class="text-muted d-block">Waybill: {{ delivery.waybill_number }}</small>
+                                            {% endif %}
+                                            <!-- Show supplier info on mobile -->
+                                            <div class="d-lg-none mt-1">
+                                                <small class="text-muted">{{ delivery.supplier_user.get_full_name|default:delivery.supplier_user.email }}</small>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="document-info">
-                                        <h6 class="mb-0">{{ document.requirement.name }}</h6>
-                                        <small class="text-muted">{{ document.original_filename }}</small>
+                                </td>
+                                <td class="supplier-col d-none d-lg-table-cell">
+                                    <div>
+                                        <div class="fw-medium">{{ delivery.supplier_user.get_full_name|default:delivery.supplier_user.email }}</div>
+                                        <small class="text-muted">{{ delivery.supplier_user.email }}</small>
                                     </div>
-                                </div>
-                                <div class="document-status">
-                                    <span class="badge badge-status badge-{{ document.status|default:'pending' }}">
-                                        {{ document.get_status_display|default:'Pending' }}
+                                </td>
+                                <td class="location-col d-none d-md-table-cell">
+                                    <div>
+                                        <div class="fw-medium">{{ delivery.delivery_region.name|default:"--" }}</div>
+                                        <small class="text-muted">{{ delivery.delivery_school.name|default:"--" }}</small>
+                                    </div>
+                                </td>
+                                <td class="commodities-col d-none d-sm-table-cell">
+                                    <div>
+                                        <div class="fw-medium">{{ delivery.commodities.count }} item(s)</div>
+                                        {% for commodity in delivery.commodities.all|slice:":2" %}
+                                        <small class="text-muted">{{ commodity.commodity.name }} ({{ commodity.quantity }} {{ commodity.unit_of_measure }})</small><br>
+                                        {% endfor %}
+                                        {% if delivery.commodities.count > 2 %}
+                                        <small class="text-muted">+{{ delivery.commodities.count|add:"-2" }} more</small>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td class="status-col">
+                                    <span class="badge badge-status badge-{{ delivery.status|lower }}">
+                                        {{ delivery.get_status_display }}
                                     </span>
-                                </div>
-                            </div>
-                            
-                            <div class="document-card-body">
-                                <div class="document-meta">
-                                    <div class="meta-item">
-                                        <i class="fas fa-building me-2"></i>
-                                        <span>{{ document.application.business_name }}</span>
+                                </td>
+                                <td class="date-col d-none d-sm-table-cell">
+                                    <div>
+                                        <div class="fw-medium">{{ delivery.delivery_date|date:"M d, Y"|default:"--" }}</div>
+                                        <small class="text-muted">{{ delivery.created_at|timesince|default:"--" }} ago</small>
                                     </div>
-                                    <div class="meta-item">
-                                        <i class="fas fa-calendar me-2"></i>
-                                        <span>{{ document.uploaded_at|date:"M d, Y" }}</span>
-                                    </div>
-                                    <div class="meta-item">
-                                        <i class="fas fa-weight me-2"></i>
-                                        <span>{{ document.file_size|filesizeformat }}</span>
-                                    </div>
-                                </div>
-                                
-                                <div class="document-preview">
-                                    {% if document.mime_type|slice:":5" == "image" %}
-                                    <img src="{{ document.file.url }}" alt="Document preview" class="img-fluid">
-                                    {% else %}
-                                    <div class="document-placeholder">
-                                        <i class="fas fa-file-alt fa-3x text-muted"></i>
-                                        <p class="text-muted mt-2">Click to view document</p>
-                                    </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            
-                            <div class="document-card-footer">
-                                <div class="btn-group w-100" role="group">
-                                    <button class="btn btn-outline-primary btn-sm" onclick="viewDocument({{ document.id }})">
-                                        <i class="fas fa-eye"></i> View
-                                    </button>
-                                    <form method="post" action="{% url 'applications:backoffice-verify-document' document.id %}" style="display: inline;">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn btn-outline-success btn-sm" onclick="return confirm('Are you sure you want to verify this document?')">
-                                            <i class="fas fa-check"></i> Verify
+                                </td>
+                                <td class="actions-col">
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-icon btn-sm btn-outline-primary"
+                                                onclick="viewDeliveryDetails({{ delivery.id }})"
+                                                data-bs-toggle="tooltip" 
+                                                title="View Details">
+                                            <i class="fas fa-eye"></i>
                                         </button>
-                                    </form>
-                                    <button class="btn btn-outline-danger btn-sm" onclick="showRejectDocumentModal({{ document.id }})">
-                                        <i class="fas fa-times"></i> Reject
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
+                                        {% if delivery.status == 'PENDING' %}
+                                        <button class="btn btn-icon btn-sm btn-outline-success"
+                                                onclick="verifyDelivery({{ delivery.id }})"
+                                                data-bs-toggle="tooltip" 
+                                                title="Verify">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                        <button class="btn btn-icon btn-sm btn-outline-danger"
+                                                onclick="rejectDelivery({{ delivery.id }})"
+                                                data-bs-toggle="tooltip" 
+                                                title="Reject">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                        {% endif %}
+                                        {% if delivery.status == 'COMPLETED' %}
+                                        <button class="btn btn-icon btn-sm btn-outline-info"
+                                                onclick="verifyDelivery({{ delivery.id }})"
+                                                data-bs-toggle="tooltip" 
+                                                title="Mark as Verified">
+                                            <i class="fas fa-check-circle"></i>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
 
                 <!-- Pagination -->
                 {% if page_obj.has_other_pages %}
-                <nav aria-label="Documents pagination" class="mt-4">
+                <nav aria-label="Delivery receipts pagination" class="mt-4">
                     <ul class="pagination justify-content-center">
                         {% if page_obj.has_previous %}
                         <li class="page-item">
-                            <a class="page-link" href="?page=1{% if current_status %}&status={{ current_status }}{% endif %}{% if current_application %}&application={{ current_application }}{% endif %}">
+                            <a class="page-link" href="?page=1{% if current_status %}&status={{ current_status }}{% endif %}{% if current_supplier %}&supplier={{ current_supplier }}{% endif %}{% if current_region %}&region={{ current_region }}{% endif %}">
                                 <i class="fas fa-angle-double-left"></i>
                             </a>
                         </li>
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_application %}&application={{ current_application }}{% endif %}">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_supplier %}&supplier={{ current_supplier }}{% endif %}{% if current_region %}&region={{ current_region }}{% endif %}">
                                 <i class="fas fa-angle-left"></i>
                             </a>
                         </li>
@@ -228,19 +285,19 @@
                             </li>
                             {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
                             <li class="page-item">
-                                <a class="page-link" href="?page={{ num }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_application %}&application={{ current_application }}{% endif %}">{{ num }}</a>
+                                <a class="page-link" href="?page={{ num }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_supplier %}&supplier={{ current_supplier }}{% endif %}{% if current_region %}&region={{ current_region }}{% endif %}">{{ num }}</a>
                             </li>
                             {% endif %}
                         {% endfor %}
 
                         {% if page_obj.has_next %}
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_application %}&application={{ current_application }}{% endif %}">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_supplier %}&supplier={{ current_supplier }}{% endif %}{% if current_region %}&region={{ current_region }}{% endif %}">
                                 <i class="fas fa-angle-right"></i>
                             </a>
                         </li>
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_application %}&application={{ current_application }}{% endif %}">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_supplier %}&supplier={{ current_supplier }}{% endif %}{% if current_region %}&region={{ current_region }}{% endif %}">
                                 <i class="fas fa-angle-double-right"></i>
                             </a>
                         </li>
@@ -251,9 +308,9 @@
 
                 {% else %}
                 <div class="text-center py-5">
-                    <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
-                    <h5 class="text-muted">No documents found</h5>
-                    <p class="text-muted">No documents match your search criteria.</p>
+                    <i class="fas fa-truck fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No delivery receipts found</h5>
+                    <p class="text-muted">No delivery receipts match your search criteria.</p>
                 </div>
                 {% endif %}
             </div>
@@ -261,50 +318,50 @@
     </div>
 </div>
 
-<!-- Reject Document Modal -->
-<div class="modal fade" id="rejectDocumentModal" tabindex="-1">
+<!-- Reject Delivery Modal -->
+<div class="modal fade" id="rejectDeliveryModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Reject Document</h5>
+                <h5 class="modal-title">Reject Delivery Receipt</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form method="post" id="rejectDocumentForm">
+            <form method="post" id="rejectDeliveryForm">
                 {% csrf_token %}
                 <div class="modal-body">
-                    <p>Please provide a reason for rejecting this document:</p>
+                    <p>Please provide a reason for rejecting this delivery receipt:</p>
                     <div class="mb-3">
-                        <label for="rejectDocumentReason" class="form-label">Reason for Rejection</label>
-                        <textarea class="form-control" id="rejectDocumentReason" name="reason" rows="4" required></textarea>
+                        <label for="rejectDeliveryReason" class="form-label">Reason for Rejection</label>
+                        <textarea class="form-control" id="rejectDeliveryReason" name="reason" rows="4" required></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-danger">Reject Document</button>
+                    <button type="submit" class="btn btn-danger">Reject Delivery</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<!-- Document Viewer Modal -->
-<div class="modal fade" id="documentViewerModal" tabindex="-1">
+<!-- Delivery Viewer Modal -->
+<div class="modal fade" id="deliveryViewerModal" tabindex="-1">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Document Viewer</h5>
+                <h5 class="modal-title">Delivery Receipt Details</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div id="documentViewerContent">
-                    <!-- Document content will be loaded here -->
+                <div id="deliveryViewerContent">
+                    <!-- Delivery content will be loaded here -->
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-success" onclick="verifyCurrentDocument()">
+                <button type="button" class="btn btn-success" onclick="verifyCurrentDelivery()">
                     <i class="fas fa-check"></i> Verify
                 </button>
-                <button type="button" class="btn btn-danger" onclick="rejectCurrentDocument()">
+                <button type="button" class="btn btn-danger" onclick="rejectCurrentDelivery()">
                     <i class="fas fa-times"></i> Reject
                 </button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -314,103 +371,124 @@
 </div>
 
 <style>
-.document-card {
-    background: white;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow-sm);
-    transition: var(--transition);
-    height: 100%;
-    display: flex;
-    flex-direction: column;
+.deliveries-table {
+    margin-bottom: 0;
 }
 
-.document-card:hover {
-    box-shadow: var(--shadow-md);
-    transform: translateY(-2px);
+.deliveries-table th {
+    border-top: none;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    padding: 1rem 0.75rem;
+    border-bottom: 2px solid var(--border-color);
 }
 
-.document-card-header {
-    padding: 1rem;
-    border-bottom: 1px solid var(--background-light);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+.deliveries-table td {
+    padding: 1rem 0.75rem;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--border-color);
 }
 
-.document-icon {
+.deliveries-table tbody tr:hover {
+    background-color: var(--background-light);
+}
+
+.delivery-avatar {
     width: 40px;
     height: 40px;
-    background: var(--danger-color);
+    background: var(--primary-color);
     color: white;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-right: 0.75rem;
+    font-size: 1rem;
 }
 
-.document-info h6 {
-    margin: 0;
-    font-size: 0.875rem;
-    font-weight: 600;
+.checkbox-col {
+    width: 30px;
+    text-align: center;
 }
 
-.document-info small {
-    font-size: 0.75rem;
+.delivery-col {
+    min-width: 200px;
 }
 
-.document-card-body {
-    padding: 1rem;
-    flex-grow: 1;
+.supplier-col {
+    min-width: 180px;
 }
 
-.document-meta {
-    margin-bottom: 1rem;
+.location-col {
+    min-width: 160px;
 }
 
-.meta-item {
-    display: flex;
-    align-items: center;
-    margin-bottom: 0.5rem;
-    font-size: 0.875rem;
-    color: var(--text-muted);
+.commodities-col {
+    min-width: 150px;
 }
 
-.document-preview {
-    height: 150px;
-    background: var(--background-light);
-    border-radius: var(--border-radius-sm);
+.status-col {
+    width: 120px;
+}
+
+.date-col {
+    width: 120px;
+}
+
+.actions-col {
+    width: 120px;
+}
+
+.btn-icon {
+    width: 32px;
+    height: 32px;
+    padding: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
-    margin-bottom: 1rem;
 }
 
-.document-preview img {
-    max-height: 100%;
-    max-width: 100%;
-    object-fit: contain;
-}
-
-.document-placeholder {
-    text-align: center;
-    color: var(--text-muted);
-}
-
-.document-card-footer {
-    padding: 1rem;
-    border-top: 1px solid var(--background-light);
-}
-
-.btn-group .btn {
-    flex: 1;
+.btn-icon i {
+    font-size: 0.875rem;
 }
 
 .badge-status {
     font-size: 0.75rem;
     padding: 0.375rem 0.75rem;
+}
+
+.badge-pending {
+    background-color: var(--warning-color);
+    color: white;
+}
+
+.badge-completed {
+    background-color: var(--info-color);
+    color: white;
+}
+
+.badge-verified {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.badge-rejected {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .deliveries-table th,
+    .deliveries-table td {
+        padding: 0.5rem;
+    }
+    
+    .delivery-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 0.875rem;
+    }
 }
 </style>
 {% endblock %}
@@ -427,78 +505,81 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Selection functions
 function selectAll() {
-    const checkboxes = document.querySelectorAll('.document-checkbox');
-    checkboxes.forEach(checkbox => checkbox.checked = true);
+    const checkboxes = document.querySelectorAll('.delivery-checkbox');
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    checkboxes.forEach(checkbox => checkbox.checked = selectAllCheckbox.checked);
 }
 
 function clearSelection() {
-    const checkboxes = document.querySelectorAll('.document-checkbox');
+    const checkboxes = document.querySelectorAll('.delivery-checkbox');
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
     checkboxes.forEach(checkbox => checkbox.checked = false);
+    selectAllCheckbox.checked = false;
 }
 
-// Document actions
-function viewDocument(documentId) {
-    console.log('Viewing document:', documentId);
-    // This would typically open a document viewer modal
-    const modal = new bootstrap.Modal(document.getElementById('documentViewerModal'));
-    document.getElementById('documentViewerContent').innerHTML = `
-        <div class="text-center py-5">
-            <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
-            <p class="text-muted">Document viewer will be implemented soon.</p>
-        </div>
-    `;
-    modal.show();
+function toggleAll() {
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    const checkboxes = document.querySelectorAll('.delivery-checkbox');
+    checkboxes.forEach(checkbox => checkbox.checked = selectAllCheckbox.checked);
 }
 
-function verifyDocument(documentId) {
-    if (confirm('Are you sure you want to verify this document?')) {
-        console.log('Verifying document:', documentId);
+// Delivery actions
+function viewDeliveryDetails(deliveryId) {
+    console.log('Viewing delivery details:', deliveryId);
+    // Redirect to delivery detail page
+    window.location.href = `/backoffice/deliveries/${deliveryId}/`;
+}
+
+function verifyDelivery(deliveryId) {
+    if (confirm('Are you sure you want to verify this delivery receipt?')) {
+        console.log('Verifying delivery:', deliveryId);
         // This would typically make an AJAX call
-        alert('Document verification functionality will be implemented soon.');
+        alert('Delivery verification functionality will be implemented soon.');
     }
 }
 
-function showRejectDocumentModal(documentId) {
-    const form = document.getElementById('rejectDocumentForm');
-    form.action = `/backoffice/documents/${documentId}/reject/`;
-    const modal = new bootstrap.Modal(document.getElementById('rejectDocumentModal'));
+function rejectDelivery(deliveryId) {
+    const form = document.getElementById('rejectDeliveryForm');
+    form.action = `/backoffice/deliveries/${deliveryId}/reject/`;
+    const modal = new bootstrap.Modal(document.getElementById('rejectDeliveryModal'));
     modal.show();
 }
 
-function verifyCurrentDocument() {
-    console.log('Verifying current document');
-    alert('Document verification functionality will be implemented soon.');
+function verifyCurrentDelivery() {
+    console.log('Verifying current delivery');
+    alert('Delivery verification functionality will be implemented soon.');
 }
 
-function rejectCurrentDocument() {
+function rejectCurrentDelivery() {
     const reason = prompt('Please provide a reason for rejection:');
     if (reason) {
-        console.log('Rejecting current document, Reason:', reason);
-        alert('Document rejection functionality will be implemented soon.');
+        console.log('Rejecting current delivery, Reason:', reason);
+        alert('Delivery rejection functionality will be implemented soon.');
     }
 }
 
 function bulkVerify() {
-    const selected = getSelectedDocuments();
+    const selected = getSelectedDeliveries();
     if (selected.length === 0) {
-        alert('Please select at least one document.');
+        alert('Please select at least one delivery receipt.');
         return;
     }
     
-    if (confirm(`Are you sure you want to verify ${selected.length} document(s)?`)) {
-        console.log('Bulk verifying documents:', selected);
+    if (confirm(`Are you sure you want to verify ${selected.length} delivery receipt(s)?`)) {
+        console.log('Bulk verifying deliveries:', selected);
         alert('Bulk verification functionality will be implemented soon.');
     }
 }
 
-function getSelectedDocuments() {
-    const checkboxes = document.querySelectorAll('.document-checkbox:checked');
+function getSelectedDeliveries() {
+    const checkboxes = document.querySelectorAll('.delivery-checkbox:checked');
     return Array.from(checkboxes).map(checkbox => checkbox.value);
 }
 
-function exportDocuments() {
-    console.log('Exporting documents...');
+function exportDeliveries() {
+    console.log('Exporting delivery receipts...');
     alert('Export functionality will be implemented soon.');
 }
 </script>
 {% endblock %}
+

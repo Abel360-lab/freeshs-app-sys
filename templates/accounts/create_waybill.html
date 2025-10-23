@@ -1,0 +1,334 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+
+{% block title %}Create Waybill - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-left">
+                <h1 class="page-title">
+                    <i class="fas fa-truck me-2"></i>
+                    Create Waybill
+                </h1>
+                <p class="page-subtitle">Create a new waybill for commodity transport</p>
+            </div>
+            <div class="header-right">
+                <a href="{% url 'applications:supplier-waybills' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Waybills
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Section -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-file-alt me-2"></i>
+                        Waybill Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" id="waybillForm">
+                        {% csrf_token %}
+                        
+                        <!-- Basic Information -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="{{ form.waybill_number.id_for_label }}" class="form-label">
+                                    Waybill Number <span class="text-danger">*</span>
+                                </label>
+                                {{ form.waybill_number }}
+                                {% if form.waybill_number.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.waybill_number.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.origin.id_for_label }}" class="form-label">
+                                    Origin <span class="text-danger">*</span>
+                                </label>
+                                {{ form.origin }}
+                                {% if form.origin.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.origin.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Transport Information -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="{{ form.transporter_name.id_for_label }}" class="form-label">
+                                    Transporter Name <span class="text-danger">*</span>
+                                </label>
+                                {{ form.transporter_name }}
+                                {% if form.transporter_name.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.transporter_name.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.vehicle_number.id_for_label }}" class="form-label">
+                                    Vehicle Number <span class="text-danger">*</span>
+                                </label>
+                                {{ form.vehicle_number }}
+                                {% if form.vehicle_number.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.vehicle_number.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Driver Information -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="{{ form.driver_name.id_for_label }}" class="form-label">
+                                    Driver Name <span class="text-danger">*</span>
+                                </label>
+                                {{ form.driver_name }}
+                                {% if form.driver_name.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.driver_name.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.driver_license.id_for_label }}" class="form-label">
+                                    Driver License
+                                </label>
+                                {{ form.driver_license }}
+                                {% if form.driver_license.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.driver_license.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Destination -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="{{ form.destination_region.id_for_label }}" class="form-label">
+                                    Destination Region <span class="text-danger">*</span>
+                                </label>
+                                {{ form.destination_region }}
+                                {% if form.destination_region.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.destination_region.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.destination_school.id_for_label }}" class="form-label">
+                                    Destination School <span class="text-danger">*</span>
+                                </label>
+                                {{ form.destination_school }}
+                                {% if form.destination_school.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.destination_school.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Commodity Information -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="{{ form.commodity.id_for_label }}" class="form-label">
+                                    Commodity <span class="text-danger">*</span>
+                                </label>
+                                {{ form.commodity }}
+                                {% if form.commodity.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.commodity.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.quantity.id_for_label }}" class="form-label">
+                                    Quantity <span class="text-danger">*</span>
+                                </label>
+                                {{ form.quantity }}
+                                {% if form.quantity.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.quantity.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Unit of Measure -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="{{ form.unit_of_measure.id_for_label }}" class="form-label">
+                                    Unit of Measure <span class="text-danger">*</span>
+                                </label>
+                                {{ form.unit_of_measure }}
+                                {% if form.unit_of_measure.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.unit_of_measure.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Dates -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="{{ form.loading_date.id_for_label }}" class="form-label">
+                                    Loading Date & Time <span class="text-danger">*</span>
+                                </label>
+                                {{ form.loading_date }}
+                                {% if form.loading_date.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.loading_date.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.expected_delivery_date.id_for_label }}" class="form-label">
+                                    Expected Delivery Date & Time <span class="text-danger">*</span>
+                                </label>
+                                {{ form.expected_delivery_date }}
+                                {% if form.expected_delivery_date.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.expected_delivery_date.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Document Upload -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <label for="{{ form.document.id_for_label }}" class="form-label">
+                                    Waybill Document
+                                </label>
+                                {{ form.document }}
+                                <div class="form-text">Upload waybill document (PDF, JPG, PNG)</div>
+                                {% if form.document.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.document.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <label for="{{ form.notes.id_for_label }}" class="form-label">
+                                    Additional Notes
+                                </label>
+                                {{ form.notes }}
+                                {% if form.notes.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.notes.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Create Waybill
+                            </button>
+                            <a href="{% url 'applications:supplier-waybills' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Help Panel -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Help & Guidelines
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <h6>Creating a Waybill</h6>
+                    <ul class="list-unstyled small">
+                        <li><i class="fas fa-check text-success me-2"></i>Ensure all required fields are filled</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Select the correct destination region and school</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Enter accurate transport and driver information</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Set realistic loading and delivery dates</li>
+                    </ul>
+                    
+                    <hr>
+                    
+                    <h6>Waybill Number Format</h6>
+                    <p class="small text-muted">
+                        Use a consistent numbering format, e.g., WB-2025-001, WB-2025-002, etc.
+                    </p>
+                    
+                    <h6>Driver License</h6>
+                    <p class="small text-muted">
+                        Driver license number is optional but recommended for record keeping.
+                    </p>
+                    
+                    <h6>Document Upload</h6>
+                    <p class="small text-muted">
+                        Supported formats: PDF, JPG, JPEG, PNG. Maximum file size: 10MB.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const regionSelect = document.getElementById('waybill_region');
+    const schoolSelect = document.getElementById('waybill_school');
+    
+    // Handle region change
+    regionSelect.addEventListener('change', function() {
+        const regionId = this.value;
+        
+        if (regionId) {
+            // Fetch schools for selected region
+            fetch(`{% url 'applications:schools-by-region' %}?region_id=${regionId}`)
+                .then(response => response.json())
+                .then(data => {
+                    schoolSelect.innerHTML = '<option value="">Select School</option>';
+                    
+                    if (data.schools) {
+                        data.schools.forEach(school => {
+                            const option = document.createElement('option');
+                            option.value = school.id;
+                            option.textContent = `${school.name} (${school.code})`;
+                            schoolSelect.appendChild(option);
+                        });
+                    }
+                    
+                    schoolSelect.disabled = false;
+                })
+                .catch(error => {
+                    console.error('Error fetching schools:', error);
+                });
+        } else {
+            schoolSelect.innerHTML = '<option value="">Select School</option>';
+            schoolSelect.disabled = true;
+        }
+    });
+});
+</script>
+{% endblock %}
+

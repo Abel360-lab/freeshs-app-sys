@@ -1,0 +1,156 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+
+{% block title %}My Invoices - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-left">
+                <h1 class="page-title">
+                    <i class="fas fa-file-invoice-dollar me-2"></i>
+                    My Invoices
+                </h1>
+                <p class="page-subtitle">Manage your invoice documents</p>
+            </div>
+            <div class="header-right">
+                <a href="{% url 'applications:supplier-create-invoice' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Create New Invoice
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invoices List -->
+    <div class="card">
+        <div class="card-body">
+            {% if invoices %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Invoice Number</th>
+                                <th>Commodity</th>
+                                <th>Client</th>
+                                <th>Quantity</th>
+                                <th>Total Amount</th>
+                                <th>Due Date</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for invoice in invoices %}
+                            <tr>
+                                <td>
+                                    <strong>{{ invoice.invoice_number }}</strong>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ invoice.commodity.name }}</span>
+                                </td>
+                                <td>
+                                    {{ invoice.client_school.name }}<br>
+                                    <small class="text-muted">{{ invoice.client_region.name }}</small>
+                                </td>
+                                <td>
+                                    {{ invoice.quantity }} {{ invoice.unit_of_measure }}
+                                </td>
+                                <td>
+                                    <strong>GHS {{ invoice.total_amount|floatformat:2 }}</strong>
+                                </td>
+                                <td>
+                                    {{ invoice.due_date|date:"M d, Y" }}
+                                    {% if invoice.due_date < today %}
+                                        <br><small class="text-danger">Overdue</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if invoice.status == 'DRAFT' %}
+                                        <span class="badge bg-secondary">{{ invoice.get_status_display }}</span>
+                                    {% elif invoice.status == 'SUBMITTED' %}
+                                        <span class="badge bg-warning">{{ invoice.get_status_display }}</span>
+                                    {% elif invoice.status == 'APPROVED' %}
+                                        <span class="badge bg-info">{{ invoice.get_status_display }}</span>
+                                    {% elif invoice.status == 'PAID' %}
+                                        <span class="badge bg-success">{{ invoice.get_status_display }}</span>
+                                    {% elif invoice.status == 'REJECTED' %}
+                                        <span class="badge bg-danger">{{ invoice.get_status_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{ invoice.created_at|date:"M d, Y" }}<br>
+                                    <small class="text-muted">{{ invoice.created_at|time:"g:i A" }}</small>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button type="button" class="btn btn-outline-primary" 
+                                                onclick="viewInvoice({{ invoice.id }})" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        {% if invoice.document %}
+                                        <a href="{{ invoice.document.url }}" class="btn btn-outline-success" 
+                                           target="_blank" title="Download Document">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                        {% endif %}
+                                        {% if invoice.payment_reference %}
+                                        <span class="btn btn-outline-info" title="Payment Reference: {{ invoice.payment_reference }}">
+                                            <i class="fas fa-check-circle"></i>
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-file-invoice-dollar fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No Invoices Found</h5>
+                    <p class="text-muted">You haven't created any invoices yet.</p>
+                    <a href="{% url 'applications:supplier-create-invoice' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Create Your First Invoice
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Invoice Details Modal -->
+<div class="modal fade" id="invoiceModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Invoice Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="invoiceModalBody">
+                <!-- Content will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function viewInvoice(invoiceId) {
+    // Load invoice details via AJAX
+    fetch(`/supplier/invoices/${invoiceId}/details/`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('invoiceModalBody').innerHTML = data.html;
+            new bootstrap.Modal(document.getElementById('invoiceModal')).show();
+        })
+        .catch(error => {
+            console.error('Error loading invoice details:', error);
+            alert('Error loading invoice details');
+        });
+}
+</script>
+{% endblock %}
+

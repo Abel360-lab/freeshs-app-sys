@@ -1,2334 +1,1646 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ application.business_name }} - Application Details - Ghana Commodity Exchange</title>
-    
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- ApexCharts -->
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    
-    <!-- Prevent sidebar flash - run immediately -->
-    <script>
-        // Set sidebar state immediately to prevent flash
-        (function() {
-            const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-            if (sidebarCollapsed && window.innerWidth > 768) {
-                // Add collapsed class to body so CSS can apply it immediately
-                document.body.classList.add('sidebar-collapsed');
-            }
-            // Add a flag to indicate early initialization is complete
-            window.sidebarEarlyInit = true;
-        })();
-    </script>
-    
-    <style>
-        :root {
-            --primary-color: #1e3a5f;
-            --primary-dark: #0f2847;
-            --primary-light: #2c4f7c;
-            --secondary-color: #3498db;
-            --accent-color: #28a745;
-            --danger-color: #dc3545;
-            --warning-color: #ffc107;
-            --info-color: #17a2b8;
-            --text-color: #2c3e50;
-            --text-muted: #6c757d;
-            --border-color: #dee2e6;
-            --background-light: #f8f9fa;
-            --background-dark: #f5f7fa;
-            --shadow-sm: 0 2px 4px rgba(0,0,0,0.08);
-            --shadow-md: 0 4px 12px rgba(0,0,0,0.12);
-            --shadow-lg: 0 8px 24px rgba(0,0,0,0.16);
-            --border-radius: 10px;
-            --border-radius-sm: 6px;
-            --sidebar-width: 280px;
-            --sidebar-collapsed-width: 70px;
-            --header-height: 70px;
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
-            color: var(--text-color);
-            font-size: 0.95rem;
-            overflow-x: hidden;
-        }
-        
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: var(--background-light);
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: var(--primary-light);
-            border-radius: 4px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--primary-color);
-        }
-        
-        /* Header */
-        .admin-header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: var(--header-height);
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
-            color: white;
-            z-index: 1000;
-            box-shadow: var(--shadow-lg);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 2rem;
-            transition: var(--transition);
-        }
-        
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-        }
-        
-        .header-logo {
-            display: flex;
-            align-items: center;
-            text-decoration: none;
-            color: white;
-            gap: 1rem;
-        }
-        
-        .logo-icon {
-            width: 45px;
-            height: 45px;
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: var(--border-radius-sm);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(10px);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            font-size: 1.5rem;
-        }
-        
-        .logo-text h1 {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin: 0;
-            letter-spacing: -0.02em;
-        }
-        
-        .logo-text p {
-            font-size: 0.75rem;
-            margin: 0;
-            opacity: 0.85;
-        }
-        
-        .sidebar-toggle {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
-            width: 40px;
-            height: 40px;
-            border-radius: var(--border-radius-sm);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-        
-        .sidebar-toggle:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: scale(1.05);
-        }
-        
-        .header-center {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        .search-bar {
-            max-width: 500px;
-            width: 100%;
-            position: relative;
-        }
-        
-        .search-input {
-            width: 100%;
-            padding: 0.5rem 1rem 0.5rem 2.5rem;
-            border: none;
-            border-radius: 25px;
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(10px);
-            color: white;
-            font-size: 0.875rem;
-            transition: var(--transition);
-        }
-        
-        .search-input::placeholder {
-            color: rgba(255, 255, 255, 0.7);
-        }
-        
-        .search-input:focus {
-            outline: none;
-            background: rgba(255, 255, 255, 0.25);
-            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
-        }
-        
-        .search-icon {
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: rgba(255, 255, 255, 0.7);
-        }
-        
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        
-        .header-item {
-            position: relative;
-        }
-        
-        .header-btn {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
-            width: 40px;
-            height: 40px;
-            border-radius: var(--border-radius-sm);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            position: relative;
-            transition: var(--transition);
-        }
-        
-        .header-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
-        }
-        
-        .notification-badge {
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            background: var(--danger-color);
-            color: white;
-            font-size: 0.625rem;
-            font-weight: 600;
-            padding: 2px 5px;
-            border-radius: 10px;
-            min-width: 18px;
-            text-align: center;
-        }
-        
-        .user-menu {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.4rem 1rem;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 25px;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-        
-        .user-menu:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-        
-        .user-avatar {
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--accent-color) 0%, #22c55e 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            font-size: 0.875rem;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-        }
-        
-        .user-name {
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
-        
-        /* Sidebar */
-        .admin-sidebar {
-            position: fixed;
-            top: var(--header-height);
-            left: 0;
-            width: var(--sidebar-width);
-            height: calc(100vh - var(--header-height));
-            background: white;
-            box-shadow: var(--shadow-md);
-            z-index: 999;
-            transition: var(--transition);
-            overflow-y: auto;
-            overflow-x: hidden;
-        }
-        
-        .admin-sidebar.collapsed {
-            width: var(--sidebar-collapsed-width);
-        }
-        
-        .admin-sidebar.collapsed .nav-label,
-        .admin-sidebar.collapsed .nav-section-title,
-        .admin-sidebar.collapsed .nav-badge {
-            display: none;
-        }
-        
-        .admin-sidebar.collapsed .nav-link {
-            justify-content: center;
-            padding: 1rem;
-        }
-        
-        .admin-sidebar.collapsed .nav-icon {
-            margin: 0;
-            font-size: 1.25rem;
-        }
+{% extends 'backoffice/base.html' %}
+{% load static %}
 
-        /* Prevent flash by setting initial state */
-        .admin-sidebar {
-            transition: none;
-        }
-        
-        .admin-sidebar.initialized {
-            transition: var(--transition);
-        }
+{% block title %}{{ application.business_name }} - Application Details{% endblock %}
 
-        /* Handle initial sidebar state via body class */
-        body.sidebar-collapsed .admin-sidebar {
-            width: var(--sidebar-collapsed-width);
-        }
-        
-        body.sidebar-collapsed .admin-sidebar .nav-label,
-        body.sidebar-collapsed .admin-sidebar .nav-section-title,
-        body.sidebar-collapsed .admin-sidebar .nav-badge {
-            display: none;
-        }
-        
-        body.sidebar-collapsed .admin-sidebar .nav-link {
-            justify-content: center;
-            padding: 1rem;
-        }
-        
-        body.sidebar-collapsed .admin-sidebar .nav-icon {
-            margin: 0;
-            font-size: 1.25rem;
-        }
-        
-        body.sidebar-collapsed .main-content {
-            margin-left: var(--sidebar-collapsed-width);
-        }
-        
-        .sidebar-content {
-            padding: 1.5rem 0;
-        }
-        
-        .nav-section {
-            margin-bottom: 2rem;
-        }
-        
-        .nav-section-title {
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            padding: 0.5rem 1.5rem;
-            margin-bottom: 0.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .nav-section-title::before {
-            content: '';
-            width: 3px;
-            height: 12px;
-            background: var(--primary-color);
-            border-radius: 2px;
-        }
-        
-        .nav-item {
-            margin: 0.25rem 0.75rem;
-        }
-        
-        .nav-link {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0.75rem 1rem;
-            color: var(--text-color);
-            text-decoration: none;
-            border-radius: var(--border-radius-sm);
-            transition: var(--transition);
-            position: relative;
-            font-size: 0.9rem;
-        }
-        
-        .nav-link:hover {
-            background: var(--background-light);
-            color: var(--primary-color);
-            transform: translateX(5px);
-        }
-        
-        .nav-link.active {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
-            color: white;
-            font-weight: 500;
-            box-shadow: var(--shadow-sm);
-        }
-        
-        .nav-link-content {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-        
-        .nav-icon {
-            width: 20px;
-            text-align: center;
-            transition: var(--transition);
-        }
-        
-        .nav-link:hover .nav-icon {
-            transform: scale(1.1);
-        }
-        
-        .nav-badge {
-            background: var(--danger-color);
-            color: white;
-            font-size: 0.625rem;
-            font-weight: 600;
-            padding: 2px 6px;
-            border-radius: 10px;
-        }
-        
-        /* Main Content */
-        .main-content {
-            margin-left: var(--sidebar-width);
-            margin-top: var(--header-height);
-            padding: 2rem;
-            min-height: calc(100vh - var(--header-height));
-            transition: var(--transition);
-        }
-        
-        .main-content.expanded {
-            margin-left: var(--sidebar-collapsed-width);
-        }
-        
-        /* Page Header */
-        .page-header {
-            background: white;
-            border-radius: var(--border-radius);
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            box-shadow: var(--shadow-sm);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .page-header-left {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-        
-        .breadcrumb {
-            background: none;
-            padding: 0;
-            margin: 0;
-            font-size: 0.875rem;
-        }
-        
-        .breadcrumb-item + .breadcrumb-item::before {
-            content: "/";
-            color: var(--text-muted);
-        }
-        
-        .breadcrumb-item a {
-            color: var(--primary-color);
-            text-decoration: none;
-            transition: var(--transition);
-        }
-        
-        .breadcrumb-item a:hover {
-            color: var(--primary-dark);
-        }
-        
-        .breadcrumb-item.active {
-            color: var(--text-muted);
-        }
-        
-        .page-title {
-            font-size: 1.75rem;
-            font-weight: 600;
-            color: var(--primary-color);
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        
-        .page-subtitle {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-            margin: 0;
-        }
-        
-        .page-header-right {
-            display: flex;
-            gap: 0.75rem;
-        }
-        
-        /* Cards */
-        .card {
-            background: white;
-            border: none;
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow-sm);
-            margin-bottom: 1.5rem;
-            transition: var(--transition);
-            overflow: hidden;
-        }
-        
-        .card:hover {
-            box-shadow: var(--shadow-md);
-            transform: translateY(-2px);
-        }
-        
-        .card-header {
-            background: white;
-            border-bottom: 2px solid var(--background-light);
-            padding: 1.25rem 1.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .card-title {
-            font-size: 1.125rem;
-            font-weight: 600;
-            color: var(--primary-color);
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-        
-        .card-title i {
-            font-size: 1rem;
-            opacity: 0.8;
-        }
-        
-        .card-actions {
-            display: flex;
-            gap: 0.5rem;
-        }
-        
-        .card-body {
-            padding: 1.5rem;
-        }
-        
-        /* Stats Cards */
-        .stat-card {
-            background: white;
-            border-radius: var(--border-radius);
-            padding: 1.5rem;
-            box-shadow: var(--shadow-sm);
-            border-left: 4px solid var(--primary-color);
-            transition: var(--transition);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .stat-card::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 100px;
-            height: 100px;
-            background: linear-gradient(135deg, transparent 0%, rgba(30, 58, 95, 0.05) 100%);
-            border-radius: 50%;
-            transform: translate(30px, -30px);
-        }
-        
-        .stat-card:hover {
-            box-shadow: var(--shadow-md);
-            transform: translateY(-5px);
-        }
-        
-        .stat-card.success {
-            border-left-color: var(--accent-color);
-        }
-        
-        .stat-card.warning {
-            border-left-color: var(--warning-color);
-        }
-        
-        .stat-card.danger {
-            border-left-color: var(--danger-color);
-        }
-        
-        .stat-card.info {
-            border-left-color: var(--info-color);
-        }
-        
-        .stat-icon {
-            position: absolute;
-            top: 1.5rem;
-            right: 1.5rem;
-            font-size: 2.5rem;
-            opacity: 0.1;
-        }
-        
-        .stat-value {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--primary-color);
-            margin: 0;
-            line-height: 1;
-        }
-        
-        .stat-label {
-            color: var(--text-muted);
-            font-size: 0.875rem;
-            margin: 0.5rem 0 0 0;
-            font-weight: 500;
-        }
-        
-        .stat-change {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
-            font-size: 0.75rem;
-            font-weight: 600;
-            margin-top: 0.75rem;
-            padding: 0.25rem 0.5rem;
-            border-radius: 20px;
-        }
-        
-        .stat-change.positive {
-            color: var(--accent-color);
-            background: rgba(40, 167, 69, 0.1);
-        }
-        
-        .stat-change.negative {
-            color: var(--danger-color);
-            background: rgba(220, 53, 69, 0.1);
-        }
-        
-        /* Tables */
-        .table-responsive {
-            border-radius: var(--border-radius);
-            overflow-x: auto;
-            overflow-y: visible;
-            -webkit-overflow-scrolling: touch;
-        }
-        
-        .table {
-            margin-bottom: 0;
-        }
-        
-        .table thead th {
-            background: var(--background-light);
-            border: none;
-            font-weight: 600;
-            font-size: 0.825rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--text-muted);
-            padding: 1rem;
-        }
-        
-        .table tbody td {
-            padding: 1rem;
-            vertical-align: middle;
-            border-color: var(--background-light);
-        }
-        
-        .table tbody tr {
-            transition: var(--transition);
-        }
-        
-        .table tbody tr:hover {
-            background: var(--background-light);
-        }
-        
-        /* Buttons */
-        .btn {
-            padding: 0.5rem 1.25rem;
-            border-radius: var(--border-radius-sm);
-            font-weight: 500;
-            font-size: 0.875rem;
-            transition: var(--transition);
-            border: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-sm);
-        }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
-            color: white;
-        }
-        
-        .btn-success {
-            background: linear-gradient(135deg, var(--accent-color) 0%, #22c55e 100%);
-            color: white;
-        }
-        
-        .btn-danger {
-            background: linear-gradient(135deg, var(--danger-color) 0%, #e74c3c 100%);
-            color: white;
-        }
-        
-        .btn-outline-primary {
-            background: white;
-            color: var(--primary-color);
-            border: 2px solid var(--primary-color);
-        }
-        
-        .btn-outline-primary:hover {
-            background: var(--primary-color);
-            color: white;
-        }
-        
-        .btn-sm {
-            padding: 0.375rem 0.875rem;
-            font-size: 0.8125rem;
-        }
-        
-        .btn-icon {
-            width: 35px;
-            height: 35px;
-            padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: var(--border-radius-sm);
-        }
-        
-        /* Status Badges */
-        .badge {
-            padding: 0.375rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.025em;
-        }
-        
-        .badge-status {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
-            padding: 0.25rem 0.5rem;
-            font-size: 0.7rem;
-            font-weight: 600;
-            border-radius: 12px;
-            border: 1px solid transparent;
-            transition: all 0.2s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-        }
-        
-        .badge-status::before {
-            content: '';
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: currentColor;
-            flex-shrink: 0;
-        }
-        
-        /* Special handling for pending badge dot */
-        .badge-pending::before {
-            background: #000;
-        }
-        
-        .badge-pending {
-            background: #ffc107;
-            color: #000;
-            border-color: #ffc107;
-        }
-        
-        .badge-approved {
-            background: #28a745;
-            color: #fff;
-            border-color: #28a745;
-        }
-        
-        .badge-rejected {
-            background: #dc3545;
-            color: #fff;
-            border-color: #dc3545;
-        }
-        
-        .badge-pending_review {
-            background: #ffc107;
-            color: #000;
-            border-color: #ffc107;
-        }
-        
-        .badge-review,
-        .badge-under_review {
-            background: #17a2b8;
-            color: #fff;
-            border-color: #17a2b8;
-        }
-        
-        .badge-submitted {
-            background: #6c757d;
-            color: #fff;
-            border-color: #6c757d;
-        }
-        
-        .badge-needs_more_docs {
-            background: #fd7e14;
-            color: #fff;
-            border-color: #fd7e14;
-        }
-        
-        .badge-draft {
-            background: #6c757d;
-            color: #fff;
-            border-color: #6c757d;
-        }
-        
-        .badge-withdrawn {
-            background: #6f42c1;
-            color: #fff;
-            border-color: #6f42c1;
-        }
-        
-        .badge-none, .badge-null {
-            background: #6c757d;
-            color: #fff;
-            border-color: #6c757d;
-        }
-        
-        /* Fallback for any status without specific styling */
-        .badge-status:not([class*="badge-pending"]):not([class*="badge-approved"]):not([class*="badge-rejected"]):not([class*="badge-review"]):not([class*="badge-under_review"]):not([class*="badge-submitted"]):not([class*="badge-needs_more_docs"]):not([class*="badge-draft"]):not([class*="badge-withdrawn"]):not([class*="badge-none"]):not([class*="badge-null"]) {
-            background: #17a2b8;
-            color: #fff;
-            border-color: #17a2b8;
-        }
-        
-        /* Hover effects for better visibility */
-        .badge-status:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-        }
-        
-        /* Loading Spinner */
-        .spinner-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 3rem;
-        }
-        
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid var(--background-light);
-            border-top-color: var(--primary-color);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        /* Animations */
-        .fade-in {
-            animation: fadeIn 0.5s ease;
-        }
-        
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .slide-in {
-            animation: slideIn 0.3s ease;
-        }
-        
-        @keyframes slideIn {
-            from {
-                transform: translateX(-100%);
-            }
-            to {
-                transform: translateX(0);
-            }
-        }
-        
-        /* Responsive */
-        @media (max-width: 1200px) {
-            .header-center {
-                display: none;
-            }
-            
-            /* Improve table responsiveness on medium screens */
-            .table-responsive {
-                margin: 0 -1rem;
-                border-radius: 0;
-            }
-            
-            /* Adjust table width when sidebar is collapsed */
-            body.sidebar-collapsed .table-responsive {
-                margin-left: 0;
-                margin-right: 0;
-            }
-        }
-        
-        @media (max-width: 768px) {
-            :root {
-                --sidebar-width: 0;
-                --header-height: 60px;
-            }
-            
-            .admin-sidebar {
-                transform: translateX(-100%);
-            }
-            
-            .admin-sidebar.show {
-                transform: translateX(0);
-                width: 280px;
-            }
-            
-            .main-content {
-                margin-left: 0;
-                padding: 1rem;
-            }
-            
-            /* Mobile table improvements */
-            .table thead th,
-            .table tbody td {
-                padding: 0.75rem 0.5rem;
-                font-size: 0.875rem;
-            }
-            
-            .main-content.expanded {
-                margin-left: 0;
-            }
-            
-            .page-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 1rem;
-            }
-            
-            .page-title {
-                font-size: 1.5rem;
-            }
-            
-            .stat-card {
-                margin-bottom: 1rem;
-            }
-            
-            .logo-text {
-                display: none;
-            }
-            
-            .user-name {
-                display: none;
-            }
-            
-            .header-btn span {
-                display: none;
-            }
-        }
-        
-        /* Print Styles */
-        @media print {
-            .admin-header,
-            .admin-sidebar,
-            .page-header-right,
-            .btn,
-            .card-actions {
-                display: none !important;
-            }
-            
-            .main-content {
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            
-            .card {
-                box-shadow: none !important;
-                border: 1px solid var(--border-color) !important;
-            }
-        }
-        
-        /* Tooltips */
-        .tooltip-inner {
-            background: var(--primary-dark);
-            padding: 0.5rem 0.75rem;
-            border-radius: var(--border-radius-sm);
-            font-size: 0.8125rem;
-        }
-        
-        /* Dropdown Menus */
-        .dropdown-menu {
-            border: none;
-            box-shadow: var(--shadow-lg);
-            border-radius: var(--border-radius);
-            padding: 0.5rem;
-            margin-top: 0.5rem;
-        }
-        
-        .dropdown-item {
-            border-radius: var(--border-radius-sm);
-            padding: 0.5rem 1rem;
-            font-size: 0.875rem;
-            transition: var(--transition);
-        }
-        
-        .dropdown-item:hover {
-            background: var(--background-light);
-            color: var(--primary-color);
-        }
-        
-        .dropdown-divider {
-            margin: 0.5rem 0;
-            border-color: var(--background-light);
-        }
-        
-        /* Additional styles for application detail page */
-        .info-item {
-            margin-bottom: 1rem;
-        }
-
-        .info-item label {
-            font-weight: 600;
-            color: #6c757d;
-            margin-bottom: 0.25rem;
-            display: block;
-        }
-
-        .info-item p {
-            margin-bottom: 0;
-            color: #212529;
-        }
-
-        .document-item {
-            border: 1px solid #dee2e6;
-            border-radius: 0.375rem;
-            padding: 1rem;
-            background-color: #f8f9fa;
-        }
-
-        .document-item h6 {
-            margin-bottom: 0.5rem;
-            color: #212529;
-        }
-
-        .commodity-item, .team-member-item, .kin-item, .bank-item {
-            padding: 0.75rem;
-            border: 1px solid #dee2e6;
-            border-radius: 0.375rem;
-            background-color: #f8f9fa;
-        }
-        
-        .other-commodities {
-            padding: 0.75rem;
-            border: 1px solid #17a2b8;
-            border-radius: 0.375rem;
-            background-color: #f8f9fa;
-            border-left: 3px solid #17a2b8;
-        }
-
-        .timeline {
-            position: relative;
-            padding-left: 2rem;
-        }
-
-        .timeline::before {
-            content: '';
-            position: absolute;
-            left: 0.75rem;
-            top: 0;
-            bottom: 0;
-            width: 2px;
-            background-color: #dee2e6;
-        }
-
-        .timeline-item {
-            position: relative;
-            margin-bottom: 1.5rem;
-        }
-
-        .timeline-marker {
-            position: absolute;
-            left: -2rem;
-            top: 0.25rem;
-            width: 1rem;
-            height: 1rem;
-            border-radius: 50%;
-            border: 2px solid #fff;
-            box-shadow: 0 0 0 2px #dee2e6;
-        }
-
-        .timeline-content h6 {
-            margin-bottom: 0.25rem;
-            color: #212529;
-        }
-
-        .document-checklist .document-item {
-            border-left: 4px solid #dee2e6;
-        }
-
-        .document-checklist .document-item:has(.fa-check-circle) {
-            border-left-color: #28a745;
-        }
-
-        .document-checklist .document-item:has(.fa-upload) {
-            border-left-color: #ffc107;
-        }
-
-        .document-checklist .document-item:has(.fa-times-circle) {
-            border-left-color: #dc3545;
-        }
-    </style>
-</head>
-<body>
-    <!-- Header -->
-    <header class="admin-header">
-        <div class="header-left">
-            <button class="sidebar-toggle" id="sidebarToggle">
-                <i class="fas fa-bars"></i>
+{% block page_header_container %}
+<div class="page-header-container">
+    <div class="page-header-content">
+        <div class="page-header-info">
+            <div class="page-header-breadcrumb">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'applications:backoffice-dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'applications:backoffice-applications' %}">Applications</a></li>
+                        <li class="breadcrumb-item active">{{ application.tracking_code }}</li>
+                    </ol>
+                </nav>
+            </div>
+            <h1 class="page-header-title">{{ application.business_name }}</h1>
+            <p class="page-header-subtitle">
+                {{ application.tracking_code }} • Submitted {{ application.created_at|date:"F d, Y" }}
+            </p>
+        </div>
+        <div class="page-header-actions">
+            <button class="btn btn-outline-secondary" onclick="window.print()">
+                <i class="fas fa-print"></i> Print
             </button>
-            <a href="/backoffice/" class="header-logo">
-                <div class="logo-icon">
-                    <img src="/media/logo/logo1.png" alt="GCX Logo" style="height: 40px; width: auto;">
-                </div>
-                <div class="logo-text">
-                    <h1>GCX Admin Portal</h1>
-                    <p>Management System</p>
-                </div>
+            <a href="{% url 'applications:backoffice-application-pdf' application.pk %}" class="btn btn-outline-secondary" target="_blank">
+                <i class="fas fa-file-pdf"></i> Download PDF
             </a>
-        </div>
-        
-        <div class="header-center">
-            <div class="search-bar">
-                <i class="fas fa-search search-icon"></i>
-                <input type="text" class="search-input" placeholder="Search applications, suppliers, documents...">
-            </div>
-        </div>
-        
-        <div class="header-right">
-            <div class="header-item">
-                <button class="header-btn" data-bs-toggle="tooltip" title="Notifications">
-                    <i class="fas fa-bell"></i>
-                    <span class="notification-badge">3</span>
+            <div class="dropdown">
+                <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-cog"></i> Actions
                 </button>
-            </div>
-            
-            <div class="header-item">
-                <button class="header-btn" data-bs-toggle="tooltip" title="Messages">
-                    <i class="fas fa-envelope"></i>
-                </button>
-            </div>
-            
-            <div class="header-item">
-                <button class="header-btn" data-bs-toggle="tooltip" title="Settings">
-                    <i class="fas fa-cog"></i>
-                </button>
-            </div>
-            
-            <div class="header-item dropdown">
-                <div class="user-menu" data-bs-toggle="dropdown">
-                    <div class="user-avatar">
-                        A
-                    </div>
-                    <span class="user-name">Abel</span>
-                    <i class="fas fa-chevron-down" style="font-size: 0.75rem;"></i>
-                </div>
                 <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Profile</a></li>
-                    <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Settings</a></li>
+                    {% if can_approve %}
+                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#approveModal">
+                        <i class="fas fa-check text-success me-2"></i>Approve Application
+                    </a></li>
+                    {% endif %}
+                    {% if can_reject %}
+                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#rejectModal">
+                        <i class="fas fa-times text-danger me-2"></i>Reject Application
+                    </a></li>
+                    {% endif %}
+                    {% if application.status == 'APPROVED' %}
+                    <li><a class="dropdown-item" href="{% url 'applications:backoffice-award-contract' application.pk %}">
+                        <i class="fas fa-award text-primary me-2"></i>Award Contract
+                    </a></li>
+                    {% endif %}
+                    {% if should_show_request_docs %}
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="#"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="requestDocuments(); return false;">
+                        <i class="fas fa-file-upload text-warning me-2"></i>Request Missing Documents
+                        {% if missing_documents %}
+                        <span class="badge bg-danger ms-2">{{ missing_documents|length }}</span>
+                        {% endif %}
+                    </a></li>
+                    {% endif %}
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{% url 'applications:backoffice-download-pack' application.pk %}">
+                        <i class="fas fa-download text-info me-2"></i>Download Pack
+                        <small class="d-block text-muted ms-4">All documents + PDF</small>
+                    </a></li>
+                    <li><a class="dropdown-item" href="mailto:{{ application.email }}">
+                        <i class="fas fa-envelope me-2"></i>Send Email
+                    </a></li>
                 </ul>
             </div>
         </div>
-    </header>
-    
-    <!-- Sidebar -->
-    <nav class="admin-sidebar" id="sidebar">
-        <div class="sidebar-content">
-            <!-- Main Navigation -->
-            <div class="nav-section">
-                <div class="nav-section-title">Main Navigation</div>
-                
-                <div class="nav-item">
-                    <a href="/backoffice/" class="nav-link ">
-                        <div class="nav-link-content">
-                            <i class="fas fa-home nav-icon"></i>
-                            <span class="nav-label">Dashboard</span>
-                        </div>
-                        
-                    </a>
-                </div>
-                
-                <div class="nav-item">
-                    <a href="/backoffice/applications/" class="nav-link ">
-                        <div class="nav-link-content">
-                            <i class="fas fa-file-alt nav-icon"></i>
-                            <span class="nav-label">Applications</span>
-                        </div>
-                        <span class="nav-badge">12</span>
-                    </a>
-                </div>
-                
-                <div class="nav-item">
-                    <a href="/backoffice/suppliers/" class="nav-link ">
-                        <div class="nav-link-content">
-                            <i class="fas fa-users nav-icon"></i>
-                            <span class="nav-label">Suppliers</span>
-                        </div>
-                    </a>
-                </div>
-                
-                <div class="nav-item">
-                    <a href="/backoffice/documents/" class="nav-link ">
-                        <div class="nav-link-content">
-                            <i class="fas fa-folder-open nav-icon"></i>
-                            <span class="nav-label">Documents</span>
-                        </div>
-                        <span class="nav-badge">5</span>
-                    </a>
-                </div>
-                
-                <div class="nav-item">
-                    <a href="/notifications/" class="nav-link ">
-                        <div class="nav-link-content">
-                            <i class="fas fa-bell nav-icon"></i>
-                            <span class="nav-label">Notifications</span>
-                        </div>
-                        <span class="nav-badge">5</span>
-                    </a>
-                </div>
-            </div>
-            
-            <!-- Analytics Section -->
-            <div class="nav-section">
-                <div class="nav-section-title">Analytics & Reports</div>
-                
-                <div class="nav-item">
-                    <a href="/backoffice/analytics/" class="nav-link ">
-                        <div class="nav-link-content">
-                            <i class="fas fa-chart-line nav-icon"></i>
-                            <span class="nav-label">Analytics</span>
-                        </div>
-                    </a>
-                </div>
-                
-                <div class="nav-item">
-                    <a href="#" class="nav-link">
-                        <div class="nav-link-content">
-                            <i class="fas fa-file-export nav-icon"></i>
-                            <span class="nav-label">Reports</span>
-                        </div>
-                    </a>
-                </div>
-                
-                <div class="nav-item">
-                    <a href="#" class="nav-link">
-                        <div class="nav-link-content">
-                            <i class="fas fa-history nav-icon"></i>
-                            <span class="nav-label">Audit Log</span>
-                        </div>
-                    </a>
-                </div>
-            </div>
-            
-            <!-- Management Section -->
-            <div class="nav-section">
-                <div class="nav-section-title">Management</div>
-                
-                <div class="nav-item">
-                    <a href="#" class="nav-link">
-                        <div class="nav-link-content">
-                            <i class="fas fa-user-shield nav-icon"></i>
-                            <span class="nav-label">User Management</span>
-                        </div>
-                    </a>
-                </div>
-                
-                <div class="nav-item">
-                    <a href="#" class="nav-link">
-                        <div class="nav-link-content">
-                            <i class="fas fa-cogs nav-icon"></i>
-                            <span class="nav-label">System Settings</span>
-                        </div>
-                    </a>
-                </div>
-                
-                <div class="nav-item">
-                    <a href="/admin/" class="nav-link" target="_blank">
-                        <div class="nav-link-content">
-                            <i class="fas fa-tools nav-icon"></i>
-                            <span class="nav-label">Django Admin</span>
-                        </div>
-                        <i class="fas fa-external-link-alt" style="font-size: 0.75rem;"></i>
-                    </a>
-                </div>
-            </div>
-            
-            <!-- Help Section -->
-            <div class="nav-section">
-                <div class="nav-section-title">Support</div>
-                
-                <div class="nav-item">
-                    <a href="#" class="nav-link">
-                        <div class="nav-link-content">
-                            <i class="fas fa-question-circle nav-icon"></i>
-                            <span class="nav-label">Help Center</span>
-                        </div>
-                    </a>
-                </div>
-                
-                <div class="nav-item">
-                    <a href="#" class="nav-link">
-                        <div class="nav-link-content">
-                            <i class="fas fa-book nav-icon"></i>
-                            <span class="nav-label">Documentation</span>
-                        </div>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </nav>
-    
-    <!-- Main Content -->
-    <main class="main-content" id="mainContent">
-        <div class="page-header">
-            <div class="page-header-left">
-                
-<nav aria-label="breadcrumb">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="/backoffice/">Dashboard</a></li>
-        <li class="breadcrumb-item"><a href="/backoffice/applications/">Applications</a></li>
-        <li class="breadcrumb-item active">{{ application.tracking_code }}</li>
-    </ol>
-</nav>
+    </div>
+</div>
+{% endblock %}
 
-                
-                <h1 class="page-title">
-                    <i class="fas fa-file-alt"></i>
-                    {{ application.business_name }}
-                </h1>
-                <p class="page-subtitle">Application #{{ application.tracking_code }} - {{ application.get_status_display }}</p>
-            </div>
-            
-            <div class="page-header-right">
-                
-<div class="d-flex gap-2">
-    <button class="btn btn-outline-primary btn-sm" onclick="printApplication()">
-        <i class="fas fa-print"></i> Print
-    </button>
-    <button class="btn btn-outline-secondary btn-sm" onclick="exportApplication()">
-        <i class="fas fa-download"></i> Export
-    </button>
+{% block content %}
+<form style="display: none;" id="csrf-form">{% csrf_token %}</form>
+
+<style>
+/* Enhanced Application Detail Page Styles */
+
+/* Status Banner */
+.status-banner {
+    background: #ffffff;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+}
+
+.status-banner-left {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+}
+
+.status-icon-large {
+    width: 56px;
+    height: 56px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.status-content h3 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 0.25rem 0;
+}
+
+.status-content p {
+    font-size: 0.8125rem;
+    color: #6b7280;
+    margin: 0;
+}
+
+.status-badge-xl {
+    padding: 0.625rem 1.25rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    white-space: nowrap;
+}
+
+.status-badge-xl.pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-badge-xl.review {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.status-badge-xl.approved {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-badge-xl.rejected {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+/* Modern Card */
+.modern-info-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 1.25rem;
+}
+
+.modern-info-card:last-child {
+    margin-bottom: 0;
+}
+
+.modern-card-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #e5e7eb;
+    background: #f9fafb;
+}
+
+.modern-card-title {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+}
+
+.modern-card-title i {
+    width: 24px;
+    text-align: center;
+}
+
+.modern-card-body {
+    padding: 1rem 1.25rem;
+}
+
+/* Info Row */
+.detail-info-row {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.detail-info-row:first-child {
+    padding-top: 0;
+}
+
+.detail-info-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.detail-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #6b7280;
+}
+
+.detail-value {
+    font-size: 0.875rem;
+    color: #111827;
+    font-weight: 500;
+}
+
+.detail-value strong {
+    color: #111827;
+}
+
+/* Commodity Badges */
+.commodity-badge-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.625rem;
+}
+
+.commodity-badge {
+    padding: 0.5rem 1rem;
+    background: linear-gradient(135deg, #eff6ff, #dbeafe);
+    border: 1px solid #bfdbfe;
+    color: #1e40af;
+    border-radius: 8px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Team Member Cards */
+.member-card {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 0.875rem;
+    transition: all 0.2s ease;
+}
+
+.member-card:last-child {
+    margin-bottom: 0;
+}
+
+.member-card:hover {
+    border-color: #d1d5db;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.member-header {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    margin-bottom: 0.875rem;
+    padding-bottom: 0.875rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.member-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.125rem;
+    flex-shrink: 0;
+}
+
+.member-info h6 {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0 0 0.25rem 0;
+}
+
+.member-info small {
+    font-size: 0.8125rem;
+    color: #6b7280;
+}
+
+.member-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.875rem;
+}
+
+.member-detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.member-detail-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.member-detail-value {
+    font-size: 0.875rem;
+    color: #111827;
+    font-weight: 500;
+}
+
+/* Document Items */
+.doc-item {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 0.875rem 1rem;
+    margin-bottom: 0.625rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    transition: all 0.2s ease;
+    flex-wrap: wrap;
+}
+
+.doc-item:last-child {
+    margin-bottom: 0;
+}
+
+.doc-item:hover {
+    border-color: var(--primary-color);
+    transform: translateX(4px);
+}
+
+.doc-item-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.doc-item-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.doc-item-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.doc-item-info h6 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0 0 0.125rem 0;
+}
+
+.doc-item-info small {
+    font-size: 0.75rem;
+    color: #6b7280;
+    display: block;
+}
+
+.doc-status-pill {
+    padding: 0.375rem 0.875rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.doc-status-pill.verified {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.doc-status-pill.uploaded {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.doc-status-pill.missing {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.doc-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+/* Timeline */
+.timeline-enhanced {
+    position: relative;
+    padding-left: 2.5rem;
+}
+
+.timeline-enhanced::before {
+    content: '';
+    position: absolute;
+    left: 0.75rem;
+    top: 0.5rem;
+    bottom: 0.5rem;
+    width: 2px;
+    background: linear-gradient(180deg, var(--primary-color), #e5e7eb);
+}
+
+.timeline-item-enhanced {
+    position: relative;
+    margin-bottom: 1.25rem;
+}
+
+.timeline-item-enhanced:last-child {
+    margin-bottom: 0;
+}
+
+.timeline-dot {
+    position: absolute;
+    left: -2.5rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    border: 2px solid #ffffff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.timeline-card {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 0.875rem 1rem;
+}
+
+.timeline-card h6 {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0 0 0.25rem 0;
+}
+
+.timeline-card p {
+    font-size: 0.8125rem;
+    color: #6b7280;
+    margin: 0 0 0.5rem 0;
+}
+
+.timeline-card small {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+/* Alert Boxes */
+.alert-modern {
+    border-radius: 10px;
+    border: 1.5px solid;
+    padding: 0.875rem 1rem;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: start;
+    gap: 0.875rem;
+}
+
+.alert-modern-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.alert-modern.warning {
+    background: #fffbeb;
+    border-color: #fef3c7;
+}
+
+.alert-modern.warning .alert-modern-icon {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.alert-modern.success {
+    background: #f0fdf4;
+    border-color: #dcfce7;
+}
+
+.alert-modern.success .alert-modern-icon {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.alert-modern.danger {
+    background: #fef2f2;
+    border-color: #fee2e2;
+}
+
+.alert-modern.danger .alert-modern-icon {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.alert-modern-content h6 {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0 0 0.25rem 0;
+}
+
+.alert-modern-content p {
+    font-size: 0.8125rem;
+    color: #6b7280;
+    margin: 0;
+}
+
+/* Action Buttons */
+.action-btn-group {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+/* Ensure buttons don't overflow */
+.modern-card-body .btn {
+    white-space: nowrap;
+}
+
+.modern-card-body .d-grid {
+    width: 100%;
+}
+
+.modern-card-body .d-grid .btn {
+    width: 100%;
+    justify-content: center;
+}
+
+/* Toast Notifications */
+.toast {
+    min-width: 300px;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(10px);
+}
+
+.toast .toast-body {
+    padding: 1rem 1.25rem;
+    font-size: 0.9375rem;
+    font-weight: 500;
+}
+
+.toast.bg-success {
+    background: linear-gradient(135deg, #10b981, #059669) !important;
+}
+
+.toast.bg-danger {
+    background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+}
+
+.toast.bg-primary {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)) !important;
+}
+
+/* Modal Enhancements */
+.modal-content {
+    border: none;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+    padding: 1.25rem 1.5rem;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-footer {
+    padding: 1rem 1.5rem;
+}
+
+.missing-doc-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.625rem 0;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.missing-doc-item:last-child {
+    border-bottom: none;
+}
+
+.missing-doc-item i {
+    color: #ef4444;
+    font-size: 0.875rem;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .doc-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
     
-    {% if can_approve %}
-    <button class="btn btn-success btn-sm" onclick="showApproveModal()">
-        <i class="fas fa-check"></i> Approve
-    </button>
-    {% endif %}
+    .doc-item-left {
+        width: 100%;
+    }
     
-    {% if can_reject %}
-    <button class="btn btn-danger btn-sm" onclick="showRejectModal()">
-        <i class="fas fa-times"></i> Reject
-    </button>
-    {% endif %}
+    .doc-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 768px) {
+    .detail-info-row {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
     
-    {% if can_request_docs %}
-    <button class="btn btn-info btn-sm" onclick="showRequestDocumentsModal()">
-        <i class="fas fa-file-upload"></i> Request Documents
-    </button>
-    {% endif %}
+    .status-banner {
+        flex-direction: column;
+        align-items: flex-start;
+    }
     
+    .status-banner-left {
+        width: 100%;
+    }
+    
+    .member-details {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<!-- Status Banner -->
+<div class="status-banner">
+    <div class="status-banner-left">
+        <div class="status-icon-large" style="background: {% if application.status == 'APPROVED' %}#dcfce7; color: #166534{% elif application.status == 'REJECTED' %}#fee2e2; color: #991b1b{% elif application.status == 'UNDER_REVIEW' %}#dbeafe; color: #1e40af{% else %}#fef3c7; color: #92400e{% endif %};">
+            <i class="fas {% if application.status == 'APPROVED' %}fa-check-circle{% elif application.status == 'REJECTED' %}fa-times-circle{% elif application.status == 'UNDER_REVIEW' %}fa-eye{% else %}fa-clock{% endif %}"></i>
+        </div>
+        <div class="status-content">
+            <h3>{{ application.tracking_code }}</h3>
+            <p>
+                <i class="fas fa-calendar me-1"></i>
+                Submitted {{ application.created_at|date:"F d, Y" }}
+                {% if application.updated_at %}
+                 • Updated {{ application.updated_at|timesince }} ago
+                {% endif %}
+            </p>
+        </div>
+    </div>
+    <div>
+        <span class="status-badge-xl {% if application.status == 'APPROVED' %}approved{% elif application.status == 'REJECTED' %}rejected{% elif application.status == 'UNDER_REVIEW' %}review{% else %}pending{% endif %}">
+            {{ application.get_status_display }}
+        </span>
+    </div>
 </div>
 
+<!-- Alerts -->
+{% if not all_documents_uploaded %}
+<div class="alert-modern warning">
+    <div class="alert-modern-icon">
+        <i class="fas fa-exclamation-triangle"></i>
+    </div>
+    <div class="alert-modern-content flex-grow-1">
+        <h6>Missing Documents</h6>
+        <p>{{ missing_documents|length }} document(s) still need to be uploaded before this application can be approved.</p>
+    </div>
+</div>
+{% elif has_unverified_documents %}
+<div class="alert-modern warning">
+    <div class="alert-modern-icon">
+        <i class="fas fa-shield-alt"></i>
+    </div>
+    <div class="alert-modern-content flex-grow-1">
+        <h6>Documents Pending Verification</h6>
+        <p>Some documents have been uploaded but not yet verified. Please review and verify all documents.</p>
+    </div>
+</div>
+{% elif all_documents_verified and application.status == 'UNDER_REVIEW' %}
+<div class="alert-modern success">
+    <div class="alert-modern-icon">
+        <i class="fas fa-check-circle"></i>
+    </div>
+    <div class="alert-modern-content flex-grow-1">
+        <h6>Ready for Approval</h6>
+        <p>All documents have been uploaded and verified. This application is ready for final approval.</p>
+    </div>
+</div>
+{% endif %}
+
+<!-- Main Content Grid -->
+<div class="row">
+    <!-- Left Column -->
+    <div class="col-lg-8">
+        <!-- Business Information -->
+        <div class="modern-info-card">
+            <div class="modern-card-header">
+                <h5 class="modern-card-title">
+                    <i class="fas fa-building text-primary"></i>
+                    Business Information
+                </h5>
             </div>
-        </div>
-        
-        
-        
-        <!-- Status Banner -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="alert alert-{% if application.status == 'approved' %}success{% elif application.status == 'rejected' %}danger{% elif application.status == 'submitted' %}primary{% elif application.status == 'under_review' %}warning{% elif application.status == 'needs_more_docs' %}info{% else %}secondary{% endif %} d-flex align-items-center">
-                    <i class="fas fa-{% if application.status == 'approved' %}check-circle{% elif application.status == 'rejected' %}times-circle{% elif application.status == 'submitted' %}paper-plane{% elif application.status == 'under_review' %}clock{% elif application.status == 'needs_more_docs' %}file-upload{% else %}info-circle{% endif %} me-3"></i>
-                    <div class="flex-grow-1">
-                        <h6 class="mb-1">Application Status: {{ application.get_status_display }}</h6>
-                        <small>
-                            {% if application.submitted_at %}
-                                Submitted on {{ application.submitted_at|date:"F d, Y \a\t g:i A" }}
-                            {% else %}
-                                Created on {{ application.created_at|date:"F d, Y \a\t g:i A" }}
-                            {% endif %}
-                            {% if application.reviewed_at %}
-                                | Reviewed on {{ application.reviewed_at|date:"F d, Y \a\t g:i A" }}
-                            {% endif %}
-                            {% if application.decided_at %}
-                                | Decided on {{ application.decided_at|date:"F d, Y \a\t g:i A" }}
-                            {% endif %}
-                        </small>
+            <div class="modern-card-body">
+                <div class="detail-info-row">
+                    <div class="detail-label">Business Name</div>
+                    <div class="detail-value"><strong>{{ application.business_name }}</strong></div>
+                </div>
+                <div class="detail-info-row">
+                    <div class="detail-label">Business Type</div>
+                    <div class="detail-value">{{ application.get_business_type_display }}</div>
+                </div>
+                <div class="detail-info-row">
+                    <div class="detail-label">Registration Number</div>
+                    <div class="detail-value">{{ application.registration_number|default:"Not Provided" }}</div>
+                </div>
+                <div class="detail-info-row">
+                    <div class="detail-label">TIN Number</div>
+                    <div class="detail-value">{{ application.tin_number|default:"Not Provided" }}</div>
+                </div>
+                <div class="detail-info-row">
+                    <div class="detail-label">Email</div>
+                    <div class="detail-value">
+                        <a href="mailto:{{ application.email }}" style="color: var(--primary-color); text-decoration: none;">
+                            {{ application.email }}
+                        </a>
                     </div>
-                    {% if gcx_proof_uploaded %}
-                    <div class="text-end">
-                        <span class="badge bg-success">
-                            <i class="fas fa-credit-card"></i> Payment Confirmed
-                        </span>
-                    </div>
-                    {% else %}
-                    <div class="text-end">
-                        <span class="badge bg-warning">
-                            <i class="fas fa-exclamation-triangle"></i> Payment Pending
-                        </span>
-                    </div>
-                    {% endif %}
+                </div>
+                <div class="detail-info-row">
+                    <div class="detail-label">Telephone</div>
+                    <div class="detail-value">{{ application.telephone }}</div>
+                </div>
+                <div class="detail-info-row">
+                    <div class="detail-label">Physical Address</div>
+                    <div class="detail-value">{{ application.physical_address }}</div>
+                </div>
+                <div class="detail-info-row">
+                    <div class="detail-label">City / Region</div>
+                    <div class="detail-value">{{ application.city }}, {{ application.region.name|default:"Not Specified" }}</div>
+                </div>
+                <div class="detail-info-row">
+                    <div class="detail-label">Country</div>
+                    <div class="detail-value">{{ application.country }}</div>
+                </div>
+                <div class="detail-info-row">
+                    <div class="detail-label">Warehouse Location</div>
+                    <div class="detail-value">{{ application.warehouse_location }}</div>
                 </div>
             </div>
         </div>
 
-        <!-- Payment Confirmation Section -->
-        {% if gcx_proof_uploaded %}
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="card border-success">
-                    <div class="card-header bg-success text-white">
-                        <h6 class="mb-0">
-                            <i class="fas fa-credit-card"></i>
-                            Payment Confirmation
-                        </h6>
+        <!-- Commodities -->
+        <div class="modern-info-card">
+            <div class="modern-card-header">
+                <h5 class="modern-card-title">
+                    <i class="fas fa-boxes text-success"></i>
+                    Commodities to Supply
+                    {% if application.commodities_to_supply.exists %}
+                    <span class="badge bg-primary">{{ application.commodities_to_supply.count }}</span>
+                    {% endif %}
+                </h5>
+            </div>
+            <div class="modern-card-body">
+                {% if application.commodities_to_supply.exists %}
+                <div class="commodity-badge-list">
+                    {% for commodity in application.commodities_to_supply.all %}
+                    <div class="commodity-badge">
+                        <i class="fas fa-check-circle"></i>
+                        {{ commodity.name }}
                     </div>
-                    <div class="card-body">
-                        <div class="row align-items-center">
-                            <div class="col-md-8">
-                                <p class="mb-1"><strong>GCX Registration Proof Received</strong></p>
-                                <small class="text-muted">Application fee payment has been confirmed through GCX Registration Proof document.</small>
-                                {% if gcx_proof_doc %}
-                                <div class="mt-2">
-                                    <span class="badge bg-{% if gcx_proof_doc.verified %}success{% else %}warning{% endif %}">
-                                        <i class="fas fa-{% if gcx_proof_doc.verified %}check{% else %}clock{% endif %}"></i>
-                                        {% if gcx_proof_doc.verified %}Verified{% else %}Pending Verification{% endif %}
-                                    </span>
-                                    {% if gcx_proof_doc.verified %}
-                                    <small class="text-muted ms-2">Verified by {{ gcx_proof_doc.verified_by.get_full_name|default:gcx_proof_doc.verified_by.username }} on {{ gcx_proof_doc.verified_at|date:"M d, Y g:i A" }}</small>
-                                    {% endif %}
-                                </div>
-                                {% endif %}
-                            </div>
-                            <div class="col-md-4 text-end">
-                                {% if gcx_proof_doc %}
-                                <div class="btn-group" role="group">
-                                    <a href="{{ gcx_proof_doc.file.url }}" target="_blank" class="btn btn-outline-success btn-sm">
-                                        <i class="fas fa-eye"></i> View Document
-                                    </a>
-                                    {% if not gcx_proof_doc.verified %}
-                                    <button type="button" class="btn btn-success btn-sm" onclick="showVerifyPaymentModal({{ gcx_proof_doc.pk }}, 'GCX Registration Proof')">
-                                        <i class="fas fa-check"></i> Confirm Payment
-                                    </button>
-                                    {% else %}
-                                    <button class="btn btn-success btn-sm" disabled>
-                                        <i class="fas fa-check"></i> Payment Confirmed
-                                    </button>
-                                    {% endif %}
-                                </div>
-                                {% endif %}
-                            </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-boxes fa-2x text-muted mb-2"></i>
+                    <p class="text-muted mb-0">No commodities selected</p>
+                </div>
+                {% endif %}
+                
+                {% if application.other_commodities %}
+                <div class="mt-3 pt-3" style="border-top: 1px solid #e5e7eb;">
+                    <div class="detail-label mb-2">Additional Commodities</div>
+                    <div class="detail-value">{{ application.other_commodities }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Team Members -->
+        {% if team_members %}
+        <div class="modern-info-card">
+            <div class="modern-card-header">
+                <h5 class="modern-card-title">
+                    <i class="fas fa-users text-info"></i>
+                    Contact Persons / Team Members
+                    <span class="badge bg-primary">{{ team_members|length }}</span>
+                </h5>
+            </div>
+            <div class="modern-card-body">
+                {% for member in team_members %}
+                <div class="member-card">
+                    <div class="member-header">
+                        <div class="member-avatar">{{ member.full_name|first|upper }}</div>
+                        <div class="member-info flex-grow-1">
+                            <h6>{{ member.full_name }}</h6>
+                            <small><i class="fas fa-briefcase me-1"></i>{{ member.position|default:"Team Member" }}</small>
                         </div>
+                    </div>
+                    <div class="member-details">
+                        <div class="member-detail-item">
+                            <div class="member-detail-label">Email</div>
+                            <div class="member-detail-value">{{ member.email }}</div>
+                        </div>
+                        <div class="member-detail-item">
+                            <div class="member-detail-label">Telephone</div>
+                            <div class="member-detail-value">{{ member.telephone }}</div>
+                        </div>
+                        <div class="member-detail-item">
+                            <div class="member-detail-label">Experience</div>
+                            <div class="member-detail-value">{{ member.years_experience|default:"N/A" }} years</div>
+                        </div>
+                        <div class="member-detail-item">
+                            <div class="member-detail-label">ID Type</div>
+                            <div class="member-detail-value">{{ member.get_id_card_type_display }}</div>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <div class="member-detail-label">Address</div>
+                        <div class="member-detail-value">{{ member.address }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Bank Accounts -->
+        {% if bank_accounts %}
+        <div class="modern-info-card">
+            <div class="modern-card-header">
+                <h5 class="modern-card-title">
+                    <i class="fas fa-university text-success"></i>
+                    Bank Account Details
+                    <span class="badge bg-primary">{{ bank_accounts|length }}</span>
+                </h5>
+            </div>
+            <div class="modern-card-body">
+                {% for account in bank_accounts %}
+                <div class="member-card">
+                    <div class="member-details">
+                        <div class="member-detail-item">
+                            <div class="member-detail-label">Bank Name</div>
+                            <div class="member-detail-value">{{ account.bank_name }}</div>
+                        </div>
+                        <div class="member-detail-item">
+                            <div class="member-detail-label">Branch</div>
+                            <div class="member-detail-value">{{ account.branch }}</div>
+                        </div>
+                        <div class="member-detail-item">
+                            <div class="member-detail-label">Account Name</div>
+                            <div class="member-detail-value">{{ account.account_name }}</div>
+                        </div>
+                        <div class="member-detail-item">
+                            <div class="member-detail-label">Account Number</div>
+                            <div class="member-detail-value" style="font-family: monospace; font-weight: 700;">{{ account.account_number }}</div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Next of Kin -->
+        {% if next_of_kin %}
+        <div class="modern-info-card">
+            <div class="modern-card-header">
+                <h5 class="modern-card-title">
+                    <i class="fas fa-user-friends text-warning"></i>
+                    Next of Kin
+                    <span class="badge bg-primary">{{ next_of_kin|length }}</span>
+                </h5>
+            </div>
+            <div class="modern-card-body">
+                {% for kin in next_of_kin %}
+                <div class="member-card">
+                    <div class="member-header">
+                        <div class="member-avatar" style="background: linear-gradient(135deg, #10b981, #059669);">
+                            {{ kin.full_name|first|upper }}
+                        </div>
+                        <div class="member-info flex-grow-1">
+                            <h6>{{ kin.full_name }}</h6>
+                            <small><i class="fas fa-heart me-1"></i>{{ kin.relationship }}</small>
+                        </div>
+                    </div>
+                    <div class="member-details">
+                        <div class="member-detail-item">
+                            <div class="member-detail-label">Mobile</div>
+                            <div class="member-detail-value">{{ kin.mobile }}</div>
+                        </div>
+                        <div class="member-detail-item">
+                            <div class="member-detail-label">Email</div>
+                            <div class="member-detail-value">{{ kin.email|default:"Not Provided" }}</div>
+                        </div>
+                        <div class="member-detail-item">
+                            <div class="member-detail-label">ID Type</div>
+                            <div class="member-detail-value">{{ kin.get_id_card_type_display }}</div>
+                        </div>
+                        <div class="member-detail-item">
+                            <div class="member-detail-label">ID Number</div>
+                            <div class="member-detail-value" style="font-family: monospace;">{{ kin.id_card_number }}</div>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <div class="member-detail-label">Address</div>
+                        <div class="member-detail-value">{{ kin.address }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Declaration -->
+        <div class="modern-info-card">
+            <div class="modern-card-header">
+                <h5 class="modern-card-title">
+                    <i class="fas fa-file-signature text-primary"></i>
+                    Declaration & Signature
+                </h5>
+            </div>
+            <div class="modern-card-body">
+                <div class="detail-info-row">
+                    <div class="detail-label">Declaration Agreed</div>
+                    <div class="detail-value">
+                        {% if application.declaration_agreed %}
+                            <span class="badge bg-success"><i class="fas fa-check me-1"></i>Yes</span>
+                        {% else %}
+                            <span class="badge bg-danger"><i class="fas fa-times me-1"></i>No</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="detail-info-row">
+                    <div class="detail-label">Data Consent</div>
+                    <div class="detail-value">
+                        {% if application.data_consent %}
+                            <span class="badge bg-success"><i class="fas fa-check me-1"></i>Given</span>
+                        {% else %}
+                            <span class="badge bg-danger"><i class="fas fa-times me-1"></i>Not Given</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="detail-info-row">
+                    <div class="detail-label">Signer Name</div>
+                    <div class="detail-value">{{ application.signer_name|default:"Not Provided" }}</div>
+                </div>
+                <div class="detail-info-row">
+                    <div class="detail-label">Designation</div>
+                    <div class="detail-value">{{ application.signer_designation|default:"Not Provided" }}</div>
+                </div>
+                <div class="detail-info-row">
+                    <div class="detail-label">Signed At</div>
+                    <div class="detail-value">
+                        {% if application.signed_at %}
+                            <i class="fas fa-calendar-check me-1 text-success"></i>
+                            {{ application.signed_at|date:"F d, Y at h:i A" }}
+                        {% else %}
+                            <span class="text-muted">Not Signed</span>
+                        {% endif %}
                     </div>
                 </div>
             </div>
         </div>
-        {% else %}
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="card border-warning">
-                    <div class="card-header bg-warning text-dark">
-                        <h6 class="mb-0">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            Payment Verification Required
-                        </h6>
+    </div>
+
+    <!-- Right Column -->
+    <div class="col-lg-4">
+        <!-- Quick Info -->
+        <div class="modern-info-card">
+            <div class="modern-card-header">
+                <h5 class="modern-card-title">
+                    <i class="fas fa-info-circle text-info"></i>
+                    Application Summary
+                </h5>
+            </div>
+            <div class="modern-card-body">
+                <div class="detail-info-row">
+                    <div class="detail-label">Reference</div>
+                    <div class="detail-value" style="font-family: monospace; font-weight: 700;">{{ application.tracking_code }}</div>
+                </div>
+                <div class="detail-info-row">
+                    <div class="detail-label">Status</div>
+                    <div class="detail-value">
+                        <span class="status-badge-xl {% if application.status == 'APPROVED' %}approved{% elif application.status == 'REJECTED' %}rejected{% elif application.status == 'UNDER_REVIEW' %}review{% else %}pending{% endif %}" style="padding: 0.5rem 1rem; font-size: 0.75rem;">
+                            {{ application.get_status_display }}
+                        </span>
                     </div>
-                    <div class="card-body">
-                        <p class="mb-1"><strong>GCX Registration Proof Not Received</strong></p>
-                        <small class="text-muted">Application cannot be approved until GCX Registration Proof (payment confirmation) is received.</small>
+                </div>
+                <div class="detail-info-row">
+                    <div class="detail-label">Created</div>
+                    <div class="detail-value">{{ application.created_at|date:"F d, Y" }}</div>
+                </div>
+                {% if application.submitted_at %}
+                <div class="detail-info-row">
+                    <div class="detail-label">Submitted</div>
+                    <div class="detail-value">{{ application.submitted_at|date:"F d, Y" }}</div>
+                </div>
+                {% endif %}
+                {% if application.reviewed_at %}
+                <div class="detail-info-row">
+                    <div class="detail-label">Reviewed</div>
+                    <div class="detail-value">{{ application.reviewed_at|date:"F d, Y" }}</div>
+                </div>
+                {% endif %}
+                {% if application.decided_at %}
+                <div class="detail-info-row">
+                    <div class="detail-label">Decision Date</div>
+                    <div class="detail-value">{{ application.decided_at|date:"F d, Y" }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Documents Status -->
+        <div class="modern-info-card">
+            <div class="modern-card-header">
+                <h5 class="modern-card-title">
+                    <i class="fas fa-file-alt text-warning"></i>
+                    Documents Status
+                </h5>
+            </div>
+            <div class="modern-card-body">
+                {% if document_status %}
+                {% for doc in document_status %}
+                <div class="doc-item">
+                    <div class="doc-item-left">
+                        {% if doc.is_uploaded and doc.uploaded_doc.file %}
+                            {% with file_ext=doc.uploaded_doc.file.name|slice:"-4:"|lower %}
+                                {% if file_ext == ".pdf" or file_ext == "pdf" %}
+                                    <div class="doc-item-icon" style="background: #fee2e2; color: #dc3545;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                                            <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
+                                            <path d="M4.603 14.087a.81.81 0 0 1-.438-.42c-.195-.388-.13-.776.08-1.102.198-.307.526-.568.897-.787a7.68 7.68 0 0 1 1.482-.645 19.697 19.697 0 0 0 1.062-2.227 7.269 7.269 0 0 1-.43-1.295c-.086-.4-.119-.796-.046-1.136.075-.354.274-.672.65-.823.192-.077.4-.12.602-.077a.7.7 0 0 1 .477.365c.088.164.12.356.127.538.007.188-.012.396-.047.614-.084.51-.27 1.134-.52 1.794a10.954 10.954 0 0 0 .98 1.686 5.753 5.753 0 0 1 1.334.05c.364.066.734.195.96.465.12.144.193.32.2.518.007.192-.047.382-.138.563a1.04 1.04 0 0 1-.354.416.856.856 0 0 1-.51.138c-.331-.014-.654-.196-.933-.417a5.712 5.712 0 0 1-.911-.95 11.651 11.651 0 0 0-1.997.406 11.307 11.307 0 0 1-1.02 1.51c-.292.35-.609.656-.927.787a.793.793 0 0 1-.58.029zm1.379-1.901c-.166.076-.32.156-.459.238-.328.194-.541.383-.647.547-.094.145-.096.25-.04.361.01.022.02.036.026.044a.266.266 0 0 0 .035-.012c.137-.056.355-.235.635-.572a8.18 8.18 0 0 0 .45-.606zm1.64-1.33a12.71 12.71 0 0 1 1.01-.193 11.744 11.744 0 0 1-.51-.858 20.801 20.801 0 0 1-.5 1.05zm2.446.45c.15.163.296.3.435.41.24.19.407.253.498.256a.107.107 0 0 0 .07-.015.307.307 0 0 0 .094-.125.436.436 0 0 0 .059-.2.095.095 0 0 0-.026-.063c-.052-.062-.2-.152-.518-.209a3.876 3.876 0 0 0-.612-.053zM8.078 7.8a6.7 6.7 0 0 0 .2-.828c.031-.188.043-.343.038-.465a.613.613 0 0 0-.032-.198.517.517 0 0 0-.145.04c-.087.035-.158.106-.196.283-.04.192-.03.469.046.822.024.111.054.227.09.346z"/>
+                                        </svg>
+                                    </div>
+                                {% elif file_ext == ".png" or file_ext == ".jpg" or file_ext == "jpeg" %}
+                                    <div class="doc-item-icon" style="background: #e0f2fe; color: #0369a1;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                                            <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                                            <path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z"/>
+                                        </svg>
+                                    </div>
+                                {% else %}
+                                    <div class="doc-item-icon" style="background: #f3f4f6; color: #6b7280;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                                            <path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5L14 4.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5h-2z"/>
+                                        </svg>
+                                    </div>
+                                {% endif %}
+                            {% endwith %}
+                        {% else %}
+                            <div class="doc-item-icon" style="background: {% if doc.is_verified %}#dcfce7; color: #166534{% elif doc.is_uploaded %}#dbeafe; color: #1e40af{% else %}#fee2e2; color: #991b1b{% endif %};">
+                                <i class="fas {% if doc.is_verified %}fa-check-circle{% elif doc.is_uploaded %}fa-file-upload{% else %}fa-times-circle{% endif %}"></i>
+                            </div>
+                        {% endif %}
+                        <div class="doc-item-info">
+                            <h6>{{ doc.requirement.label }}</h6>
+                            <small>
+                                {% if doc.is_verified %}
+                                    Verified {% if doc.uploaded_doc.verified_at %}{{ doc.uploaded_doc.verified_at|timesince }} ago{% endif %}
+                                {% elif doc.is_uploaded %}
+                                    Uploaded {% if doc.uploaded_doc.uploaded_at %}{{ doc.uploaded_doc.uploaded_at|timesince }} ago{% endif %}
+                                {% else %}
+                                    Not yet uploaded
+                                {% endif %}
+                            </small>
+                        </div>
                     </div>
+                    <div class="doc-actions">
+                        {% if doc.is_verified %}
+                            <span class="doc-status-pill verified"><i class="fas fa-shield-check"></i> Verified</span>
+                            {% if doc.uploaded_doc.file %}
+                            <a href="{{ doc.uploaded_doc.file.url }}" class="btn btn-sm btn-outline-primary" target="_blank" title="View Document"><i class="fas fa-eye"></i></a>
+                            <a href="{{ doc.uploaded_doc.file.url }}" class="btn btn-sm btn-outline-secondary" download title="Download"><i class="fas fa-download"></i></a>
+                            {% endif %}
+                        {% elif doc.is_uploaded %}
+                            <span class="doc-status-pill uploaded"><i class="fas fa-clock"></i> Pending</span>
+                            {% if doc.uploaded_doc.file %}
+                            <a href="{{ doc.uploaded_doc.file.url }}" class="btn btn-sm btn-outline-primary" target="_blank" title="View Document"><i class="fas fa-eye"></i></a>
+                            <a href="{{ doc.uploaded_doc.file.url }}" class="btn btn-sm btn-outline-secondary" download title="Download"><i class="fas fa-download"></i></a>
+                            <button class="btn btn-sm btn-outline-success" onclick="verifyDocument('{{ doc.requirement.code }}', '{{ application.pk }}', '{{ doc.requirement.label }}')" title="Verify Document"><i class="fas fa-check"></i></button>
+                            {% endif %}
+                        {% else %}
+                            <span class="doc-status-pill missing"><i class="fas fa-exclamation"></i> Missing</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-file-alt fa-2x text-muted mb-2"></i>
+                    <p class="text-muted mb-0">No document requirements</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Timeline -->
+        {% if timeline_events %}
+        <div class="modern-info-card">
+            <div class="modern-card-header">
+                <h5 class="modern-card-title">
+                    <i class="fas fa-history text-secondary"></i>
+                    Activity Timeline
+                </h5>
+            </div>
+            <div class="modern-card-body">
+                <div class="timeline-enhanced">
+                    {% for event in timeline_events %}
+                    <div class="timeline-item-enhanced">
+                        <div class="timeline-dot" style="background: {% if event.color == 'success' %}#dcfce7; color: #166534{% elif event.color == 'danger' %}#fee2e2; color: #991b1b{% elif event.color == 'primary' %}#dbeafe; color: #1e40af{% else %}#fef3c7; color: #92400e{% endif %};">
+                            <i class="{{ event.icon|default:'fas fa-info-circle' }}"></i>
+                        </div>
+                        <div class="timeline-card">
+                            <h6>{{ event.title|default:event.type|title }}</h6>
+                            <p>{{ event.description|default:"No description" }}</p>
+                            <small>
+                                <i class="fas fa-calendar me-1"></i>
+                                {{ event.timestamp|date:"F d, Y" }} at {{ event.timestamp|time:"h:i A" }}
+                                {% if event.user %}
+                                • by {{ event.user.get_full_name|default:event.user.username }}
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
         {% endif %}
 
-        <div class="row">
-            <!-- Main Content -->
-            <div class="col-lg-8">
-                <!-- Business Information -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="card-title">
-                            <i class="fas fa-building"></i>
-                            Business Information
-                        </h5>
+        <!-- Reviewer Comment -->
+        {% if application.reviewer_comment %}
+        <div class="modern-info-card">
+            <div class="modern-card-header">
+                <h5 class="modern-card-title">
+                    <i class="fas fa-comment-dots text-primary"></i>
+                    Reviewer's Comments
+                </h5>
+            </div>
+            <div class="modern-card-body">
+                <div style="background: #f9fafb; border-left: 3px solid var(--primary-color); padding: 1rem 1.25rem; border-radius: 6px;">
+                    <p style="margin: 0; white-space: pre-wrap; color: #374151; line-height: 1.6;">{{ application.reviewer_comment }}</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modals -->
+<div class="modal fade" id="approveModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 12px; border: none;">
+            <div class="modal-header" style="border-bottom: 1px solid #e5e7eb;">
+                <h5 class="modal-title" style="display: flex; align-items: center; gap: 0.5rem;">
+                    <div style="width: 40px; height: 40px; background: #dcfce7; color: #166534; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-check-circle"></i>
                     </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="info-item">
-                                    <label>Business Name</label>
-                                    <p>{{ application.business_name }}</p>
-                                </div>
-                                <div class="info-item">
-                                    <label>Business Type</label>
-                                    <p>{{ application.get_business_type_display|default:"--" }}</p>
-                                </div>
-                                <div class="info-item">
-                                    <label>Registration Number</label>
-                                    <p>{{ application.registration_number|default:"--" }}</p>
-                                </div>
-                                <div class="info-item">
-                                    <label>TIN Number</label>
-                                    <p>{{ application.tin_number|default:"--" }}</p>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="info-item">
-                                    <label>Email Address</label>
-                                    <p><a href="mailto:{{ application.email }}">{{ application.email }}</a></p>
-                                </div>
-                                <div class="info-item">
-                                    <label>Phone Number</label>
-                                    <p><a href="tel:{{ application.telephone }}">{{ application.telephone }}</a></p>
-                                </div>
-                                <div class="info-item">
-                                    <label>Physical Address</label>
-                                    <p>{{ application.physical_address|default:"--" }}</p>
-                                </div>
-                                <div class="info-item">
-                                    <label>City</label>
-                                    <p>{{ application.city|default:"--" }}</p>
-                                </div>
-                            </div>
+                    Approve Application
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="padding: 1.5rem;">
+                <p style="font-size: 0.9375rem; color: #374151;">Are you sure you want to approve this application?</p>
+                <p style="font-size: 0.875rem; color: #6b7280;">This will change the status to "Approved" and notify the supplier via email.</p>
+                
+                <div class="mt-3">
+                    <label class="form-label" style="font-weight: 600;">Comments (Optional)</label>
+                    <textarea class="form-control" rows="3" id="approveComment" placeholder="Add any notes or comments..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid #e5e7eb; padding: 1rem 1.5rem;">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="approveBtn" class="btn btn-success" onclick="confirmApprove()">
+                    <i class="fas fa-check me-2"></i>Confirm Approval
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="rejectModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 12px; border: none;">
+            <div class="modal-header" style="border-bottom: 1px solid #e5e7eb;">
+                <h5 class="modal-title" style="display: flex; align-items: center; gap: 0.5rem;">
+                    <div style="width: 40px; height: 40px; background: #fee2e2; color: #991b1b; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-times-circle"></i>
+                    </div>
+                    Reject Application
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="padding: 1.5rem;">
+                <p style="font-size: 0.9375rem; color: #374151;">Are you sure you want to reject this application?</p>
+                <p style="font-size: 0.875rem; color: #6b7280;">This action will notify the supplier with your reason for rejection.</p>
+                
+                <div class="mt-3">
+                    <label class="form-label" style="font-weight: 600;">Reason for Rejection *</label>
+                    <textarea class="form-control" rows="4" id="rejectReason" placeholder="Please provide a detailed reason for rejection..." required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid #e5e7eb; padding: 1rem 1.5rem;">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="rejectBtn" class="btn btn-danger" onclick="confirmReject()">
+                    <i class="fas fa-times me-2"></i>Confirm Rejection
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="verifyDocumentModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 12px; border: none;">
+            <div class="modal-header" style="border-bottom: 1px solid #e5e7eb;">
+                <h5 class="modal-title" style="display: flex; align-items: center; gap: 0.5rem;">
+                    <div style="width: 40px; height: 40px; background: #dcfce7; color: #166534; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-shield-check"></i>
+                    </div>
+                    Verify Document
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="padding: 1.5rem;">
+                <div class="mb-3">
+                    <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem;">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <i class="fas fa-file-alt text-primary"></i>
+                            <strong id="verifyDocName" style="color: #111827;">Document Name</strong>
                         </div>
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="info-item">
-                                    <label>Region</label>
-                                    <p>{{ application.region.name|default:"--" }}</p>
-                                </div>
-                                <div class="info-item">
-                                    <label>Warehouse Location</label>
-                                    <p>{{ application.warehouse_location|default:"--" }}</p>
-                                </div>
-                            </div>
+                        <small class="text-muted">Uploaded by supplier for verification</small>
+                    </div>
+                </div>
+                
+                <p style="font-size: 0.9375rem; color: #374151;">Are you sure you want to verify this document?</p>
+                <p style="font-size: 0.875rem; color: #6b7280;">This confirms that the document is valid, authentic, and meets all requirements.</p>
+                
+                <div class="mt-3">
+                    <label class="form-label" style="font-weight: 600;">Verification Notes (Optional)</label>
+                    <textarea class="form-control" rows="3" id="verifyNotes" placeholder="Add any verification notes or comments..."></textarea>
+                </div>
+                
+                <input type="hidden" id="verifyDocType">
+                <input type="hidden" id="verifyAppId">
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid #e5e7eb; padding: 1rem 1.5rem;">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="confirmVerifyDocument()">
+                    <i class="fas fa-shield-check me-2"></i>Confirm Verification
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="requestDocsModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content" style="border-radius: 12px; border: none;">
+            <div class="modal-header" style="border-bottom: 1px solid #e5e7eb;">
+                <h5 class="modal-title" style="display: flex; align-items: center; gap: 0.5rem;">
+                    <div style="width: 40px; height: 40px; background: #fef3c7; color: #92400e; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-file-upload"></i>
+                    </div>
+                    Request Missing Documents
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="padding: 1.5rem;">
+                <div class="alert alert-warning mb-3" style="border-radius: 8px;">
+                    <div class="d-flex align-items-start gap-2">
+                        <i class="fas fa-info-circle mt-1"></i>
+                        <div>
+                            <strong>Supplier will be notified</strong>
+                            <p class="mb-0 small mt-1">An email will be sent to {{ application.email }} requesting the missing documents listed below.</p>
                         </div>
                     </div>
                 </div>
-
-                <!-- Commodities -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="card-title">
-                            <i class="fas fa-seedling"></i>
-                            Commodities to Supply
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        {% if application.commodities_to_supply.exists %}
-                        <div class="row">
-                            {% for commodity in application.commodities_to_supply.all %}
-                            <div class="col-md-6 col-lg-4 mb-2">
-                                <div class="commodity-item">
-                                    <i class="fas fa-check-circle text-success me-2"></i>
-                                    {{ commodity.name }}
-                                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label" style="font-weight: 600;">
+                        Missing Documents 
+                        {% if missing_documents %}
+                        <span class="badge bg-danger">{{ missing_documents|length }}</span>
+                        {% endif %}
+                    </label>
+                    <div id="missingDocsList" style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem; max-height: 250px; overflow-y: auto;">
+                        {% if missing_documents %}
+                        <div class="list-group list-group-flush">
+                            {% for doc in missing_documents %}
+                            <div class="missing-doc-item">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <strong style="color: #111827;">{{ doc.name }}</strong>
                             </div>
                             {% endfor %}
                         </div>
                         {% else %}
-                        <p class="text-muted">No commodities specified</p>
-                        {% endif %}
-                        
-                        {% if application.other_commodities %}
-                        <div class="mt-3">
-                            <h6 class="text-muted mb-2">Additional Commodities:</h6>
-                            <div class="other-commodities">
-                                <i class="fas fa-plus-circle text-info me-2"></i>
-                                {{ application.other_commodities }}
-                            </div>
+                        <div class="text-center py-3">
+                            <i class="fas fa-check-circle text-success fa-2x mb-2"></i>
+                            <p class="text-muted mb-0">All documents uploaded</p>
                         </div>
                         {% endif %}
                     </div>
                 </div>
+                
+                <div class="mb-3">
+                    <label class="form-label" style="font-weight: 600;">Custom Message to Supplier</label>
+                    <textarea class="form-control" rows="5" id="requestDocsMessage" placeholder="Add a custom message to the supplier...">Dear {{ application.business_name }},
 
-                <!-- Team Members -->
-                {% if team_members %}
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="card-title">
-                            <i class="fas fa-users"></i>
-                            Team Members
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            {% for member in team_members %}
-                            <div class="col-md-6 mb-3">
-                                <div class="team-member-item">
-                                    <h6>{{ member.full_name }}</h6>
-                                    <p class="text-muted mb-1">{{ member.position }}</p>
-                                    <p class="text-muted mb-1">{{ member.telephone }}</p>
-                                    <p class="text-muted mb-0">{{ member.email|default:"--" }}</p>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
+We are reviewing your application ({{ application.tracking_code }}) and noticed that some required documents are still missing.
 
-                <!-- Next of Kin -->
-                {% if next_of_kin %}
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="card-title">
-                            <i class="fas fa-user-friends"></i>
-                            Next of Kin
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            {% for kin in next_of_kin %}
-                            <div class="col-md-6 mb-3">
-                                <div class="kin-item">
-                                    <h6>{{ kin.full_name }}</h6>
-                                    <p class="text-muted mb-1">{{ kin.relationship }}</p>
-                                    <p class="text-muted mb-1">{{ kin.mobile }}</p>
-                                    <p class="text-muted mb-0">{{ kin.address|default:"--" }}</p>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
+Please upload the documents listed above at your earliest convenience to proceed with your application.
 
-                <!-- Bank Accounts -->
-                {% if bank_accounts %}
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="card-title">
-                            <i class="fas fa-university"></i>
-                            Bank Accounts
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            {% for account in bank_accounts %}
-                            <div class="col-md-6 mb-3">
-                                <div class="bank-item">
-                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <h6>{{ account.bank_name }}</h6>
-                                        <span class="badge bg-primary">Option {{ account.account_index }}</span>
-                                    </div>
-                                    <p class="text-muted mb-1"><strong>Account Name:</strong> {{ account.account_name }}</p>
-                                    <p class="text-muted mb-1"><strong>Account Number:</strong> {{ account.account_number }}</p>
-                                    <p class="text-muted mb-0"><strong>Branch:</strong> {{ account.branch }}</p>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
+If you have any questions, please don't hesitate to contact us.
+
+Best regards,
+GCX Admin Team</textarea>
                 </div>
-                {% endif %}
+                
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="sendEmailCopy" checked>
+                    <label class="form-check-label" for="sendEmailCopy">
+                        Send me a copy of this email
+                    </label>
+                </div>
             </div>
-
-            <!-- Sidebar -->
-            <div class="col-lg-4">
-                <!-- Document Review -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="card-title">
-                            <i class="fas fa-file-alt"></i>
-                            Document Review
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="document-checklist">
-                            {% for doc_status in document_status %}
-                            <div class="document-item mb-3">
-                                <div class="d-flex align-items-start">
-                                    <div class="flex-shrink-0 me-3">
-                                        {% if doc_status.is_uploaded %}
-                                            {% if doc_status.is_verified %}
-                                                <i class="fas fa-check-circle text-success"></i>
-                                            {% else %}
-                                                <i class="fas fa-upload text-warning"></i>
-                                            {% endif %}
-                                        {% else %}
-                                            <i class="fas fa-times-circle text-danger"></i>
-                                        {% endif %}
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <h6 class="mb-1">
-                                            {{ doc_status.requirement.label }}
-                                            {% if doc_status.is_gcx_proof %}
-                                                <span class="badge bg-primary ms-2">Payment</span>
-                                            {% endif %}
-                                        </h6>
-                                        <p class="text-muted mb-1 small">{{ doc_status.requirement.description }}</p>
-                                        {% if doc_status.is_uploaded and doc_status.uploaded_doc %}
-                                            <div class="d-flex gap-2">
-                                                <a href="{{ doc_status.uploaded_doc.file.url }}" target="_blank" class="btn btn-outline-primary btn-sm">
-                                                    <i class="fas fa-eye"></i> View
-                                                </a>
-                                                {% if not doc_status.is_verified %}
-                                                <button type="button" class="btn btn-success btn-sm" onclick="showVerifyDocumentModal({{ doc_status.uploaded_doc.pk }}, '{{ doc_status.requirement.label|escapejs }}')">
-                                                    <i class="fas fa-check"></i> Verify
-                                                </button>
-                                                {% endif %}
-                                            </div>
-                                        {% else %}
-                                            <span class="text-danger small">Not uploaded</span>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Missing Documents Alert -->
-                {% if missing_documents %}
-                <div class="card mb-4 border-warning">
-                    <div class="card-header bg-warning text-dark">
-                        <h6 class="mb-0">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            Missing Documents
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        <ul class="list-unstyled mb-0">
-                            {% for doc in missing_documents %}
-                            <li class="mb-1">
-                                <i class="fas fa-times text-danger me-2"></i>
-                                {{ doc.name }}
-                            </li>
-                            {% endfor %}
-                        </ul>
-                        {% if application.completion_token %}
-                        <div class="mt-3">
-                            <small class="text-muted">Completion Link:</small>
-                            <div class="input-group input-group-sm">
-                                <input type="text" class="form-control" value="{{ request.scheme }}://{{ request.get_host }}{{ application.get_completion_url }}" readonly>
-                                <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard(this.previousElementSibling)">
-                                    <i class="fas fa-copy"></i>
-                                </button>
-                            </div>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-                {% endif %}
-
-                <!-- Application Actions -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h6 class="mb-0">
-                            <i class="fas fa-cogs"></i>
-                            Application Actions
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        <!-- Primary Actions -->
-                        <div class="mb-3">
-                            <h6 class="text-muted mb-2">Primary Actions</h6>
-                            <div class="d-grid gap-2">
-                                {% if can_approve %}
-                                <button class="btn btn-success w-100" onclick="showApproveModal()">
-                                    <i class="fas fa-check"></i> Approve Application
-                                </button>
-                                {% else %}
-                                <button class="btn btn-outline-secondary w-100" disabled>
-                                    <i class="fas fa-lock"></i> Cannot Approve - Payment Not Confirmed
-                                </button>
-                                {% endif %}
-                                
-                                {% if can_reject %}
-                                <button class="btn btn-danger w-100" onclick="showRejectModal()">
-                                    <i class="fas fa-times"></i> Reject Application
-                                </button>
-                                {% endif %}
-                                
-                                {% if can_request_docs %}
-                                <button class="btn btn-info w-100" onclick="showRequestDocumentsModal()">
-                                    <i class="fas fa-file-upload"></i> Request Documents
-                                </button>
-                                {% endif %}
-                            </div>
-                        </div>
-                        
-                        <!-- Secondary Actions -->
-                        <div>
-                            <h6 class="text-muted mb-2">Secondary Actions</h6>
-                            <div class="d-grid gap-2">
-                                <button class="btn btn-outline-primary w-100" onclick="sendEmail()">
-                                    <i class="fas fa-envelope"></i> Send Email
-                                </button>
-                                
-                                <button class="btn btn-outline-secondary w-100" onclick="printApplication()">
-                                    <i class="fas fa-print"></i> Print Application
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <!-- Status Information -->
-                        <div class="mt-3 pt-3 border-top">
-                            <small class="text-muted">
-                                <strong>Current Status:</strong> {{ application.get_status_display }}<br>
-                                <strong>Payment Status:</strong> 
-                                {% if gcx_proof_uploaded %}
-                                    {% if gcx_proof_verified %}
-                                        <span class="text-success">Confirmed</span>
-                                    {% else %}
-                                        <span class="text-warning">Pending Verification</span>
-                                    {% endif %}
-                                {% else %}
-                                    <span class="text-danger">Not Received</span>
-                                {% endif %}
-                            </small>
-                        </div>
-                        
-                        <!-- Debug Information (remove in production) -->
-                        <div class="mt-3 pt-3 border-top">
-                            <small class="text-muted">
-                                <strong>Debug Info:</strong><br>
-                                Can Approve: {{ can_approve|yesno:"Yes,No" }}<br>
-                                GCX Uploaded: {{ gcx_proof_uploaded|yesno:"Yes,No" }}<br>
-                                GCX Verified: {{ gcx_proof_verified|yesno:"Yes,No" }}<br>
-                                App Status: {{ application.status }}<br>
-                                Required Status: SUBMITTED, PENDING_REVIEW, UNDER_REVIEW, NEEDS_MORE_DOCS
-                            </small>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Application Timeline -->
-                <div class="card">
-                    <div class="card-header">
-                        <h6 class="mb-0">
-                            <i class="fas fa-history"></i>
-                            Application Timeline
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="timeline">
-                            <div class="timeline-item">
-                                <div class="timeline-marker bg-primary"></div>
-                                <div class="timeline-content">
-                                    <h6 class="mb-1">Application Created</h6>
-                                    <small class="text-muted">{{ application.created_at|date:"M d, Y g:i A" }}</small>
-                                </div>
-                            </div>
-                            
-                            {% if application.submitted_at %}
-                            <div class="timeline-item">
-                                <div class="timeline-marker bg-success"></div>
-                                <div class="timeline-content">
-                                    <h6 class="mb-1">Application Submitted</h6>
-                                    <small class="text-muted">{{ application.submitted_at|date:"M d, Y g:i A" }}</small>
-                                </div>
-                            </div>
-                            {% endif %}
-                            
-                            {% if application.reviewed_at %}
-                            <div class="timeline-item">
-                                <div class="timeline-marker bg-warning"></div>
-                                <div class="timeline-content">
-                                    <h6 class="mb-1">Under Review</h6>
-                                    <small class="text-muted">{{ application.reviewed_at|date:"M d, Y g:i A" }}</small>
-                                </div>
-                            </div>
-                            {% endif %}
-                            
-                            {% if application.decided_at %}
-                            <div class="timeline-item">
-                                <div class="timeline-marker bg-{% if application.status == 'approved' %}success{% else %}danger{% endif %}"></div>
-                                <div class="timeline-content">
-                                    <h6 class="mb-1">{{ application.get_status_display }}</h6>
-                                    <small class="text-muted">{{ application.decided_at|date:"M d, Y g:i A" }}</small>
-                                </div>
-                            </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
+            <div class="modal-footer" style="border-top: 1px solid #e5e7eb; padding: 1rem 1.5rem;">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="requestDocsBtn" class="btn btn-warning" onclick="confirmRequestDocuments()">
+                    <i class="fas fa-paper-plane me-2"></i>Send Request
+                </button>
             </div>
         </div>
+    </div>
+</div>
 
-        <!-- Approve Application Modal -->
-        <div class="modal fade" id="approveModal" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Approve Application</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <form method="post" action="{% url 'applications:backoffice-approve-application' application.pk %}">
-                        {% csrf_token %}
-                        <div class="modal-body">
-                            <div class="alert alert-success d-flex align-items-center mb-3">
-                                <i class="fas fa-check-circle me-2"></i>
-                                <span>This will create a user account and send login credentials to the supplier.</span>
-                            </div>
-                            
-                            <p><strong>Application Details:</strong></p>
-                            <ul class="list-unstyled">
-                                <li><strong>Business:</strong> {{ application.business_name }}</li>
-                                <li><strong>Contact:</strong> {{ application.email }}</li>
-                                <li><strong>Tracking Code:</strong> {{ application.tracking_code }}</li>
-                            </ul>
-                            
-                            <div class="mb-3">
-                                <label for="approveComment" class="form-label">Approval Comment (Optional)</label>
-                                <textarea class="form-control" id="approveComment" name="comment" rows="3" placeholder="Add any comments about this approval..."></textarea>
-                            </div>
-                            
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="sendCredentials" name="send_credentials" checked>
-                                <label class="form-check-label" for="sendCredentials">
-                                    Send login credentials via email to {{ application.email }}
-                                </label>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-success">
-                                <i class="fas fa-check"></i> Approve & Create Account
-                            </button>
-                        </div>
-                    </form>
-                </div>
+<!-- Toast Container -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+    <div id="successToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="fas fa-check-circle me-2"></i>
+                <span id="successToastMessage">Operation successful</span>
             </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
         </div>
-
-        <!-- Reject Application Modal -->
-        <div class="modal fade" id="rejectModal" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Reject Application</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <form method="post" action="{% url 'applications:backoffice-reject-application' application.pk %}">
-                        {% csrf_token %}
-                        <div class="modal-body">
-                            <p>Please provide a reason for rejecting this application:</p>
-                            <div class="mb-3">
-                                <label for="rejectReason" class="form-label">Rejection Reason</label>
-                                <textarea class="form-control" id="rejectReason" name="comment" rows="4" required></textarea>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-danger">Reject Application</button>
-                        </div>
-                    </form>
-                </div>
+    </div>
+    
+    <div id="errorToast" class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <span id="errorToastMessage">An error occurred</span>
             </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
         </div>
-
-        <!-- Request Documents Modal -->
-        <div class="modal fade" id="requestDocumentsModal" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Request Additional Documents</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <form method="post" action="{% url 'applications:backoffice-request-documents' application.pk %}">
-                        {% csrf_token %}
-                        <div class="modal-body">
-                            <p>Please specify which additional documents are required:</p>
-                            <div class="mb-3">
-                                <label for="documentRequest" class="form-label">Document Request Details</label>
-                                <textarea class="form-control" id="documentRequest" name="comment" rows="4" required></textarea>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-info">Send Request</button>
-                        </div>
-                    </form>
-                </div>
+    </div>
+    
+    <div id="infoToast" class="toast align-items-center text-white bg-primary border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="fas fa-info-circle me-2"></i>
+                <span id="infoToastMessage">Information</span>
             </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
         </div>
+    </div>
+</div>
 
-        <!-- Verify Document Modal -->
-        <div class="modal fade" id="verifyDocumentModal" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Verify Document</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <form method="post" id="verifyDocumentForm">
-                        {% csrf_token %}
-                        <div class="modal-body">
-                            <div class="text-center mb-3">
-                                <i class="fas fa-check-circle text-success" style="font-size: 3rem;"></i>
-                            </div>
-                            <p class="text-center mb-3">Are you sure you want to verify this document?</p>
-                            <div class="alert alert-info">
-                                <strong>Document:</strong> <span id="documentName"></span>
-                            </div>
-                            <p class="text-muted small">This action will mark the document as verified and cannot be undone.</p>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-success">
-                                <i class="fas fa-check"></i> Verify Document
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
+{% endblock %}
 
-        <!-- Verify Payment Modal -->
-        <div class="modal fade" id="verifyPaymentModal" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Confirm Payment Receipt</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <form method="post" id="verifyPaymentForm">
-                        {% csrf_token %}
-                        <div class="modal-body">
-                            <div class="text-center mb-3">
-                                <i class="fas fa-credit-card text-success" style="font-size: 3rem;"></i>
-                            </div>
-                            <p class="text-center mb-3">Confirm payment receipt and verify this GCX Registration Proof document?</p>
-                            <div class="alert alert-warning">
-                                <strong>Document:</strong> <span id="paymentDocumentName"></span>
-                            </div>
-                            <div class="alert alert-info">
-                                <i class="fas fa-info-circle"></i>
-                                <strong>Important:</strong> This action confirms that the application fee has been paid and the GCX Registration Proof is valid.
-                            </div>
-                            <p class="text-muted small">This action will mark the document as verified and enable application approval.</p>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-success">
-                                <i class="fas fa-check"></i> Confirm Payment
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-        </main>
-        
-        <!-- Bootstrap JS -->
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-        
-        <script>
-            // Initialize tooltips
-            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl)
-            });
-            
-            // Sidebar Toggle
-            const sidebar = document.getElementById('sidebar');
-            const mainContent = document.getElementById('mainContent');
-            const sidebarToggle = document.getElementById('sidebarToggle');
-            
-            sidebarToggle.addEventListener('click', function() {
-                // Toggle the collapsed state
-                const isCurrentlyCollapsed = sidebar.classList.contains('collapsed');
-                
-                if (isCurrentlyCollapsed) {
-                    // Expand sidebar
-                    sidebar.classList.remove('collapsed');
-                    mainContent.classList.remove('expanded');
-                    document.body.classList.remove('sidebar-collapsed');
-                } else {
-                    // Collapse sidebar
-                    sidebar.classList.add('collapsed');
-                    mainContent.classList.add('expanded');
-                    document.body.classList.add('sidebar-collapsed');
-                }
-                
-                // Save state to localStorage
-                localStorage.setItem('sidebarCollapsed', !isCurrentlyCollapsed);
-            });
-            
-            // Mobile sidebar toggle
-            if (window.innerWidth <= 768) {
-                sidebarToggle.addEventListener('click', function() {
-                    sidebar.classList.toggle('show');
-                });
-                
-                // Close sidebar when clicking outside
-                document.addEventListener('click', function(event) {
-                    if (!sidebar.contains(event.target) && !sidebarToggle.contains(event.target)) {
-                        sidebar.classList.remove('show');
-                    }
-                });
-            }
-            
-            // Restore sidebar state and sync with body class
-            const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-            if (window.innerWidth > 768) {
-                if (sidebarCollapsed) {
-                    sidebar.classList.add('collapsed');
-                    mainContent.classList.add('expanded');
-                    document.body.classList.add('sidebar-collapsed');
-                } else {
-                    sidebar.classList.remove('collapsed');
-                    mainContent.classList.remove('expanded');
-                    document.body.classList.remove('sidebar-collapsed');
-                }
-            }
-            
-            // Enable transitions after initialization
-            setTimeout(() => {
-                sidebar.classList.add('initialized');
-            }, 100);
-            
-            // Search functionality
-            const searchInput = document.querySelector('.search-input');
-            if (searchInput) {
-                searchInput.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        const searchTerm = this.value.trim();
-                        if (searchTerm) {
-                            window.location.href = `/backoffice/applications/?search=${searchTerm}`;
-                        }
-                    }
-                });
-            }
-            
-            // Auto-hide alerts
-            setTimeout(function() {
-                const alerts = document.querySelectorAll('.alert-dismissible');
-                alerts.forEach(function(alert) {
-                    const bsAlert = new bootstrap.Alert(alert);
-                    bsAlert.close();
-                });
-            }, 5000);
-            
-            // Add fade-in animation to elements
-            document.addEventListener('DOMContentLoaded', function() {
-                const elements = document.querySelectorAll('.card, .stat-card');
-                elements.forEach(function(element, index) {
-                    setTimeout(function() {
-                        element.classList.add('fade-in');
-                    }, index * 50);
-                });
-            });
-            
-            // Handle active nav item
-            const currentPath = window.location.pathname;
-            const navLinks = document.querySelectorAll('.nav-link');
-            navLinks.forEach(link => {
-                if (link.getAttribute('href') === currentPath) {
-                    link.classList.add('active');
-                }
-            });
-        </script>
-        
-        
-        <script>
-        // Debug: Check if functions are being loaded
-        console.log('Loading application detail JavaScript functions...');
+{% block extrajs %}
+<script>
+// Toast notification functions
+function showSuccessToast(message) {
+    const toastElement = document.getElementById('successToast');
+    document.getElementById('successToastMessage').textContent = message;
+    const toast = new bootstrap.Toast(toastElement, { delay: 5000 });
+    toast.show();
+}
 
-        // Ensure functions are available globally
-        window.showApproveModal = function() {
-            console.log('showApproveModal called');
-            const modal = new bootstrap.Modal(document.getElementById('approveModal'));
-            modal.show();
+function showErrorToast(message) {
+    const toastElement = document.getElementById('errorToast');
+    document.getElementById('errorToastMessage').textContent = message;
+    const toast = new bootstrap.Toast(toastElement, { delay: 5000 });
+    toast.show();
+}
+
+function showInfoToast(message) {
+    const toastElement = document.getElementById('infoToast');
+    document.getElementById('infoToastMessage').textContent = message;
+    const toast = new bootstrap.Toast(toastElement, { delay: 5000 });
+    toast.show();
+}
+
+function confirmApprove() {
+    const comment = document.getElementById('approveComment').value;
+    const csrfToken = document.querySelector('#csrf-form input[name="csrfmiddlewaretoken"]').value;
+    
+    // Get the button and disable it to prevent multiple clicks
+    const approveBtn = document.getElementById('approveBtn');
+    const originalHtml = approveBtn.innerHTML;
+    approveBtn.disabled = true;
+    approveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Approving...';
+    
+    fetch('{% url "applications:backoffice-approve-application" application.pk %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({ comment: comment })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('approveModal')).hide();
+            showSuccessToast('Application approved successfully!');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showErrorToast(data.message || 'Failed to approve application');
+            approveBtn.disabled = false;
+            approveBtn.innerHTML = originalHtml;
         }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showErrorToast('An error occurred while approving the application');
+        approveBtn.disabled = false;
+        approveBtn.innerHTML = originalHtml;
+    });
+}
 
-        window.showRejectModal = function() {
-            console.log('showRejectModal called');
-            const modal = new bootstrap.Modal(document.getElementById('rejectModal'));
-            modal.show();
+function confirmReject() {
+    const reason = document.getElementById('rejectReason').value;
+    
+    if (!reason.trim()) {
+        alert('Please provide a reason for rejection');
+        document.getElementById('rejectReason').focus();
+        return;
+    }
+    
+    const csrfToken = document.querySelector('#csrf-form input[name="csrfmiddlewaretoken"]').value;
+    
+    // Get the button and disable it to prevent multiple clicks
+    const rejectBtn = document.getElementById('rejectBtn');
+    const originalHtml = rejectBtn.innerHTML;
+    rejectBtn.disabled = true;
+    rejectBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Rejecting...';
+    
+    fetch('{% url "applications:backoffice-reject-application" application.pk %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({ reason: reason })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('rejectModal')).hide();
+            showSuccessToast('Application rejected successfully');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showErrorToast(data.message || 'Failed to reject application');
+            rejectBtn.disabled = false;
+            rejectBtn.innerHTML = originalHtml;
         }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showErrorToast('An error occurred while rejecting the application');
+        rejectBtn.disabled = false;
+        rejectBtn.innerHTML = originalHtml;
+    });
+}
 
-        window.showRequestDocumentsModal = function() {
-            const modal = new bootstrap.Modal(document.getElementById('requestDocumentsModal'));
-            modal.show();
+function requestDocuments() {
+    // Show the request documents modal
+    const modal = new bootstrap.Modal(document.getElementById('requestDocsModal'));
+    modal.show();
+}
+
+function confirmRequestDocuments() {
+    const message = document.getElementById('requestDocsMessage').value;
+    const sendCopy = document.getElementById('sendEmailCopy').checked;
+    const csrfToken = document.querySelector('#csrf-form input[name="csrfmiddlewaretoken"]').value;
+    
+    if (!message.trim()) {
+        showErrorToast('Please enter a message to send to the supplier');
+        return;
+    }
+    
+    // Disable button to prevent double clicks
+    const confirmBtn = document.getElementById('requestDocsBtn');
+    const originalHtml = confirmBtn.innerHTML;
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sending...';
+    
+    fetch('{% url "applications:backoffice-request-documents" application.pk %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({ 
+            message: message,
+            send_copy: sendCopy
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('requestDocsModal')).hide();
+            showSuccessToast('Document request sent successfully! 📧');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showErrorToast(data.message || 'Failed to send request');
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = originalHtml;
         }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showErrorToast('An error occurred while sending the request');
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = originalHtml;
+    });
+}
 
-        window.showVerifyDocumentModal = function(documentId, documentName) {
-            console.log('showVerifyDocumentModal called with:', documentId, documentName);
-            try {
-                // Set the document name in the modal
-                const nameElement = document.getElementById('documentName');
-                if (nameElement) {
-                    nameElement.textContent = documentName;
-                }
-                
-                // Set the form action
-                const form = document.getElementById('verifyDocumentForm');
-                if (form) {
-                    form.action = `/backoffice/documents/${documentId}/verify/`;
-                }
-                
-                // Show the modal
-                const modalElement = document.getElementById('verifyDocumentModal');
-                if (modalElement) {
-                    const modal = new bootstrap.Modal(modalElement);
-                    modal.show();
-                }
-            } catch (error) {
-                console.error('Error in showVerifyDocumentModal:', error);
-                alert('Error opening verification modal. Please try again.');
-            }
+function verifyDocument(docType, appId, docName) {
+    // Set hidden fields and document name
+    document.getElementById('verifyDocType').value = docType;
+    document.getElementById('verifyAppId').value = appId;
+    document.getElementById('verifyDocName').textContent = docName || 'Document';
+    document.getElementById('verifyNotes').value = '';
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('verifyDocumentModal'));
+    modal.show();
+}
+
+function confirmVerifyDocument() {
+    const docType = document.getElementById('verifyDocType').value;
+    const appId = document.getElementById('verifyAppId').value;
+    const notes = document.getElementById('verifyNotes').value;
+    const csrfToken = document.querySelector('#csrf-form input[name="csrfmiddlewaretoken"]').value;
+    
+    // Disable button to prevent double clicks
+    const confirmBtn = event.target;
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Verifying...';
+    
+    fetch('{% url "applications:backoffice-verify-document" application.pk %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({ 
+            document_type: docType,
+            notes: notes
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Close modal and show success toast
+            bootstrap.Modal.getInstance(document.getElementById('verifyDocumentModal')).hide();
+            showSuccessToast('Document verified successfully! ✓');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showErrorToast(data.message || 'Failed to verify document');
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="fas fa-shield-check me-2"></i>Confirm Verification';
         }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showErrorToast('An error occurred while verifying the document');
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = '<i class="fas fa-shield-check me-2"></i>Confirm Verification';
+    });
+}
 
-        window.showVerifyPaymentModal = function(documentId, documentName) {
-            console.log('showVerifyPaymentModal called with:', documentId, documentName);
-            try {
-                // Set the document name in the modal
-                const nameElement = document.getElementById('paymentDocumentName');
-                if (nameElement) {
-                    nameElement.textContent = documentName;
-                }
-                
-                // Set the form action
-                const form = document.getElementById('verifyPaymentForm');
-                if (form) {
-                    form.action = `/backoffice/documents/${documentId}/verify/`;
-                }
-                
-                // Show the modal
-                const modalElement = document.getElementById('verifyPaymentModal');
-                if (modalElement) {
-                    const modal = new bootstrap.Modal(modalElement);
-                    modal.show();
-                }
-            } catch (error) {
-                console.error('Error in showVerifyPaymentModal:', error);
-                alert('Error opening payment verification modal. Please try again.');
-            }
-        }
-
-        window.printApplication = function() {
-            window.print();
-        }
-
-        window.exportApplication = function() {
-            // TODO: Implement export functionality
-            alert('Export functionality will be implemented soon.');
-        }
-
-        window.sendEmail = function() {
-            // TODO: Implement email functionality
-            alert('Email functionality will be implemented soon.');
-        }
-
-        window.copyToClipboard = function(element) {
-            element.select();
-            element.setSelectionRange(0, 99999); // For mobile devices
-            document.execCommand('copy');
-            
-            // Show feedback
-            const button = element.nextElementSibling;
-            const originalHTML = button.innerHTML;
-            button.innerHTML = '<i class="fas fa-check"></i>';
-            button.classList.remove('btn-outline-secondary');
-            button.classList.add('btn-success');
-            
-            setTimeout(() => {
-                button.innerHTML = originalHTML;
-                button.classList.remove('btn-success');
-                button.classList.add('btn-outline-secondary');
-            }, 2000);
-        }
-
-        // Initialize tooltips
-        document.addEventListener('DOMContentLoaded', function() {
-            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl)
-            });
-            
-            console.log('Application detail page loaded successfully');
-            console.log('Available functions:', {
-                showApproveModal: typeof window.showApproveModal,
-                showRejectModal: typeof window.showRejectModal,
-                showRequestDocumentsModal: typeof window.showRequestDocumentsModal,
-                showVerifyDocumentModal: typeof window.showVerifyDocumentModal,
-                showVerifyPaymentModal: typeof window.showVerifyPaymentModal,
-                printApplication: typeof window.printApplication,
-                exportApplication: typeof window.exportApplication,
-                sendEmail: typeof window.sendEmail,
-                copyToClipboard: typeof window.copyToClipboard
-            });
-        });
-        </script>
-    </body>
-</html>
+// Initialize tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}

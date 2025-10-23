@@ -1,0 +1,1195 @@
+{% extends "accounts/base.html" %}
+
+{% block title %}Delivery Tracking - GCX Supplier Portal{% endblock %}
+
+{% block page_title %}Delivery Tracking{% endblock %}
+{% block page_subtitle %}Track and manage your commodity deliveries{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Page Header Modern */
+    .page-header-modern {
+        background: linear-gradient(135deg, rgba(26, 71, 42, 0.9) 0%, rgba(45, 90, 61, 0.9) 100%), 
+                    url('/media/logo/Untitled-1.jpg');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        color: white;
+        border-radius: var(--border-radius-lg);
+        padding: 2rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .page-header-modern::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 200px;
+        height: 200px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        transform: translate(50%, -50%);
+    }
+
+    .page-header-modern::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 150px;
+        height: 150px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 50%;
+        transform: translate(-50%, 50%);
+    }
+
+    .header-content {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .header-info {
+        flex: 1;
+    }
+
+    .header-title {
+        font-size: 2rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .header-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+    }
+
+    .breadcrumb-modern {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 0.75rem 1rem;
+        border-radius: var(--border-radius-sm);
+        margin-top: 1rem;
+    }
+
+    .breadcrumb-modern a {
+        color: white;
+        text-decoration: none;
+        opacity: 0.8;
+    }
+
+    .breadcrumb-modern a:hover {
+        opacity: 1;
+    }
+
+    .breadcrumb-modern .active {
+        color: white;
+        opacity: 1;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card-modern {
+        background: var(--white);
+        border: 1px solid var(--gray-200);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        box-shadow: var(--shadow-sm);
+        transition: all var(--transition);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card-modern::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--gcx-secondary);
+        transform: scaleY(0);
+        transition: transform var(--transition);
+    }
+
+    .stat-card-modern:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .stat-card-modern:hover::before {
+        transform: scaleY(1);
+    }
+
+    .stat-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--border-radius-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+    }
+
+    .stat-icon.deliveries {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+    }
+
+    .stat-icon.pending {
+        background: linear-gradient(135deg, #ffecd2, #fcb69f);
+    }
+
+    .stat-icon.delivered {
+        background: linear-gradient(135deg, #89f7fe, #66a6ff);
+    }
+
+    .stat-icon.verified {
+        background: linear-gradient(135deg, #43e97b, #38f9d7);
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--gray-900);
+        line-height: 1;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+        font-size: 0.875rem;
+        color: var(--gray-600);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Card Modern */
+    .card-modern {
+        background: var(--white);
+        border: 1px solid var(--gray-200);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-sm);
+        margin-bottom: 2rem;
+    }
+
+    .card-header-modern {
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--gray-200);
+        background: var(--white);
+    }
+
+    .card-title-modern {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--gray-900);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .card-body-modern {
+        padding: 1.5rem;
+    }
+
+    /* Table Styles */
+    .table-modern {
+        border: none;
+        margin-bottom: 0;
+    }
+
+    .table-modern thead th {
+        border: none;
+        background: var(--gray-50);
+        color: var(--gray-700);
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 1rem 0.75rem;
+    }
+
+    .table-modern tbody td {
+        border: none;
+        border-bottom: 1px solid var(--gray-100);
+        padding: 1rem 0.75rem;
+        vertical-align: middle;
+    }
+
+    .table-modern tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .table-modern tbody tr:hover {
+        background: var(--gray-25);
+    }
+
+    /* Status Badge */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-badge.status-verified {
+        background: rgba(25, 135, 84, 0.1);
+        color: #198754;
+        border: 1px solid rgba(25, 135, 84, 0.2);
+    }
+
+    .status-badge.status-delivered {
+        background: rgba(13, 202, 240, 0.1);
+        color: #0dcaf0;
+        border: 1px solid rgba(13, 202, 240, 0.2);
+    }
+
+    .status-badge.status-in_transit {
+        background: rgba(253, 126, 20, 0.1);
+        color: #fd7e14;
+        border: 1px solid rgba(253, 126, 20, 0.2);
+    }
+
+    .status-badge.status-pending {
+        background: rgba(108, 117, 125, 0.1);
+        color: #6c757d;
+        border: 1px solid rgba(108, 117, 125, 0.2);
+    }
+
+    .status-badge.status-rejected {
+        background: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+        border: 1px solid rgba(220, 53, 69, 0.2);
+    }
+
+    /* Contract Badge */
+    .contract-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+    }
+
+    .contract-badge.secondary {
+        background: linear-gradient(135deg, #6c757d, #495057);
+    }
+
+    .contract-badge.warning {
+        background: linear-gradient(135deg, #ffc107, #ff9800);
+    }
+
+    /* Button Styles */
+    .btn-modern {
+        padding: 0.5rem 1rem;
+        border-radius: var(--border-radius-sm);
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: all var(--transition);
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-primary-modern {
+        background: linear-gradient(135deg, var(--gcx-primary), var(--gcx-primary-light));
+        color: white;
+    }
+
+    .btn-primary-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow);
+        color: white;
+    }
+
+    .btn-outline-modern {
+        background: transparent;
+        border: 1px solid var(--gray-300);
+        color: var(--gray-700);
+    }
+
+    .btn-outline-modern:hover {
+        background: var(--gray-50);
+        border-color: var(--gcx-primary);
+        color: var(--gcx-primary);
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+    }
+
+    .empty-state-icon {
+        width: 80px;
+        height: 80px;
+        background: var(--gray-100);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        font-size: 2rem;
+        color: var(--gray-400);
+    }
+
+    .empty-state-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--gray-900);
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state-description {
+        color: var(--gray-600);
+        margin-bottom: 2rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .page-header-modern {
+            padding: 1.5rem;
+        }
+
+        .header-title {
+            font-size: 1.5rem;
+        }
+
+        .header-subtitle {
+            font-size: 1rem;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .stat-card-modern {
+            padding: 1rem;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+        }
+
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            font-size: 1.25rem;
+        }
+
+        .card-header-modern,
+        .card-body-modern {
+            padding: 1rem;
+        }
+
+        .card-title-modern {
+            font-size: 1.125rem;
+        }
+
+        /* Mobile table */
+        .table-responsive {
+            border: none;
+            box-shadow: none;
+        }
+
+        .table-modern {
+            font-size: 0.875rem;
+        }
+
+        .table-modern thead {
+            display: none;
+        }
+
+        .table-modern tbody tr {
+            display: block;
+            margin-bottom: 1rem;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            background: var(--white);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .table-modern tbody td {
+            display: block;
+            text-align: left;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .table-modern tbody td:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+            padding-top: 1rem;
+        }
+
+        .table-modern tbody td::before {
+            content: attr(data-label);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            color: var(--gray-600);
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .table-modern tbody td:first-child::before {
+            display: none;
+        }
+
+        .table-modern tbody td .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .table-modern tbody td .btn-group .btn {
+            width: 100%;
+        }
+
+        .empty-state {
+            padding: 2rem 1rem;
+        }
+
+        .empty-state-icon {
+            width: 60px;
+            height: 60px;
+            font-size: 1.5rem;
+        }
+
+        .header-content {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .page-header-modern {
+            padding: 1rem;
+        }
+
+        .header-title {
+            font-size: 1.25rem;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .header-subtitle {
+            font-size: 0.875rem;
+        }
+
+        .stat-number {
+            font-size: 1.75rem;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+        }
+    }
+
+    /* Animations */
+    .fade-in-up {
+        animation: fadeInUp 0.6s ease-out;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .stagger-animation > * {
+        animation: fadeInUp 0.6s ease-out;
+    }
+
+    .stagger-animation > *:nth-child(1) { animation-delay: 0.1s; }
+    .stagger-animation > *:nth-child(2) { animation-delay: 0.2s; }
+    .stagger-animation > *:nth-child(3) { animation-delay: 0.3s; }
+    .stagger-animation > *:nth-child(4) { animation-delay: 0.4s; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header-modern fade-in-up">
+    <div class="header-content">
+        <div class="header-info">
+            <h1 class="header-title">
+                <i class="fas fa-truck"></i>
+                Delivery Tracking
+            </h1>
+            <p class="header-subtitle">
+                Track and manage your commodity deliveries
+            </p>
+            <nav class="breadcrumb-modern" aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'accounts:dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Deliveries</li>
+                </ol>
+            </nav>
+        </div>
+        <div>
+            <button class="btn btn-primary-modern btn-modern" style="padding: 0.75rem 1.5rem; font-size: 1rem;" data-bs-toggle="modal" data-bs-target="#createDeliveryModal">
+                <i class="fas fa-plus"></i> New Delivery
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Delivery Statistics -->
+<div class="stats-grid stagger-animation">
+    <div class="stat-card-modern">
+        <div class="stat-header">
+            <div class="stat-icon deliveries">
+                <i class="fas fa-truck"></i>
+            </div>
+        </div>
+        <div class="stat-number">{{ total_deliveries }}</div>
+        <div class="stat-label">Total Deliveries</div>
+    </div>
+
+    <div class="stat-card-modern">
+        <div class="stat-header">
+            <div class="stat-icon pending">
+                <i class="fas fa-clock"></i>
+            </div>
+        </div>
+        <div class="stat-number">{{ pending_deliveries }}</div>
+        <div class="stat-label">Pending</div>
+    </div>
+
+    <div class="stat-card-modern">
+        <div class="stat-header">
+            <div class="stat-icon delivered">
+                <i class="fas fa-check-circle"></i>
+            </div>
+        </div>
+        <div class="stat-number">{{ delivered }}</div>
+        <div class="stat-label">Delivered</div>
+    </div>
+
+    <div class="stat-card-modern">
+        <div class="stat-header">
+            <div class="stat-icon verified">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+        </div>
+        <div class="stat-number">{{ verified }}</div>
+        <div class="stat-label">Verified</div>
+    </div>
+</div>
+
+<!-- Deliveries List -->
+<div class="card-modern fade-in-up">
+    <div class="card-header-modern">
+        <h3 class="card-title-modern">
+            <i class="fas fa-list"></i>
+            Delivery History
+        </h3>
+    </div>
+    <div class="card-body-modern">
+        {% if deliveries %}
+        <div class="table-responsive">
+            <table class="table table-modern">
+                <thead>
+                    <tr>
+                        <th>Serial No.</th>
+                        <th>Contract</th>
+                        <th>SRV No.</th>
+                        <th>Waybill No.</th>
+                        <th>Invoice No.</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for delivery in deliveries %}
+                    <tr>
+                        <td data-label="Serial No.">
+                            <strong>{{ delivery.serial_number }}</strong>
+                        </td>
+                        <td data-label="Contract">
+                            {% if delivery.contract %}
+                                <span class="contract-badge">{{ delivery.contract.contract_number }}</span>
+                                <br><small class="text-muted">{{ delivery.contract.application.business_name }}</small>
+                            {% elif delivery.contract_commodity %}
+                                <span class="contract-badge secondary">{{ delivery.contract_commodity.contract.contract_number }}</span>
+                                <br><small class="text-muted">Legacy Delivery</small>
+                            {% else %}
+                                <span class="contract-badge warning">No Contract</span>
+                                <br><small class="text-muted">This should not happen</small>
+                            {% endif %}
+                        </td>
+                        <td data-label="SRV No.">{{ delivery.srv_number }}</td>
+                        <td data-label="Waybill No.">{{ delivery.waybill_number }}</td>
+                        <td data-label="Invoice No.">{{ delivery.invoice_number|default:"-" }}</td>
+                        <td data-label="Status">
+                            <span class="status-badge status-{{ delivery.status|lower }}">
+                                {{ delivery.get_status_display }}
+                            </span>
+                        </td>
+                        <td data-label="Actions">
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'applications:supplier-delivery-detail' delivery.pk %}" 
+                                   class="btn btn-primary-modern btn-modern btn-sm" 
+                                   data-bs-toggle="tooltip" 
+                                   title="View Delivery Details">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                                {% if delivery.srv_document %}
+                                <a href="{{ delivery.srv_document.url }}" 
+                                   class="btn btn-outline-modern btn-modern btn-sm" 
+                                   target="_blank"
+                                   data-bs-toggle="tooltip" 
+                                   title="View SRV">
+                                    <i class="fas fa-file-alt"></i> SRV
+                                </a>
+                                {% endif %}
+                                {% if delivery.waybill_document %}
+                                <a href="{{ delivery.waybill_document.url }}" 
+                                   class="btn btn-outline-modern btn-modern btn-sm" 
+                                   target="_blank"
+                                   data-bs-toggle="tooltip" 
+                                   title="View Waybill">
+                                    <i class="fas fa-file-alt"></i> Waybill
+                                </a>
+                                {% endif %}
+                                {% if delivery.invoice_document %}
+                                <a href="{{ delivery.invoice_document.url }}" 
+                                   class="btn btn-outline-modern btn-modern btn-sm" 
+                                   target="_blank"
+                                   data-bs-toggle="tooltip" 
+                                   title="View Invoice">
+                                    <i class="fas fa-file-invoice"></i> Invoice
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="fas fa-truck"></i>
+            </div>
+            <h3 class="empty-state-title">No Deliveries Found</h3>
+            <p class="empty-state-description">
+                You haven't created any deliveries yet. Create your first delivery to get started.
+            </p>
+            <button class="btn btn-primary-modern btn-modern" data-bs-toggle="modal" data-bs-target="#createDeliveryModal">
+                <i class="fas fa-plus"></i> Create First Delivery
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Create Delivery Modal -->
+<div class="modal fade" id="createDeliveryModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create New Delivery</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="createDeliveryForm" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <!-- Contract Selection -->
+                    {% if signed_contracts %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Contract-based Delivery:</strong> <small>Select the signed contract for which you are creating this delivery.</small>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6 mb-3">
+                            <label for="contract" class="form-label">Contract *</label>
+                            <select class="form-select" id="contract" name="contract" required>
+                                <option value="">Select Contract</option>
+                                {% for contract in signed_contracts %}
+                                <option value="{{ contract.pk }}">{{ contract.contract_number }} - {{ contract.application.business_name }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text"><small>Select the signed contract for which you are creating this delivery.</small></div>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    {% else %}
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>No Signed Contracts Available:</strong> You need to have signed contracts before you can create deliveries. Please contact the admin if you believe this is an error.
+                    </div>
+                    <div class="text-center py-3">
+                        <button type="button" class="btn btn-secondary" disabled>
+                            <i class="fas fa-ban me-2"></i>Cannot Create Delivery - No Signed Contracts
+                        </button>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="region" class="form-label">Region *</label>
+                            <select class="form-select" id="region" name="region">
+                                <option value="">Select Region</option>
+                                {% for region in regions %}
+                                <option value="{{ region.pk }}">{{ region.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="school" class="form-label">School *</label>
+                            <select class="form-select" id="school" name="school" disabled>
+                                <option value="">Select School</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="serial_number" class="form-label">Serial Number *</label>
+                            <input type="text" class="form-control" id="serial_number" name="serial_number" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="delivery_date" class="form-label">Delivery Date *</label>
+                            <input type="date" class="form-control" id="delivery_date" name="delivery_date" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="srv_number" class="form-label">SRV Number *</label>
+                            <input type="text" class="form-control" id="srv_number" name="srv_number" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="waybill_number" class="form-label">Waybill Number *</label>
+                            <input type="text" class="form-control" id="waybill_number" name="waybill_number" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="invoice_number" class="form-label">Invoice Number</label>
+                            <input type="text" class="form-control" id="invoice_number" name="invoice_number">
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    <h6 class="mb-3">Commodities Delivered</h6>
+                    <div id="commodities-container">
+                        <div class="commodity-item border rounded p-3 mb-3">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Commodity *</label>
+                                    <select class="form-select commodity-select" name="commodities[0][commodity]" required>
+                                        <option value="">Select Commodity</option>
+                                        {% for commodity in commodities %}
+                                        <option value="{{ commodity.pk }}" data-unit="{{ commodity.unit_of_measure }}" data-description="{{ commodity.description }}">{{ commodity.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="commodity-description mt-2" style="display: none;">
+                                        <small class="text-muted"></small>
+                                    </div>
+                                </div>
+                                <div class="col-md-2 mb-3">
+                                    <label class="form-label">Quantity *</label>
+                                    <input type="number" class="form-control quantity-input" name="commodities[0][quantity]" step="0.01" min="0.01" required>
+                                </div>
+                                <div class="col-md-2 mb-3">
+                                    <label class="form-label">Unit</label>
+                                    <input type="text" class="form-control unit-input" name="commodities[0][unit_of_measure]" 
+                                           readonly style="background-color: #f8f9fa;">
+                                </div>
+                                <div class="col-md-2 mb-3">
+                                    <label class="form-label">Unit Price</label>
+                                    <input type="number" class="form-control price-input" name="commodities[0][unit_price]" step="0.01" min="0">
+                                </div>
+                                <div class="col-md-2 mb-3">
+                                    <label class="form-label">&nbsp;</label>
+                                    <button type="button" class="btn btn-danger btn-sm d-block remove-commodity" style="display: none;">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="add-commodity">
+                            <i class="fas fa-plus"></i> Add Another Commodity
+                        </button>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="delivery_notes" class="form-label">Delivery Notes</label>
+                        <textarea class="form-control" id="delivery_notes" name="notes" rows="3" placeholder="Any additional notes about this delivery..."></textarea>
+                    </div>
+                    
+                    <hr>
+                    <h6 class="mb-3">Supporting Documents</h6>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="srv_document" class="form-label">SRV Document</label>
+                            <input type="file" class="form-control" id="srv_document" name="srv_document" accept=".pdf,.jpg,.jpeg,.png">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="waybill_document" class="form-label">Waybill Document</label>
+                            <input type="file" class="form-control" id="waybill_document" name="waybill_document" accept=".pdf,.jpg,.jpeg,.png">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="invoice_document" class="form-label">Invoice Document</label>
+                            <input type="file" class="form-control" id="invoice_document" name="invoice_document" accept=".pdf,.jpg,.jpeg,.png">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary-modern btn-modern">Create Delivery</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+console.log('JavaScript file loaded');
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM Content Loaded - JavaScript starting');
+    
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+    
+    // Animate stat numbers
+    const statNumbers = document.querySelectorAll('.stat-number');
+    statNumbers.forEach(stat => {
+        const finalValue = parseInt(stat.textContent.replace(/[^\d]/g, ''));
+        if (finalValue > 0) {
+            animateNumber(stat, 0, finalValue, 1000);
+        }
+    });
+
+    function animateNumber(element, start, end, duration) {
+        const startTime = performance.now();
+        
+        function updateNumber(currentTime) {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const current = Math.floor(start + (end - start) * progress);
+            
+            element.textContent = current;
+            
+            if (progress < 1) {
+                requestAnimationFrame(updateNumber);
+            }
+        }
+        
+        requestAnimationFrame(updateNumber);
+    }
+
+    // Add hover effects to cards
+    const cards = document.querySelectorAll('.stat-card-modern');
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-4px)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+    
+    // Commodity management
+    let commodityIndex = 1;
+    
+    // Add commodity functionality
+    const addCommodityBtn = document.getElementById('add-commodity');
+    if (addCommodityBtn) {
+        addCommodityBtn.addEventListener('click', function() {
+            console.log('Add commodity button clicked');
+            const container = document.getElementById('commodities-container');
+            if (!container) {
+                console.error('Commodities container not found');
+                return;
+            }
+            
+            const template = container.querySelector('.commodity-item');
+            if (!template) {
+                console.error('Commodity template not found');
+                return;
+            }
+            
+            const newTemplate = template.cloneNode(true);
+            
+            // Update the index for the new commodity
+            const newIndex = commodityIndex++;
+            newTemplate.querySelectorAll('select, input').forEach(input => {
+                const name = input.getAttribute('name');
+                if (name) {
+                    input.setAttribute('name', name.replace(/\[\d+\]/, `[${newIndex}]`));
+                }
+            });
+            
+            // Clear values but keep unit field read-only
+            newTemplate.querySelectorAll('select, input').forEach(input => {
+                if (input.type !== 'button') {
+                    input.value = '';
+                    // Make unit field read-only
+                    if (input.classList.contains('unit-input')) {
+                        input.readOnly = true;
+                        input.style.backgroundColor = '#f8f9fa';
+                    }
+                }
+            });
+            
+            // Clear commodity description
+            const descriptionDiv = newTemplate.querySelector('.commodity-description');
+            if (descriptionDiv) {
+                descriptionDiv.style.display = 'none';
+                descriptionDiv.querySelector('small').textContent = '';
+            }
+            
+            // Show remove button
+            const removeBtn = newTemplate.querySelector('.remove-commodity');
+            if (removeBtn) {
+                removeBtn.style.display = 'block';
+            }
+            
+            container.appendChild(newTemplate);
+            console.log('New commodity added');
+        });
+    } else {
+        console.error('Add commodity button not found');
+    }
+    
+    // Remove commodity functionality
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.remove-commodity')) {
+            const commodityItem = e.target.closest('.commodity-item');
+            commodityItem.remove();
+        }
+    });
+    
+    // Auto-fill unit of measure and show description when commodity is selected
+    document.addEventListener('change', function(e) {
+        if (e.target.classList.contains('commodity-select')) {
+            console.log('Commodity selected:', e.target.value);
+            const selectedOption = e.target.options[e.target.selectedIndex];
+            const commodityItem = e.target.closest('.commodity-item');
+            const unitInput = commodityItem.querySelector('.unit-input');
+            const descriptionDiv = commodityItem.querySelector('.commodity-description');
+            
+            // Handle unit of measure
+            if (selectedOption.dataset.unit && unitInput) {
+                unitInput.value = selectedOption.dataset.unit;
+                unitInput.readOnly = true;
+                unitInput.style.backgroundColor = '#f8f9fa';
+                console.log('Unit of measure auto-filled:', selectedOption.dataset.unit);
+            } else if (unitInput) {
+                // Clear unit field if no unit is specified
+                unitInput.value = '';
+                unitInput.readOnly = true;
+                unitInput.style.backgroundColor = '#f8f9fa';
+            }
+            
+            // Handle commodity description
+            if (descriptionDiv) {
+                const description = selectedOption.dataset.description;
+                if (description && description.trim() !== '') {
+                    descriptionDiv.querySelector('small').textContent = description;
+                    descriptionDiv.style.display = 'block';
+                } else {
+                    descriptionDiv.style.display = 'none';
+                }
+            }
+        }
+    });
+    
+    // Create delivery form
+    document.getElementById('createDeliveryForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
+        submitBtn.disabled = true;
+        
+        fetch('{% url "applications:supplier-create-delivery" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('success', data.message);
+                bootstrap.Modal.getInstance(document.getElementById('createDeliveryModal')).hide();
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showAlert('danger', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('danger', 'An error occurred while creating the delivery.');
+        })
+        .finally(() => {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        });
+    });
+    
+    // Contract selection is now simple - no additional logic needed
+    
+    // Disable form submission if no contracts available
+    const contractSelect = document.getElementById('contract');
+    const submitBtn = document.querySelector('button[type="submit"]');
+    
+    if (!contractSelect && submitBtn) {
+        // No contract select means no signed contracts, disable submit button
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-ban me-2"></i>Cannot Create Delivery - No Signed Contracts';
+    }
+
+    // Handle region selection to populate schools
+    const regionSelect = document.getElementById('region');
+    const schoolSelect = document.getElementById('school');
+    
+    console.log('Region select found:', !!regionSelect);
+    console.log('School select found:', !!schoolSelect);
+    
+    if (regionSelect && schoolSelect) {
+        regionSelect.addEventListener('change', function() {
+            const regionId = this.value;
+            console.log('Region changed to:', regionId);
+            
+            if (regionId) {
+                // Enable school select and fetch schools
+                schoolSelect.disabled = false;
+                schoolSelect.innerHTML = '<option value="">Loading schools...</option>';
+                console.log('School select enabled, fetching schools...');
+                
+                fetch(`{% url 'applications:schools-by-region' %}?region_id=${regionId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                    .then(response => {
+                        console.log('Response status:', response.status);
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Schools data received:', data);
+                        schoolSelect.innerHTML = '<option value="">Select School</option>';
+                        if (data.schools && data.schools.length > 0) {
+                            data.schools.forEach(school => {
+                                const option = document.createElement('option');
+                                option.value = school.id;
+                                option.textContent = `${school.name} (${school.code})`;
+                                schoolSelect.appendChild(option);
+                            });
+                            console.log(`Added ${data.schools.length} schools to dropdown`);
+                        } else {
+                            schoolSelect.innerHTML = '<option value="">No schools found</option>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading schools:', error);
+                        schoolSelect.innerHTML = '<option value="">Error loading schools</option>';
+                    });
+            } else {
+                // Disable school select and clear options
+                schoolSelect.disabled = true;
+                schoolSelect.innerHTML = '<option value="">Select School</option>';
+                console.log('School select disabled');
+            }
+        });
+    } else {
+        console.error('Region or school select element not found');
+        console.error('Region select:', regionSelect);
+        console.error('School select:', schoolSelect);
+    }
+});
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    const container = document.querySelector('.content-body') || document.querySelector('main') || document.body;
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

@@ -247,6 +247,31 @@
                     <div class="help-text">Email address to receive notifications for new applications</div>
                 </div>
             </div>
+            
+            <div class="mt-3">
+                <h6><i class="fas fa-cog"></i> Test Configuration</h6>
+                <div class="settings-grid">
+                    <div class="form-group">
+                        <label for="test_email_address" class="form-label">Test Email Address</label>
+                        <input type="email" class="form-control" id="test_email_address" 
+                               value="test@example.com" placeholder="Enter test email address">
+                        <div class="help-text">Email address to send test message to</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="test_email_subject" class="form-label">Test Subject</label>
+                        <input type="text" class="form-control" id="test_email_subject" 
+                               value="GCX Admin Portal - Email Test" placeholder="Enter test subject">
+                        <div class="help-text">Subject line for test email</div>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="testEmailService()">
+                        <i class="fas fa-paper-plane"></i> Test Email Service
+                    </button>
+                </div>
+            </div>
         </div>
 
         <!-- SMS Settings -->
@@ -262,9 +287,9 @@
             </div>
         </div>
 
-        <!-- Notification Settings -->
+        <!-- Notification API Settings -->
         <div class="settings-section">
-            <h5><i class="fas fa-bell"></i> Notification Settings</h5>
+            <h5><i class="fas fa-bell"></i> Notification API Settings</h5>
             <div class="settings-grid">
                 <div class="form-group">
                     <label for="notification_api_url" class="form-label">API URL</label>
@@ -273,12 +298,213 @@
                     <div class="help-text">External notification API endpoint</div>
                 </div>
                 
+                
                 <div class="form-group">
                     <label for="notification_timeout" class="form-label">Timeout (seconds)</label>
                     <input type="number" class="form-control" id="notification_timeout" name="notification_timeout" 
                            value="{{ settings.notification_timeout }}" min="5" max="300" required>
                     <div class="help-text">API request timeout in seconds</div>
                 </div>
+                
+            </div>
+            
+            <div class="mt-3">
+                <button type="button" class="btn btn-outline-primary btn-sm" onclick="testNotificationAPI()">
+                    <i class="fas fa-paper-plane"></i> Test Notification API
+                </button>
+            </div>
+        </div>
+
+
+        <!-- SMS Service Configuration -->
+        <div class="settings-section">
+            <h5><i class="fas fa-sms"></i> SMS Service Configuration</h5>
+            <div class="settings-grid">
+                <div class="form-group">
+                    <label for="sms_provider" class="form-label">SMS Provider</label>
+                    <select class="form-select" id="sms_provider" name="sms_provider" required>
+                        <option value="twilio" {% if settings.sms_provider == 'twilio' %}selected{% endif %}>Twilio</option>
+                        <option value="africas_talking" {% if settings.sms_provider == 'africas_talking' %}selected{% endif %}>Africa's Talking</option>
+                        <option value="custom" {% if settings.sms_provider == 'custom' %}selected{% endif %}>Custom API</option>
+                    </select>
+                    <div class="help-text">Choose your SMS service provider</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="sms_api_key" class="form-label">API Key (Optional)</label>
+                    <input type="password" class="form-control" id="sms_api_key" name="sms_api_key" 
+                           value="{{ settings.sms_api_key }}">
+                    <div class="help-text">SMS provider API key (leave blank if not required)</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="sms_api_secret" class="form-label">API Secret (Optional)</label>
+                    <input type="password" class="form-control" id="sms_api_secret" name="sms_api_secret" 
+                           value="{{ settings.sms_api_secret }}">
+                    <div class="help-text">SMS provider API secret (leave blank if not required)</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="sms_sender_id" class="form-label">Sender ID</label>
+                    <input type="text" class="form-control" id="sms_sender_id" name="sms_sender_id" 
+                           value="{{ settings.sms_sender_id }}" required>
+                    <div class="help-text">Sender identifier for SMS messages</div>
+                </div>
+            </div>
+            
+            <div class="mt-3">
+                <h6><i class="fas fa-cog"></i> Test Configuration</h6>
+                <div class="settings-grid">
+                    <div class="form-group">
+                        <label for="test_sms_number" class="form-label">Test Phone Number</label>
+                        <input type="tel" class="form-control" id="test_sms_number" 
+                               value="+233123456789" placeholder="Enter test phone number">
+                        <div class="help-text">Phone number to send test SMS to</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="test_sms_message" class="form-label">Test Message</label>
+                        <textarea class="form-control" id="test_sms_message" rows="2" 
+                                  placeholder="Enter test message">This is a test SMS from GCX Admin Portal</textarea>
+                        <div class="help-text">Message content for test SMS</div>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <button type="button" class="btn btn-outline-success btn-sm" onclick="testSMSService()">
+                        <i class="fas fa-mobile-alt"></i> Test SMS Service
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Background Service Settings -->
+        <div class="settings-section">
+            <h5><i class="fas fa-server"></i> Background Service Settings</h5>
+            <div class="settings-grid">
+                <div class="form-group">
+                    <label for="notification_queue_size" class="form-label">Queue Size Limit</label>
+                    <input type="number" class="form-control" id="notification_queue_size" name="notification_queue_size" 
+                           value="{{ settings.notification_queue_size }}" min="100" max="50000" required>
+                    <div class="help-text">Maximum number of notifications in queue</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="notification_batch_size" class="form-label">Batch Size</label>
+                    <input type="number" class="form-control" id="notification_batch_size" name="notification_batch_size" 
+                           value="{{ settings.notification_batch_size }}" min="1" max="1000" required>
+                    <div class="help-text">Number of notifications to process in each batch</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="notification_worker_count" class="form-label">Worker Count</label>
+                    <input type="number" class="form-control" id="notification_worker_count" name="notification_worker_count" 
+                           value="{{ settings.notification_worker_count }}" min="1" max="20" required>
+                    <div class="help-text">Number of background workers for processing notifications</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="notification_health_check_interval" class="form-label">Health Check Interval (minutes)</label>
+                    <input type="number" class="form-control" id="notification_health_check_interval" name="notification_health_check_interval" 
+                           value="{{ settings.notification_health_check_interval }}" min="1" max="60" required>
+                    <div class="help-text">How often to check service health status</div>
+                </div>
+            </div>
+            
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="notification_auto_retry" name="notification_auto_retry" 
+                       {% if settings.notification_auto_retry %}checked{% endif %}>
+                <label class="form-check-label" for="notification_auto_retry">
+                    Enable Auto-Retry for Failed Notifications
+                </label>
+                <div class="help-text">Automatically retry failed notifications</div>
+            </div>
+            
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="notification_rate_limiting" name="notification_rate_limiting" 
+                       {% if settings.notification_rate_limiting %}checked{% endif %}>
+                <label class="form-check-label" for="notification_rate_limiting">
+                    Enable Rate Limiting
+                </label>
+                <div class="help-text">Limit notification sending rate to prevent spam</div>
+            </div>
+        </div>
+
+        <!-- Bulk Notification Settings -->
+        <div class="settings-section">
+            <h5><i class="fas fa-bullhorn"></i> Bulk Notification Settings</h5>
+            <div class="settings-grid">
+                <div class="form-group">
+                    <label for="bulk_notification_max_recipients" class="form-label">Max Recipients per Campaign</label>
+                    <input type="number" class="form-control" id="bulk_notification_max_recipients" name="bulk_notification_max_recipients" 
+                           value="{{ settings.bulk_notification_max_recipients }}" min="100" max="100000" required>
+                    <div class="help-text">Maximum number of recipients allowed in a single campaign</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="bulk_notification_delay_between_batches" class="form-label">Delay Between Batches (seconds)</label>
+                    <input type="number" class="form-control" id="bulk_notification_delay_between_batches" name="bulk_notification_delay_between_batches" 
+                           value="{{ settings.bulk_notification_delay_between_batches }}" min="1" max="300" required>
+                    <div class="help-text">Delay between sending batches of notifications</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="bulk_notification_max_concurrent_campaigns" class="form-label">Max Concurrent Campaigns</label>
+                    <input type="number" class="form-control" id="bulk_notification_max_concurrent_campaigns" name="bulk_notification_max_concurrent_campaigns" 
+                           value="{{ settings.bulk_notification_max_concurrent_campaigns }}" min="1" max="10" required>
+                    <div class="help-text">Maximum number of campaigns that can run simultaneously</div>
+                </div>
+            </div>
+            
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="bulk_notification_require_approval" name="bulk_notification_require_approval" 
+                       {% if settings.bulk_notification_require_approval %}checked{% endif %}>
+                <label class="form-check-label" for="bulk_notification_require_approval">
+                    Require Approval for Bulk Campaigns
+                </label>
+                <div class="help-text">Require admin approval before starting bulk campaigns</div>
+            </div>
+        </div>
+
+        <!-- Notification Templates Settings -->
+        <div class="settings-section">
+            <h5><i class="fas fa-file-alt"></i> Notification Templates Settings</h5>
+            <div class="settings-grid">
+                <div class="form-group">
+                    <label for="notification_template_cache_ttl" class="form-label">Template Cache TTL (minutes)</label>
+                    <input type="number" class="form-control" id="notification_template_cache_ttl" name="notification_template_cache_ttl" 
+                           value="{{ settings.notification_template_cache_ttl }}" min="5" max="1440" required>
+                    <div class="help-text">How long to cache notification templates</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="notification_default_timezone" class="form-label">Default Timezone</label>
+                    <select class="form-select" id="notification_default_timezone" name="notification_default_timezone" required>
+                        <option value="Africa/Accra" {% if settings.notification_default_timezone == 'Africa/Accra' %}selected{% endif %}>Africa/Accra (Ghana)</option>
+                        <option value="UTC" {% if settings.notification_default_timezone == 'UTC' %}selected{% endif %}>UTC</option>
+                        <option value="America/New_York" {% if settings.notification_default_timezone == 'America/New_York' %}selected{% endif %}>America/New_York</option>
+                        <option value="Europe/London" {% if settings.notification_default_timezone == 'Europe/London' %}selected{% endif %}>Europe/London</option>
+                    </select>
+                    <div class="help-text">Default timezone for notification timestamps</div>
+                </div>
+            </div>
+            
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="notification_enable_tracking" name="notification_enable_tracking" 
+                       {% if settings.notification_enable_tracking %}checked{% endif %}>
+                <label class="form-check-label" for="notification_enable_tracking">
+                    Enable Email Tracking
+                </label>
+                <div class="help-text">Track email opens and link clicks</div>
+            </div>
+            
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="notification_enable_analytics" name="notification_enable_analytics" 
+                       {% if settings.notification_enable_analytics %}checked{% endif %}>
+                <label class="form-check-label" for="notification_enable_analytics">
+                    Enable Notification Analytics
+                </label>
+                <div class="help-text">Collect detailed analytics on notification performance</div>
             </div>
         </div>
 
@@ -459,6 +685,170 @@ function testNotificationAPI() {
     });
 }
 
+function testSMSService() {
+    const smsProvider = document.getElementById('sms_provider').value;
+    const smsApiKey = document.getElementById('sms_api_key').value;
+    const smsSenderId = document.getElementById('sms_sender_id').value;
+    const testNumber = document.getElementById('test_sms_number').value;
+    const testMessage = document.getElementById('test_sms_message').value;
+    
+    if (!smsSenderId) {
+        alert('Please fill in SMS Sender ID before testing.');
+        return;
+    }
+    
+    if (!testNumber) {
+        alert('Please enter a test phone number.');
+        return;
+    }
+    
+    if (!testMessage) {
+        alert('Please enter a test message.');
+        return;
+    }
+    
+    const testButton = event.target;
+    const originalText = testButton.innerHTML;
+    testButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
+    testButton.disabled = true;
+    
+    fetch('{% url "core:test-sms-service" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: new URLSearchParams({
+            'provider': smsProvider,
+            'api_key': smsApiKey,
+            'sender_id': smsSenderId,
+            'test_number': testNumber,
+            'test_message': testMessage
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('SMS service test successful!');
+        } else {
+            alert(`SMS service test failed: ${data.message}`);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error testing SMS service');
+    })
+    .finally(() => {
+        testButton.innerHTML = originalText;
+        testButton.disabled = false;
+    });
+}
+
+function testNotificationAPI() {
+    const testButton = event.target;
+    const originalText = testButton.innerHTML;
+    testButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
+    testButton.disabled = true;
+    
+    fetch('{% url "core:test-notification-api" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: new URLSearchParams({
+            'test_type': 'email',
+            'from_email': document.getElementById('email_from_address').value,
+            'from_name': document.getElementById('email_from_name').value,
+            'test_email': 'test@example.com',
+            'test_subject': 'GCX Admin Portal - API Test',
+            'test_body': 'This is a test from the GCX Admin Portal notification API.',
+            'is_html': 'false'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Notification API test successful!');
+        } else {
+            alert(`Notification API test failed: ${data.message}`);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error testing notification API');
+    })
+    .finally(() => {
+        testButton.innerHTML = originalText;
+        testButton.disabled = false;
+    });
+}
+
+function testEmailService() {
+    const testEmail = document.getElementById('test_email_address').value;
+    const fromEmail = document.getElementById('email_from_address').value;
+    const fromName = document.getElementById('email_from_name').value;
+    
+    if (!testEmail) {
+        alert('Please enter a test email address.');
+        return;
+    }
+    
+    if (!fromEmail || !fromName) {
+        alert('Please fill in the From Name and From Address fields.');
+        return;
+    }
+    
+    const testButton = event.target;
+    const originalText = testButton.innerHTML;
+    testButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
+    testButton.disabled = true;
+    
+    fetch('{% url "core:test-notification-api" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: new URLSearchParams({
+            'test_type': 'email',
+            'from_email': document.getElementById('email_from_address').value,
+            'from_name': document.getElementById('email_from_name').value,
+            'test_email': document.getElementById('test_email_address').value,
+            'test_subject': document.getElementById('test_email_subject').value,
+            'test_body': 'This is a test email from the GCX Admin Portal system settings.',
+            'is_html': 'false'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Email service test successful!');
+        } else {
+            alert(`Email service test failed: ${data.message}`);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error testing email service');
+    })
+    .finally(() => {
+        testButton.innerHTML = originalText;
+        testButton.disabled = false;
+    });
+}
+
+function toggleSMSProviderFields() {
+    const provider = document.getElementById('sms_provider').value;
+    const apiSecretField = document.getElementById('sms_api_secret').closest('.form-group');
+    
+    if (provider === 'twilio') {
+        apiSecretField.style.display = 'block';
+    } else {
+        apiSecretField.style.display = 'none';
+    }
+}
+
 // Form validation
 document.addEventListener('DOMContentLoaded', function() {
     const settingsForm = document.getElementById('settingsForm');
@@ -493,6 +883,14 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+    
+    // SMS provider field toggle
+    const smsProviderSelect = document.getElementById('sms_provider');
+    if (smsProviderSelect) {
+        smsProviderSelect.addEventListener('change', toggleSMSProviderFields);
+        // Initialize on page load
+        toggleSMSProviderFields();
+    }
 });
 </script>
 {% endblock %}

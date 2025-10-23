@@ -1,0 +1,704 @@
+{% extends "accounts/base.html" %}
+
+{% block title %}My Contracts - GCX Supplier Portal{% endblock %}
+
+{% block page_title %}My Contracts{% endblock %}
+{% block page_subtitle %}View and manage your supply contracts{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Dashboard Specific Styles */
+    .page-header-modern {
+        background: linear-gradient(135deg, rgba(26, 71, 42, 0.9) 0%, rgba(45, 90, 61, 0.9) 100%), 
+                    url('/media/logo/Untitled-1.jpg');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        color: white;
+        border-radius: var(--border-radius-lg);
+        padding: 2rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .page-header-modern::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 200px;
+        height: 200px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        transform: translate(50%, -50%);
+    }
+
+    .page-header-modern::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 150px;
+        height: 150px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 50%;
+        transform: translate(-50%, 50%);
+    }
+
+    .header-content {
+        position: relative;
+        z-index: 2;
+    }
+
+    .header-title {
+        font-size: 2rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .header-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card-modern {
+        background: var(--white);
+        border: 1px solid var(--gray-200);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        box-shadow: var(--shadow-sm);
+        transition: all var(--transition);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card-modern::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--gcx-secondary);
+        transform: scaleY(0);
+        transition: transform var(--transition);
+    }
+
+    .stat-card-modern:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .stat-card-modern:hover::before {
+        transform: scaleY(1);
+    }
+
+    .stat-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--border-radius-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+    }
+
+    .stat-icon.contracts {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+    }
+
+    .stat-icon.pending {
+        background: linear-gradient(135deg, #ffecd2, #fcb69f);
+    }
+
+    .stat-icon.accepted {
+        background: linear-gradient(135deg, #43e97b, #38f9d7);
+    }
+
+    .stat-icon.value {
+        background: linear-gradient(135deg, #89f7fe, #66a6ff);
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--gray-900);
+        line-height: 1;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+        font-size: 0.875rem;
+        color: var(--gray-600);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Table Styles */
+    .table-modern {
+        border: none;
+        margin-bottom: 0;
+    }
+
+    .table-modern thead th {
+        border: none;
+        background: var(--gray-50);
+        color: var(--gray-700);
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 1rem 0.75rem;
+    }
+
+    .table-modern tbody td {
+        border: none;
+        border-bottom: 1px solid var(--gray-100);
+        padding: 1rem 0.75rem;
+        vertical-align: middle;
+    }
+
+    .table-modern tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .table-modern tbody tr:hover {
+        background: var(--gray-25);
+    }
+
+    /* Status Badge Styles */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-badge.status-pending,
+    .status-badge.status-not-reviewed {
+        background: rgba(253, 126, 20, 0.1);
+        color: #fd7e14;
+        border: 1px solid rgba(253, 126, 20, 0.2);
+    }
+
+    .status-badge.status-accepted {
+        background: rgba(25, 135, 84, 0.1);
+        color: #198754;
+        border: 1px solid rgba(25, 135, 84, 0.2);
+    }
+
+    .status-badge.status-rejected {
+        background: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+        border: 1px solid rgba(220, 53, 69, 0.2);
+    }
+
+    /* Card Modern */
+    .card-modern {
+        background: var(--white);
+        border: 1px solid var(--gray-200);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-sm);
+        margin-bottom: 2rem;
+    }
+
+    .card-header-modern {
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--gray-200);
+        background: var(--white);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .card-title-modern {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--gray-900);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .card-body-modern {
+        padding: 1.5rem;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+        background: var(--white);
+        border: 1px solid var(--gray-200);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .empty-state-icon {
+        width: 80px;
+        height: 80px;
+        background: var(--gray-100);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        font-size: 2rem;
+        color: var(--gray-400);
+    }
+
+    .empty-state-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--gray-900);
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state-description {
+        color: var(--gray-600);
+        margin-bottom: 0;
+    }
+
+    /* Button Styles */
+    .btn-modern {
+        padding: 0.5rem 1rem;
+        border-radius: var(--border-radius-sm);
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: all var(--transition);
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-primary-modern {
+        background: linear-gradient(135deg, var(--gcx-primary), var(--gcx-primary-light));
+        color: white;
+    }
+
+    .btn-primary-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow);
+        color: white;
+    }
+
+    .btn-outline-modern {
+        background: transparent;
+        border: 1px solid var(--gray-300);
+        color: var(--gray-700);
+    }
+
+    .btn-outline-modern:hover {
+        background: var(--gray-50);
+        border-color: var(--gcx-primary);
+        color: var(--gcx-primary);
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .page-header-modern {
+            padding: 1.5rem;
+        }
+
+        .header-title {
+            font-size: 1.5rem;
+        }
+
+        .header-subtitle {
+            font-size: 1rem;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .stat-card-modern {
+            padding: 1rem;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+        }
+
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            font-size: 1.25rem;
+        }
+
+        .card-header-modern {
+            padding: 1rem;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .card-body-modern {
+            padding: 1rem;
+        }
+
+        .card-title-modern {
+            font-size: 1.125rem;
+        }
+
+        /* Mobile table improvements */
+        .table-responsive {
+            border: none;
+            box-shadow: none;
+        }
+
+        .table-modern {
+            font-size: 0.875rem;
+        }
+
+        .table-modern thead {
+            display: none;
+        }
+
+        .table-modern tbody tr {
+            display: block;
+            margin-bottom: 1rem;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            background: var(--white);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .table-modern tbody td {
+            display: block;
+            text-align: left;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .table-modern tbody td:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+            padding-top: 1rem;
+        }
+
+        .table-modern tbody td::before {
+            content: attr(data-label);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            color: var(--gray-600);
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .table-modern tbody td:first-child::before {
+            display: none;
+        }
+
+        /* Mobile action buttons */
+        .table-modern tbody td .d-flex {
+            flex-direction: column;
+            gap: 0.5rem !important;
+        }
+
+        .table-modern tbody td .btn-modern {
+            width: 100%;
+            justify-content: center;
+        }
+
+        /* Empty state mobile */
+        .empty-state {
+            padding: 2rem 1rem;
+        }
+
+        .empty-state-icon {
+            width: 60px;
+            height: 60px;
+            font-size: 1.5rem;
+        }
+
+        .empty-state-title {
+            font-size: 1.125rem;
+        }
+
+        .empty-state-description {
+            font-size: 0.875rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .page-header-modern {
+            padding: 1rem;
+        }
+
+        .header-title {
+            font-size: 1.25rem;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .header-subtitle {
+            font-size: 0.875rem;
+        }
+
+        .stat-number {
+            font-size: 1.75rem;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+        }
+    }
+
+    /* Animations */
+    .fade-in-up {
+        animation: fadeInUp 0.6s ease-out;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .stagger-animation > * {
+        animation: fadeInUp 0.6s ease-out;
+    }
+
+    .stagger-animation > *:nth-child(1) { animation-delay: 0.1s; }
+    .stagger-animation > *:nth-child(2) { animation-delay: 0.2s; }
+    .stagger-animation > *:nth-child(3) { animation-delay: 0.3s; }
+    .stagger-animation > *:nth-child(4) { animation-delay: 0.4s; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header-modern fade-in-up">
+    <div class="header-content">
+        <h1 class="header-title">
+            <i class="fas fa-file-contract"></i>
+            My Contracts
+        </h1>
+        <p class="header-subtitle">
+            View and manage your supply contracts
+        </p>
+    </div>
+</div>
+
+<!-- Contract Statistics -->
+<div class="stats-grid stagger-animation">
+    <div class="stat-card-modern">
+        <div class="stat-header">
+            <div class="stat-icon contracts">
+                <i class="fas fa-file-contract"></i>
+            </div>
+        </div>
+        <div class="stat-number">{{ total_contracts }}</div>
+        <div class="stat-label">Total Contracts</div>
+    </div>
+
+    <div class="stat-card-modern">
+        <div class="stat-header">
+            <div class="stat-icon pending">
+                <i class="fas fa-clock"></i>
+            </div>
+        </div>
+        <div class="stat-number">{{ pending_contracts }}</div>
+        <div class="stat-label">Pending Review</div>
+    </div>
+
+    <div class="stat-card-modern">
+        <div class="stat-header">
+            <div class="stat-icon accepted">
+                <i class="fas fa-check-circle"></i>
+            </div>
+        </div>
+        <div class="stat-number">{{ accepted_contracts }}</div>
+        <div class="stat-label">Accepted</div>
+    </div>
+
+    <div class="stat-card-modern">
+        <div class="stat-header">
+            <div class="stat-icon value">
+                <i class="fas fa-money-bill-wave"></i>
+            </div>
+        </div>
+        <div class="stat-number">GHS {{ total_contracts|floatformat:0 }}</div>
+        <div class="stat-label">Total Value</div>
+    </div>
+</div>
+
+<!-- Contracts List -->
+<div class="card-modern fade-in-up">
+    <div class="card-header-modern">
+        <h3 class="card-title-modern">
+                    <i class="fas fa-list"></i>
+                    Contract Overview
+        </h3>
+            </div>
+    <div class="card-body-modern">
+                {% if contracts %}
+                <div class="table-responsive">
+            <table class="table table-modern">
+                        <thead>
+                            <tr>
+                                <th>Contract Number</th>
+                                <th>Title</th>
+                                <th>Status</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for contract_data in contracts %}
+                            {% with contract=contract_data.contract acceptance=contract_data.acceptance %}
+                            <tr>
+                        <td data-label="Contract Number">
+                                    <strong>{{ contract.contract_number }}</strong>
+                                </td>
+                        <td data-label="Title">{{ contract.title }}</td>
+                        <td data-label="Status">
+                                    {% if acceptance %}
+                                        {% if acceptance.status == 'ACCEPTED' %}
+                                    <span class="status-badge status-accepted">Accepted</span>
+                                        {% elif acceptance.status == 'REJECTED' %}
+                                    <span class="status-badge status-rejected">Rejected</span>
+                                        {% else %}
+                                    <span class="status-badge status-pending">Pending</span>
+                                        {% endif %}
+                                    {% else %}
+                                <span class="status-badge status-not-reviewed">Not Reviewed</span>
+                                    {% endif %}
+                                </td>
+                        <td data-label="Start Date">{{ contract.start_date|date:"M d, Y" }}</td>
+                        <td data-label="End Date">{{ contract.end_date|date:"M d, Y" }}</td>
+                        <td data-label="Actions">
+                            <div class="d-flex gap-2">
+                                        <a href="{% url 'applications:supplier-contract-detail' contract.pk %}" 
+                                   class="btn btn-primary-modern btn-modern btn-sm">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                        {% if contract.contract_file %}
+                                        <a href="{{ contract.contract_file.url }}" 
+                                   class="btn btn-outline-modern btn-modern btn-sm" 
+                                           target="_blank">
+                                            <i class="fas fa-download"></i> Download
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endwith %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="fas fa-file-contract"></i>
+            </div>
+            <h3 class="empty-state-title">No Contracts Available</h3>
+            <p class="empty-state-description">
+                You don't have any contracts yet. Contracts will appear here once they are assigned to you.
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate stat numbers
+    const statNumbers = document.querySelectorAll('.stat-number');
+    statNumbers.forEach(stat => {
+        const text = stat.textContent.trim();
+        const finalValue = parseInt(text.replace(/[^\d]/g, ''));
+        
+        if (finalValue > 0 && !isNaN(finalValue)) {
+            animateNumber(stat, 0, finalValue, 1000, text.includes('GHS'));
+        }
+    });
+
+    function animateNumber(element, start, end, duration, hasPrefix = false) {
+        const startTime = performance.now();
+        const originalText = element.textContent;
+        
+        function updateNumber(currentTime) {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const current = Math.floor(start + (end - start) * progress);
+            
+            if (hasPrefix) {
+                element.textContent = 'GHS ' + current;
+            } else {
+                element.textContent = current;
+            }
+            
+            if (progress < 1) {
+                requestAnimationFrame(updateNumber);
+            } else {
+                element.textContent = originalText;
+            }
+        }
+        
+        requestAnimationFrame(updateNumber);
+    }
+
+    // Add hover effects to cards
+    const cards = document.querySelectorAll('.stat-card-modern');
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-4px)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+});
+</script>
+{% endblock %}
+
+

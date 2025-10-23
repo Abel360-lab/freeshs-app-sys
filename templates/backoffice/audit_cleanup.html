@@ -1,0 +1,415 @@
+{% extends 'backoffice/base.html' %}
+{% load static %}
+
+{% block title %}Audit Log Cleanup - GCX Admin Portal{% endblock %}
+
+{% block page_icon %}<i class="fas fa-broom"></i>{% endblock %}
+{% block page_title %}Audit Log Cleanup{% endblock %}
+
+{% block page_header_container %}
+<div class="page-header-container">
+    <div class="page-header-content">
+        <div class="page-header-info">
+            <div class="page-header-breadcrumb">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'applications:backoffice-dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'core:audit-logs' %}">Audit Logs</a></li>
+                        <li class="breadcrumb-item active">Cleanup</li>
+                    </ol>
+                </nav>
+            </div>
+            <h1 class="page-header-title">Audit Log Cleanup</h1>
+            <p class="page-header-subtitle">Manage log retention and cleanup old entries</p>
+        </div>
+        <div class="page-header-actions">
+            <a href="{% url 'core:audit-logs' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-list"></i> All Logs
+            </a>
+            <a href="{% url 'core:audit-log-statistics' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-chart-bar"></i> Statistics
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<style>
+    .cleanup-content {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .cleanup-card {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .cleanup-card h3 {
+        color: var(--primary-color);
+        margin-bottom: 1.5rem;
+        font-size: 1.5rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .warning-card {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .warning-card .warning-icon {
+        color: #856404;
+        margin-right: 0.5rem;
+    }
+    
+    .warning-card .warning-text {
+        color: #856404;
+        font-weight: 500;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+        display: block;
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-group input,
+    .form-group select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: border-color 0.2s ease;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+    }
+    
+    .form-help {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin-top: 0.5rem;
+    }
+    
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
+        font-size: 1rem;
+    }
+    
+    .btn-primary {
+        background: var(--primary-color);
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
+    }
+    
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .btn-danger:hover {
+        background: #c82333;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+    }
+    
+    .btn-outline-secondary {
+        background: transparent;
+        color: var(--text-dark);
+        border: 2px solid var(--border-color);
+    }
+    
+    .btn-outline-secondary:hover {
+        background: var(--bg-light);
+        border-color: var(--text-muted);
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-item {
+        background: var(--bg-light);
+        border-radius: 8px;
+        padding: 1rem;
+        text-align: center;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+    
+    .success-message {
+        background: #d4edda;
+        border: 1px solid #c3e6cb;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        color: #155724;
+    }
+    
+    .success-message .success-icon {
+        margin-right: 0.5rem;
+    }
+    
+    .critical-actions {
+        background: #f8d7da;
+        border: 1px solid #f5c6cb;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .critical-actions h4 {
+        color: #721c24;
+        margin-bottom: 0.5rem;
+        font-size: 1.1rem;
+    }
+    
+    .critical-actions ul {
+        color: #721c24;
+        margin: 0;
+        padding-left: 1.5rem;
+    }
+    
+    .critical-actions li {
+        margin-bottom: 0.25rem;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    
+    .retention-info {
+        background: var(--bg-light);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .retention-info h4 {
+        color: var(--primary-color);
+        margin-bottom: 0.5rem;
+        font-size: 1.1rem;
+    }
+    
+    .retention-info p {
+        color: var(--text-muted);
+        margin: 0;
+        font-size: 0.9rem;
+    }
+    
+    @media (max-width: 768px) {
+        .cleanup-content {
+            max-width: 100%;
+        }
+        
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+    }
+</style>
+
+<div class="container">
+    <div class="cleanup-content">
+        <!-- Warning Message -->
+        <div class="warning-card">
+            <i class="fas fa-exclamation-triangle warning-icon"></i>
+            <span class="warning-text">
+                <strong>Warning:</strong> This action will permanently delete audit log entries. 
+                This action cannot be undone. Please review the settings carefully before proceeding.
+            </span>
+        </div>
+
+        <!-- Current Statistics -->
+        <div class="cleanup-card">
+            <h3><i class="fas fa-chart-bar"></i> Current Log Statistics</h3>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number">{{ total_logs|default:"0" }}</div>
+                    <div class="stat-label">Total Logs</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ logs_last_7_days|default:"0" }}</div>
+                    <div class="stat-label">Last 7 Days</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ logs_last_30_days|default:"0" }}</div>
+                    <div class="stat-label">Last 30 Days</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ logs_last_90_days|default:"0" }}</div>
+                    <div class="stat-label">Last 90 Days</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cleanup Form -->
+        <div class="cleanup-card">
+            <h3><i class="fas fa-broom"></i> Cleanup Old Logs</h3>
+            
+            <form method="POST">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label for="days_to_keep">Retention Period (Days)</label>
+                    <select id="days_to_keep" name="days_to_keep" required>
+                        <option value="30">30 days</option>
+                        <option value="90">90 days</option>
+                        <option value="180">180 days (6 months)</option>
+                        <option value="365" selected>365 days (1 year)</option>
+                        <option value="730">730 days (2 years)</option>
+                        <option value="1095">1095 days (3 years)</option>
+                    </select>
+                    <div class="form-help">
+                        Logs older than this period will be deleted. Critical actions (LOGIN, PASSWORD_CHANGE, SETTINGS_UPDATE) will be preserved.
+                    </div>
+                </div>
+
+                <div class="retention-info">
+                    <h4><i class="fas fa-info-circle"></i> Retention Policy</h4>
+                    <p>
+                        The system will preserve critical security events (login attempts, password changes, settings updates) 
+                        regardless of the retention period. Only routine audit logs will be cleaned up.
+                    </p>
+                </div>
+
+                <div class="critical-actions">
+                    <h4><i class="fas fa-shield-alt"></i> Protected Actions</h4>
+                    <p>The following actions will <strong>never</strong> be deleted:</p>
+                    <ul>
+                        <li>User login and logout events</li>
+                        <li>Password changes and security events</li>
+                        <li>System settings modifications</li>
+                        <li>Permission and role changes</li>
+                    </ul>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete old audit logs? This action cannot be undone.')">
+                        <i class="fas fa-trash"></i> Cleanup Old Logs
+                    </button>
+                    <a href="{% url 'core:audit-logs' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Success Message -->
+        {% if message %}
+        <div class="success-message">
+            <i class="fas fa-check-circle success-icon"></i>
+            <strong>Cleanup Completed:</strong> {{ message }}
+        </div>
+        {% endif %}
+
+        <!-- Additional Information -->
+        <div class="cleanup-card">
+            <h3><i class="fas fa-question-circle"></i> About Log Cleanup</h3>
+            <div style="color: var(--text-muted); line-height: 1.6;">
+                <p>
+                    <strong>Why cleanup logs?</strong> Audit logs can grow very large over time, affecting system performance 
+                    and storage requirements. Regular cleanup helps maintain optimal system performance.
+                </p>
+                <p>
+                    <strong>What gets deleted?</strong> Only routine audit logs older than the specified retention period 
+                    will be deleted. Critical security events are always preserved.
+                </p>
+                <p>
+                    <strong>When to cleanup?</strong> Consider running cleanup monthly or quarterly, depending on your 
+                    system's activity level and storage constraints.
+                </p>
+                <p>
+                    <strong>Backup recommendation:</strong> Before running cleanup, consider exporting important logs 
+                    to an external system for long-term archival.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add confirmation for cleanup action
+    const cleanupForm = document.querySelector('form[method="POST"]');
+    if (cleanupForm) {
+        cleanupForm.addEventListener('submit', function(e) {
+            const daysToKeep = document.getElementById('days_to_keep').value;
+            const confirmMessage = `Are you sure you want to delete audit logs older than ${daysToKeep} days? This action cannot be undone.`;
+            
+            if (!confirm(confirmMessage)) {
+                e.preventDefault();
+            }
+        });
+    }
+    
+    // Update form help text based on selection
+    const daysSelect = document.getElementById('days_to_keep');
+    const helpText = document.querySelector('.form-help');
+    
+    if (daysSelect && helpText) {
+        daysSelect.addEventListener('change', function() {
+            const days = this.value;
+            helpText.textContent = `Logs older than ${days} days will be deleted. Critical actions (LOGIN, PASSWORD_CHANGE, SETTINGS_UPDATE) will be preserved.`;
+        });
+    }
+});
+</script>
+{% endblock %}

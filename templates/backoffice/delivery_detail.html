@@ -1,0 +1,1026 @@
+{% extends 'backoffice/base.html' %}
+{% load static %}
+
+{% block title %}Delivery Details - {{ delivery.serial_number }}{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<style>
+    :root {
+        --gcx-primary: #1a472a;
+        --gcx-primary-light: #2d5a3d;
+        --gcx-secondary: #f8b500;
+        --success: #198754;
+        --warning: #fd7e14;
+        --danger: #dc3545;
+        --info: #0dcaf0;
+        --light: #f8f9fa;
+        --dark: #212529;
+    }
+
+    body {
+        background-color: #f8f9fa;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .delivery-header {
+        background: linear-gradient(135deg, var(--gcx-primary) 0%, var(--gcx-primary-light) 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .delivery-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 200px;
+        height: 200px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        z-index: 1;
+    }
+
+    .delivery-header .container {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .delivery-status-badge {
+        font-size: 0.875rem;
+        padding: 0.5rem 1rem;
+        border-radius: 25px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: inline-block;
+    }
+    
+    .status-pending {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+    
+    .status-delivered {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    
+    .status-verified {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+    }
+    
+    .status-rejected {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .status-in_transit {
+        background: #e2e3e5;
+        color: #383d41;
+        border: 1px solid #d6d8db;
+    }
+    
+    .info-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        border: 1px solid #e9ecef;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .info-card:hover {
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+        transform: translateY(-2px);
+    }
+    
+    .info-card-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 1.25rem 1.5rem;
+        border-bottom: 2px solid #e9ecef;
+        font-weight: 700;
+        color: var(--gcx-primary);
+        font-size: 1.1rem;
+    }
+
+    .info-card-header i {
+        color: var(--gcx-primary);
+        margin-right: 0.5rem;
+    }
+    
+    .info-card-body {
+        padding: 1.5rem;
+    }
+    
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 0;
+        border-bottom: 1px solid #f1f3f4;
+        transition: background-color 0.2s ease;
+    }
+
+    .detail-row:hover {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        margin: 0 -1rem;
+        padding: 1rem;
+    }
+    
+    .detail-row:last-child {
+        border-bottom: none;
+    }
+    
+    .detail-label {
+        font-weight: 600;
+        color: #6c757d;
+        flex: 1;
+        font-size: 0.95rem;
+    }
+    
+    .detail-value {
+        font-weight: 700;
+        color: #212529;
+        flex: 2;
+        text-align: right;
+        font-size: 0.95rem;
+    }
+    
+    .commodity-item {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .commodity-item::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--gcx-primary);
+    }
+
+    .commodity-item:hover {
+        border-color: var(--gcx-primary);
+        transform: translateX(5px);
+        box-shadow: 0 4px 15px rgba(26, 71, 42, 0.1);
+    }
+    
+    .commodity-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+    }
+    
+    .commodity-name {
+        font-weight: 700;
+        color: var(--gcx-primary);
+        font-size: 1.1rem;
+    }
+    
+    .commodity-quantity {
+        font-weight: 600;
+        color: var(--success);
+        background: rgba(25, 135, 84, 0.1);
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+    }
+    
+    .document-card {
+        background: white;
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .document-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, var(--gcx-primary), var(--gcx-secondary));
+    }
+    
+    .document-card:hover {
+        border-color: var(--gcx-primary);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(26, 71, 42, 0.15);
+    }
+    
+    .document-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        color: white;
+        margin-bottom: 1rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .document-srv {
+        background: linear-gradient(135deg, var(--success) 0%, #20c997 100%);
+    }
+    
+    .document-waybill {
+        background: linear-gradient(135deg, var(--danger) 0%, #e74c3c 100%);
+    }
+    
+    .document-invoice {
+        background: linear-gradient(135deg, #6f42c1 0%, #8e44ad 100%);
+    }
+    
+    .document-name {
+        font-weight: 700;
+        color: #212529;
+        margin-bottom: 0.5rem;
+        font-size: 1.1rem;
+    }
+    
+    .document-description {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+
+    .btn-download {
+        background: linear-gradient(135deg, var(--gcx-primary) 0%, var(--gcx-primary-light) 100%);
+        border: none;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-download:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(26, 71, 42, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1.5rem;
+        flex-wrap: wrap;
+    }
+    
+    .btn-verify {
+        background: linear-gradient(135deg, var(--success) 0%, #20c997 100%);
+        border: none;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 700;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(25, 135, 84, 0.2);
+    }
+    
+    .btn-verify:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(25, 135, 84, 0.4);
+        color: white;
+    }
+    
+    .btn-reject {
+        background: linear-gradient(135deg, var(--danger) 0%, #e74c3c 100%);
+        border: none;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 700;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.2);
+    }
+    
+    .btn-reject:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
+        color: white;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        border: 1px solid #e9ecef;
+        text-align: center;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, var(--gcx-primary), var(--gcx-secondary));
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(26, 71, 42, 0.15);
+    }
+    
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--gcx-primary);
+        margin-bottom: 0.5rem;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .stat-label {
+        color: #6c757d;
+        font-weight: 600;
+        font-size: 0.95rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .timeline {
+        position: relative;
+        padding-left: 2rem;
+    }
+    
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 1rem;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: linear-gradient(180deg, var(--gcx-primary), var(--gcx-secondary));
+        border-radius: 2px;
+    }
+    
+    .timeline-item {
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+    
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -1.75rem;
+        top: 0.5rem;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--gcx-primary);
+        border: 4px solid white;
+        box-shadow: 0 0 0 3px var(--gcx-primary);
+        z-index: 2;
+    }
+    
+    .timeline-content {
+        background: white;
+        border-radius: 12px;
+        padding: 1.25rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        border: 1px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+
+    .timeline-content:hover {
+        box-shadow: 0 6px 20px rgba(26, 71, 42, 0.1);
+        transform: translateX(5px);
+    }
+    
+    .timeline-title {
+        font-weight: 700;
+        color: var(--gcx-primary);
+        margin-bottom: 0.5rem;
+        font-size: 1.05rem;
+    }
+    
+    .timeline-date {
+        color: #6c757d;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    
+    .supplier-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 12px;
+        border: 2px solid #e9ecef;
+    }
+    
+    .supplier-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--gcx-primary) 0%, var(--gcx-primary-light) 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 700;
+        font-size: 1.25rem;
+        box-shadow: 0 4px 15px rgba(26, 71, 42, 0.3);
+    }
+
+    .btn-outline-light {
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+    }
+
+    .btn-outline-light:hover {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.5);
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .btn-outline-primary {
+        border: 2px solid var(--gcx-primary);
+        color: var(--gcx-primary);
+        background: transparent;
+        transition: all 0.3s ease;
+    }
+
+    .btn-outline-primary:hover {
+        background: var(--gcx-primary);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(26, 71, 42, 0.3);
+    }
+
+    .back-button {
+        background: rgba(255, 255, 255, 0.2);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        backdrop-filter: blur(10px);
+    }
+
+    .back-button:hover {
+        background: rgba(255, 255, 255, 0.3);
+        border-color: rgba(255, 255, 255, 0.5);
+        color: white;
+        text-decoration: none;
+        transform: translateY(-2px);
+    }
+    
+    @media (max-width: 768px) {
+        .delivery-header {
+            padding: 1.5rem 0;
+        }
+        
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .action-buttons .btn {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .detail-row {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+            text-align: left;
+        }
+        
+        .detail-value {
+            text-align: left;
+        }
+
+        .commodity-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .supplier-info {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .timeline {
+            padding-left: 1.5rem;
+        }
+
+        .timeline-item::before {
+            left: -1.25rem;
+        }
+    }
+
+    /* Loading animation */
+    .loading-shimmer {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: shimmer 2s infinite;
+    }
+
+    @keyframes shimmer {
+        0% {
+            background-position: -200% 0;
+        }
+        100% {
+            background-position: 200% 0;
+        }
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: var(--gcx-primary);
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--gcx-primary-light);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Delivery Header -->
+<div class="delivery-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <div class="d-flex align-items-center gap-3 mb-2">
+                    <i class="fas fa-truck text-warning" style="font-size: 2rem;"></i>
+                    <div>
+                        <h1 class="h2 mb-0">{{ delivery.serial_number }}</h1>
+                        <p class="mb-0 opacity-75">Delivery Receipt Details</p>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="delivery-status-badge status-{{ delivery.status|lower }}">
+                        {{ delivery.get_status_display }}
+                    </span>
+                    <span class="text-light">
+                        <i class="fas fa-calendar-alt me-1"></i>
+                        {{ delivery.delivery_date|date:"M d, Y" }}
+                    </span>
+                </div>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <div class="d-flex gap-2 justify-content-md-end">
+                    <a href="{% url 'applications:backoffice-documents' %}" class="back-button">
+                        <i class="fas fa-arrow-left"></i>
+                        Back to Deliveries
+                    </a>
+                    {% if delivery.status == 'PENDING' %}
+                    <button class="btn-verify" onclick="verifyDelivery({{ delivery.pk }})">
+                        <i class="fas fa-check"></i>
+                        Verify
+                    </button>
+                    <button class="btn-reject" onclick="rejectDelivery({{ delivery.pk }})">
+                        <i class="fas fa-times"></i>
+                        Reject
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">{{ total_commodities }}</div>
+            <div class="stat-label">Commodities Delivered</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ total_quantity }}</div>
+            <div class="stat-label">Total Quantity</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ supporting_documents|length }}</div>
+            <div class="stat-label">Supporting Documents</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ delivery.delivery_region.name }}</div>
+            <div class="stat-label">Delivery Region</div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Delivery Information -->
+        <div class="col-lg-8">
+            <!-- Delivery Details -->
+            <div class="info-card mb-4">
+                <div class="info-card-header">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Delivery Information
+                </div>
+                <div class="info-card-body">
+                    <div class="detail-row">
+                        <span class="detail-label">Delivery Number</span>
+                        <span class="detail-value">{{ delivery.serial_number }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">SRV Number</span>
+                        <span class="detail-value">{{ delivery.srv_number|default:"Not provided" }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Waybill Number</span>
+                        <span class="detail-value">{{ delivery.waybill_number|default:"Not provided" }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Invoice Number</span>
+                        <span class="detail-value">{{ delivery.invoice_number|default:"Not provided" }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Delivery Date</span>
+                        <span class="detail-value">{{ delivery.delivery_date|date:"F d, Y" }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Created At</span>
+                        <span class="detail-value">{{ delivery.created_at|date:"F d, Y g:i A" }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Status</span>
+                        <span class="detail-value">
+                            <span class="delivery-status-badge status-{{ delivery.status|lower }}">
+                                {{ delivery.get_status_display }}
+                            </span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Location Information -->
+            <div class="info-card mb-4">
+                <div class="info-card-header">
+                    <i class="fas fa-map-marker-alt me-2"></i>
+                    Delivery Location
+                </div>
+                <div class="info-card-body">
+                    <div class="detail-row">
+                        <span class="detail-label">Region</span>
+                        <span class="detail-value">{{ delivery.delivery_region.name }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">School</span>
+                        <span class="detail-value">{{ delivery.delivery_school.name }}</span>
+                    </div>
+                    {% if delivery.delivery_school.address %}
+                    <div class="detail-row">
+                        <span class="detail-label">Address</span>
+                        <span class="detail-value">{{ delivery.delivery_school.address }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Commodities Delivered -->
+            <div class="info-card mb-4">
+                <div class="info-card-header">
+                    <i class="fas fa-boxes me-2"></i>
+                    Commodities Delivered
+                </div>
+                <div class="info-card-body">
+                    {% for commodity in commodities %}
+                    <div class="commodity-item">
+                        <div class="commodity-header">
+                            <span class="commodity-name">{{ commodity.commodity.name }}</span>
+                            <span class="commodity-quantity">
+                                {{ commodity.quantity }} {{ commodity.unit_of_measure }}
+                            </span>
+                        </div>
+                        {% if commodity.unit_price %}
+                        <div class="text-muted">
+                            <small>Unit Price: GHS {{ commodity.unit_price|floatformat:2 }}</small>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-box-open fa-2x mb-2"></i>
+                        <p>No commodities recorded for this delivery.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Supporting Documents -->
+            <div class="info-card mb-4">
+                <div class="info-card-header">
+                    <i class="fas fa-file-alt me-2"></i>
+                    Supporting Documents
+                </div>
+                <div class="info-card-body">
+                    {% for doc in supporting_documents %}
+                    <div class="document-card">
+                        <div class="d-flex align-items-start gap-3">
+                            <div class="document-icon document-{{ doc.type|lower }}">
+                                {% if doc.type == 'SRV' %}
+                                    <i class="fas fa-receipt"></i>
+                                {% elif doc.type == 'Waybill' %}
+                                    <i class="fas fa-shipping-fast"></i>
+                                {% elif doc.type == 'Invoice' %}
+                                    <i class="fas fa-file-invoice"></i>
+                                {% endif %}
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="document-name">{{ doc.name }}</div>
+                                <div class="document-description">{{ doc.description }}</div>
+                                <div class="mt-2">
+                                    <a href="{{ doc.file.url }}" target="_blank" class="btn-download">
+                                        <i class="fas fa-download"></i>
+                                        Download
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-file-alt fa-2x mb-2"></i>
+                        <p>No supporting documents uploaded for this delivery.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Supplier Information -->
+            <div class="info-card mb-4">
+                <div class="info-card-header">
+                    <i class="fas fa-user me-2"></i>
+                    Supplier Information
+                </div>
+                <div class="info-card-body">
+                    <div class="supplier-info mb-3">
+                        <div class="supplier-avatar">
+                            {{ delivery.supplier_user.get_full_name|first|default:delivery.supplier_user.email|first }}
+                        </div>
+                        <div>
+                            <div class="fw-bold">{{ delivery.supplier_user.get_full_name|default:"N/A" }}</div>
+                            <div class="text-muted">{{ delivery.supplier_user.email }}</div>
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        <a href="{% url 'applications:backoffice-supplier-detail' delivery.supplier_user.pk %}" class="btn btn-outline-primary">
+                            <i class="fas fa-eye"></i>
+                            View Supplier
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Delivery Timeline -->
+            <div class="info-card mb-4">
+                <div class="info-card-header">
+                    <i class="fas fa-clock me-2"></i>
+                    Delivery Timeline
+                </div>
+                <div class="info-card-body">
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-content">
+                                <div class="timeline-title">Delivery Created</div>
+                                <div class="timeline-date">{{ delivery.created_at|date:"M d, Y g:i A" }}</div>
+                            </div>
+                        </div>
+                        {% if delivery.status == 'COMPLETED' %}
+                        <div class="timeline-item">
+                            <div class="timeline-content">
+                                <div class="timeline-title">Delivery Completed</div>
+                                <div class="timeline-date">{{ delivery.updated_at|date:"M d, Y g:i A" }}</div>
+                            </div>
+                        </div>
+                        {% elif delivery.status == 'VERIFIED' %}
+                        <div class="timeline-item">
+                            <div class="timeline-content">
+                                <div class="timeline-title">Delivery Verified</div>
+                                <div class="timeline-date">{{ delivery.updated_at|date:"M d, Y g:i A" }}</div>
+                            </div>
+                        </div>
+                        {% elif delivery.status == 'REJECTED' %}
+                        <div class="timeline-item">
+                            <div class="timeline-content">
+                                <div class="timeline-title">Delivery Rejected</div>
+                                <div class="timeline-date">{{ delivery.updated_at|date:"M d, Y g:i A" }}</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Deliveries -->
+            {% if supplier_deliveries %}
+            <div class="info-card">
+                <div class="info-card-header">
+                    <i class="fas fa-history me-2"></i>
+                    Recent Deliveries
+                </div>
+                <div class="info-card-body">
+                    {% for recent_delivery in supplier_deliveries %}
+                    <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                        <div>
+                            <div class="fw-bold">{{ recent_delivery.serial_number }}</div>
+                            <small class="text-muted">{{ recent_delivery.delivery_date|date:"M d, Y" }}</small>
+                        </div>
+                        <span class="delivery-status-badge status-{{ recent_delivery.status|lower }}">
+                            {{ recent_delivery.get_status_display }}
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Verification Modal -->
+<div class="modal fade" id="verifyDeliveryModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Verify Delivery</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to verify this delivery receipt?</p>
+                <p class="text-muted">This action will mark the delivery as verified and complete the review process.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="confirmVerify">Verify Delivery</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Rejection Modal -->
+<div class="modal fade" id="rejectDeliveryModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Reject Delivery</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to reject this delivery receipt?</p>
+                <div class="mb-3">
+                    <label for="rejectionReason" class="form-label">Reason for rejection:</label>
+                    <textarea class="form-control" id="rejectionReason" rows="3" placeholder="Please provide a reason for rejection..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmReject">Reject Delivery</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentDeliveryId = null;
+
+function verifyDelivery(deliveryId) {
+    currentDeliveryId = deliveryId;
+    const modal = new bootstrap.Modal(document.getElementById('verifyDeliveryModal'));
+    modal.show();
+}
+
+function rejectDelivery(deliveryId) {
+    currentDeliveryId = deliveryId;
+    const modal = new bootstrap.Modal(document.getElementById('rejectDeliveryModal'));
+    modal.show();
+}
+
+document.getElementById('confirmVerify').addEventListener('click', function() {
+    if (!currentDeliveryId) return;
+    
+    fetch(`/backoffice/documents/${currentDeliveryId}/verify/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while verifying the delivery.');
+    });
+});
+
+document.getElementById('confirmReject').addEventListener('click', function() {
+    if (!currentDeliveryId) return;
+    
+    const reason = document.getElementById('rejectionReason').value.trim();
+    if (!reason) {
+        alert('Please provide a reason for rejection.');
+        return;
+    }
+    
+    fetch(`/backoffice/documents/${currentDeliveryId}/reject/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            reason: reason
+        }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while rejecting the delivery.');
+    });
+});
+</script>
+{% endblock %}

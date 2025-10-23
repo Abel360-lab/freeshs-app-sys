@@ -1,0 +1,142 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+
+{% block title %}My SRVs - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-left">
+                <h1 class="page-title">
+                    <i class="fas fa-file-invoice me-2"></i>
+                    My Store Receipt Vouchers
+                </h1>
+                <p class="page-subtitle">Manage your SRV documents</p>
+            </div>
+            <div class="header-right">
+                <a href="{% url 'applications:supplier-create-srv' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Create New SRV
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- SRVs List -->
+    <div class="card">
+        <div class="card-body">
+            {% if srvs %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>SRV Number</th>
+                                <th>Commodity</th>
+                                <th>School</th>
+                                <th>Quantity</th>
+                                <th>Total Amount</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for srv in srvs %}
+                            <tr>
+                                <td>
+                                    <strong>{{ srv.srv_number }}</strong>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ srv.commodity.name }}</span>
+                                </td>
+                                <td>
+                                    {{ srv.delivery_school.name }}<br>
+                                    <small class="text-muted">{{ srv.delivery_region.name }}</small>
+                                </td>
+                                <td>
+                                    {{ srv.quantity }} {{ srv.unit_of_measure }}
+                                </td>
+                                <td>
+                                    <strong>GHS {{ srv.total_amount|floatformat:2 }}</strong>
+                                </td>
+                                <td>
+                                    {% if srv.status == 'DRAFT' %}
+                                        <span class="badge bg-secondary">{{ srv.get_status_display }}</span>
+                                    {% elif srv.status == 'SUBMITTED' %}
+                                        <span class="badge bg-warning">{{ srv.get_status_display }}</span>
+                                    {% elif srv.status == 'APPROVED' %}
+                                        <span class="badge bg-success">{{ srv.get_status_display }}</span>
+                                    {% elif srv.status == 'REJECTED' %}
+                                        <span class="badge bg-danger">{{ srv.get_status_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{ srv.created_at|date:"M d, Y" }}<br>
+                                    <small class="text-muted">{{ srv.created_at|time:"g:i A" }}</small>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button type="button" class="btn btn-outline-primary" 
+                                                onclick="viewSRV({{ srv.id }})" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        {% if srv.document %}
+                                        <a href="{{ srv.document.url }}" class="btn btn-outline-success" 
+                                           target="_blank" title="Download Document">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-file-invoice fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No SRVs Found</h5>
+                    <p class="text-muted">You haven't created any Store Receipt Vouchers yet.</p>
+                    <a href="{% url 'applications:supplier-create-srv' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Create Your First SRV
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- SRV Details Modal -->
+<div class="modal fade" id="srvModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">SRV Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="srvModalBody">
+                <!-- Content will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function viewSRV(srvId) {
+    // Load SRV details via AJAX
+    fetch(`/supplier/srvs/${srvId}/details/`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('srvModalBody').innerHTML = data.html;
+            new bootstrap.Modal(document.getElementById('srvModal')).show();
+        })
+        .catch(error => {
+            console.error('Error loading SRV details:', error);
+            alert('Error loading SRV details');
+        });
+}
+</script>
+{% endblock %}
+

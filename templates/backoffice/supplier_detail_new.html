@@ -1,0 +1,1994 @@
+{% extends "backoffice/base.html" %}
+
+{% block title %}Supplier Details - {{ application.business_name }} - GCX Admin Portal{% endblock %}
+
+{% block page_icon %}<i class="fas fa-user-tie"></i>{% endblock %}
+{% block page_title %}Supplier Management{% endblock %}
+
+{% block page_header_container %}
+<div class="page-header-container">
+    <div class="page-header-content">
+        <div class="page-header-info">
+            <div class="page-header-breadcrumb">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'applications:backoffice-dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'applications:backoffice-suppliers' %}">Suppliers</a></li>
+                        <li class="breadcrumb-item active">{{ application.business_name }}</li>
+                    </ol>
+                </nav>
+            </div>
+            <h1 class="page-header-title">{{ application.business_name }}</h1>
+            <p class="page-header-subtitle">Supplier Management & Contract Awarding</p>
+        </div>
+        <div class="page-header-actions">
+            {% if application.user and not application.user.is_active %}
+            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#activateAccountModal">
+                <i class="fas fa-user-check"></i> Activate Account
+            </button>
+            {% elif application.user and application.user.is_active %}
+            <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#deactivateAccountModal">
+                <i class="fas fa-user-times"></i> Deactivate Account
+            </button>
+            {% endif %}
+            <a href="{% url 'applications:backoffice-award-contract-page' application.pk %}" class="btn btn-primary">
+                <i class="fas fa-award"></i> Award Contract
+            </a>
+            <button class="btn btn-outline-primary" onclick="exportSupplierData()">
+                <i class="fas fa-download"></i> Export Data
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Supplier Overview Cards -->
+<div class="row mb-4">
+    <!-- Account Status -->
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="modern-stat-card">
+            <div class="stat-header">
+                <div class="stat-icon-wrapper" style="background: {% if application.user and application.user.is_active %}#dcfce7{% elif application.user and not application.user.is_active %}#fee2e2{% else %}#fef3c7{% endif %}; color: {% if application.user and application.user.is_active %}#166534{% elif application.user and not application.user.is_active %}#991b1b{% else %}#92400e{% endif %};">
+                    {% if application.user and application.user.is_active %}
+                        <i class="fas fa-user-check"></i>
+                    {% elif application.user and not application.user.is_active %}
+                        <i class="fas fa-user-times"></i>
+                    {% else %}
+                        <i class="fas fa-user-question"></i>
+                    {% endif %}
+                </div>
+                <div>
+                    {% if application.user and application.user.is_active %}
+                        <span class="stat-trend positive"><i class="fas fa-check-circle"></i> Active</span>
+                    {% elif application.user and not application.user.is_active %}
+                        <span class="stat-trend" style="background: #fee2e2; color: #991b1b;"><i class="fas fa-times-circle"></i> Inactive</span>
+                    {% else %}
+                        <span class="stat-trend warning"><i class="fas fa-exclamation-circle"></i> No Account</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="stat-value-wrapper">
+                <div class="stat-label-main">Account Status</div>
+                {% if application.user %}
+                <div class="text-muted mt-2" style="font-size: 0.8125rem;">User ID: #{{ application.user.pk }}</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Status -->
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="modern-stat-card">
+            <div class="stat-header">
+                <div class="stat-icon-wrapper" style="background: {% if application.status == 'APPROVED' %}#dcfce7{% elif application.status == 'REJECTED' %}#fee2e2{% elif application.status == 'UNDER_REVIEW' %}#fef3c7{% else %}#dbeafe{% endif %}; color: {% if application.status == 'APPROVED' %}#166534{% elif application.status == 'REJECTED' %}#991b1b{% elif application.status == 'UNDER_REVIEW' %}#92400e{% else %}#1e40af{% endif %};">
+                    {% if application.status == 'APPROVED' %}
+                        <i class="fas fa-check-circle"></i>
+                    {% elif application.status == 'REJECTED' %}
+                        <i class="fas fa-times-circle"></i>
+                    {% elif application.status == 'UNDER_REVIEW' %}
+                        <i class="fas fa-clock"></i>
+                    {% else %}
+                        <i class="fas fa-hourglass-half"></i>
+                    {% endif %}
+                </div>
+                <div>
+                    <span class="stat-trend {% if application.status == 'APPROVED' %}positive{% elif application.status == 'REJECTED' %}{% elif application.status == 'UNDER_REVIEW' %}warning{% else %}neutral{% endif %}" style="{% if application.status == 'REJECTED' %}background: #fee2e2; color: #991b1b;{% endif %}">
+                        {{ application.get_status_display }}
+                    </span>
+                </div>
+            </div>
+            <div class="stat-value-wrapper">
+                <div class="stat-label-main">Application Status</div>
+                <div class="text-muted mt-2" style="font-size: 0.8125rem;">{{ application.tracking_code }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Business Performance -->
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="modern-stat-card">
+            <div class="stat-header">
+                <div class="stat-icon-wrapper" style="background: #dbeafe; color: #1e40af;">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+            </div>
+            <div class="stat-value-wrapper">
+                <div class="stat-value-main">{{ total_contracts|default:0 }}</div>
+                <div class="stat-label-main">Total Contracts</div>
+                <div class="mt-3 d-flex justify-content-between text-muted" style="font-size: 0.8125rem;">
+                    <span><i class="fas fa-file-contract"></i> {{ total_srvs|default:0 }} SRVs</span>
+                    <span><i class="fas fa-file-invoice"></i> {{ total_invoices|default:0 }} Invoices</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contract Value -->
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="modern-stat-card">
+            <div class="stat-header">
+                <div class="stat-icon-wrapper" style="background: #dcfce7; color: #166534;">
+                    <i class="fas fa-money-bill-wave"></i>
+                </div>
+                {% if contract_signings %}
+                <span class="stat-trend positive"><i class="fas fa-check"></i> {{ contract_signings|length }} Total</span>
+                {% else %}
+                <span class="stat-trend neutral"><i class="fas fa-minus"></i> None</span>
+                {% endif %}
+            </div>
+            <div class="stat-value-wrapper">
+                <div class="stat-value-main" style="font-size: 1.5rem;">
+                    {% if contract_signings %}
+                        {% for signing in contract_signings|slice:":1" %}
+                            {% if signing.status == 'SIGNED' %}
+                            <i class="fas fa-check-circle text-success" style="font-size: 1.25rem;"></i>
+                            {% elif signing.status == 'PENDING' %}
+                            <i class="fas fa-clock text-warning" style="font-size: 1.25rem;"></i>
+                            {% else %}
+                            <i class="fas fa-hourglass text-secondary" style="font-size: 1.25rem;"></i>
+                            {% endif %}
+                            {{ signing.get_status_display }}
+                        {% endfor %}
+                    {% else %}
+                        <span style="font-size: 1rem;">No Contracts</span>
+                    {% endif %}
+                </div>
+                <div class="stat-label-main">Contract Status</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content Tabs -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs" id="supplierTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">
+                            <i class="fas fa-info-circle me-2"></i>Overview
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="contracts-tab" data-bs-toggle="tab" data-bs-target="#contracts" type="button" role="tab">
+                            <i class="fas fa-file-contract me-2"></i>Contracts
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents" type="button" role="tab">
+                            <i class="fas fa-file-alt me-2"></i>Contract Documents
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="activity-tab" data-bs-toggle="tab" data-bs-target="#activity" type="button" role="tab">
+                            <i class="fas fa-history me-2"></i>Activity
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content" id="supplierTabsContent">
+                    <!-- Overview Tab -->
+                    <div class="tab-pane fade show active" id="overview" role="tabpanel">
+                        <div class="row">
+                            <!-- Business Information -->
+                            <div class="col-lg-6 mb-4">
+                                <div class="modern-card">
+                                    <div class="modern-card-header">
+                                        <h6 class="modern-card-title mb-0">
+                                            <i class="fas fa-building"></i>Business Information
+                                        </h6>
+                                    </div>
+                                    <div class="modern-card-body">
+                                        <table class="table table-sm table-borderless">
+                                        <tr>
+                                            <td width="40%"><strong>Business Name:</strong></td>
+                                            <td>{{ application.business_name|default:"—" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Registration Number:</strong></td>
+                                            <td>{{ application.registration_number|default:"—" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>TIN Number:</strong></td>
+                                            <td>{{ application.tin_number|default:"—" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Business Type:</strong></td>
+                                            <td>{{ application.get_business_type_display|default:"—" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Physical Address:</strong></td>
+                                            <td>{{ application.physical_address|default:"—" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>City:</strong></td>
+                                            <td>{{ application.city|default:"—" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Region:</strong></td>
+                                            <td>{{ application.region.name|default:"—" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Phone:</strong></td>
+                                            <td>{{ application.telephone|default:"—" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Email:</strong></td>
+                                            <td>{{ application.email|default:"—" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Website:</strong></td>
+                                            <td>
+                                                {% if application.website %}
+                                                    <a href="{{ application.website }}" target="_blank">{{ application.website }}</a>
+                                                {% else %}
+                                                    —
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Account Information -->
+                            <div class="col-lg-6 mb-4">
+                                <div class="modern-card">
+                                    <div class="modern-card-header">
+                                        <h6 class="modern-card-title mb-0">
+                                            <i class="fas fa-user"></i>Account Information
+                                        </h6>
+                                    </div>
+                                    <div class="modern-card-body">
+                                        <table class="table table-sm table-borderless">
+                                        <tr>
+                                            <td><strong>User:</strong></td>
+                                            <td>
+                                                {% if application.user %}
+                                                    {{ application.user.get_full_name }} ({{ application.user.email }})
+                                                {% else %}
+                                                    <span class="text-muted">No account created</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Application Date:</strong></td>
+                                            <td>{{ application.created_at|date:"M d, Y" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Last Updated:</strong></td>
+                                            <td>{{ application.updated_at|date:"M d, Y" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Status:</strong></td>
+                                            <td>
+                                                <span class="badge bg-{% if application.status == 'APPROVED' %}success{% elif application.status == 'REJECTED' %}danger{% elif application.status == 'UNDER_REVIEW' %}warning{% else %}info{% endif %}">
+                                                    {{ application.get_status_display }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contracts Tab -->
+                    <div class="tab-pane fade" id="contracts" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="text-primary mb-0">
+                                <i class="fas fa-file-contract me-2"></i>Contract History
+                            </h6>
+                            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#awardContractModal">
+                                <i class="fas fa-plus"></i> Award New Contract
+                            </button>
+                        </div>
+                        
+                        {% if contracts %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Contract Number</th>
+                                        <th>Type</th>
+                                        <th>Start Date</th>
+                                        <th>End Date</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for contract in contracts %}
+                                    <tr>
+                                        <td><strong>{{ contract.contract_number }}</strong></td>
+                                        <td>{{ contract.get_contract_type_display }}</td>
+                                        <td>{{ contract.start_date|date:"M d, Y" }}</td>
+                                        <td>{{ contract.end_date|date:"M d, Y" }}</td>
+                                        <td>
+                                            <span class="badge bg-{% if contract.status == 'ACTIVE' %}success{% elif contract.status == 'EXPIRED' %}danger{% else %}warning{% endif %}">
+                                                {{ contract.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                {% if contract.contract_file %}
+                                                <a href="{{ contract.contract_file.url }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                                    <i class="fas fa-download"></i>
+                                                </a>
+                                                {% endif %}
+                                                <a href="{% url 'applications:backoffice-contract-deliveries' contract.pk %}" class="btn btn-sm btn-outline-info" title="View Delivery Receipts">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-file-contract fa-3x text-muted mb-3"></i>
+                            <h6 class="text-muted">No contracts awarded yet</h6>
+                            <p class="text-muted">Award a contract to this supplier to get started.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Contract Documents Tab -->
+                    <div class="tab-pane fade" id="documents" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h6 class="text-primary mb-0">
+                                <i class="fas fa-file-alt me-2"></i>Contract Documents & Signing
+                            </h6>
+                            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#uploadDocumentModal">
+                                <i class="fas fa-plus"></i> Upload Document
+                            </button>
+                        </div>
+                        
+                        <!-- Contract Signing Status -->
+                        {% if contracts %}
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-header bg-gradient-primary text-white">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-signature me-2"></i>Contract Signing Status
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        {% for contract in contracts %}
+                                        {% with contract.signings.first as signing %}
+                                        <div class="contract-signing-item mb-3 p-3 border rounded">
+                                            <div class="row align-items-center">
+                                                <div class="col-md-4">
+                                                    <h6 class="mb-1">{{ contract.contract_number }}</h6>
+                                                    <small class="text-muted">{{ contract.title }}</small>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="d-flex align-items-center">
+                                                        {% if signing and signing.status == 'SIGNED' %}
+                                                        <span class="badge bg-success me-2">
+                                                            <i class="fas fa-check"></i> Signed
+                                                        </span>
+                                                        {% elif signing and signing.status == 'PENDING' %}
+                                                        <span class="badge bg-warning me-2">
+                                                            <i class="fas fa-clock"></i> Pending
+                                                        </span>
+                                                        {% elif signing and signing.status == 'REJECTED' %}
+                                                        <span class="badge bg-danger me-2">
+                                                            <i class="fas fa-times"></i> Rejected
+                                                        </span>
+                                                        {% else %}
+                                                        <span class="badge bg-secondary me-2">
+                                                            <i class="fas fa-file"></i> Not Started
+                                                        </span>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    {% if signing and signing.signed_at %}
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-calendar me-1"></i>
+                                                        Signed: {{ signing.signed_at|date:"M d, Y" }}
+                                                    </small>
+                                                    {% else %}
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-calendar me-1"></i>
+                                                        Not signed yet
+                                                    </small>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="col-md-2 text-end">
+                                                    {% if signing and signing.signature_file %}
+                                                    <a href="{{ signing.signature_file.url }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                                        <i class="fas fa-download"></i> Download
+                                                    </a>
+                                                    {% else %}
+                                                    <span class="btn btn-sm btn-outline-secondary disabled">
+                                                        <i class="fas fa-file"></i> No Document
+                                                    </span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endwith %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Signed Documents Section -->
+                        {% if contract_signings %}
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-header bg-gradient-success text-white d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-file-signature me-2"></i>Signed Documents
+                                        </h6>
+                                        <a href="{% url 'applications:download-signed-documents-zip' application.pk %}" class="btn btn-light btn-sm">
+                                            <i class="fas fa-download me-1"></i>Download All as ZIP
+                                        </a>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            {% for signing in contract_signings %}
+                                            {% if signing.status == 'SIGNED' and signing.signature_file %}
+                                            <div class="col-lg-6 mb-3">
+                                                <div class="signed-document-card p-3 border rounded">
+                                                    <div class="d-flex align-items-start">
+                                                        <div class="signed-doc-icon me-3">
+                                                            <i class="fas fa-file-signature text-success"></i>
+                                                        </div>
+                                                        <div class="flex-grow-1">
+                                                            <h6 class="mb-1">{{ signing.contract.contract_number }}</h6>
+                                                            <p class="text-muted small mb-2">{{ signing.contract.title }}</p>
+                                                            <div class="d-flex justify-content-between align-items-center">
+                                                                <small class="text-muted">
+                                                                    <i class="fas fa-calendar me-1"></i>
+                                                                    {{ signing.signed_at|date:"M d, Y H:i" }}
+                                                                </small>
+                                                                <a href="{{ signing.signature_file.url }}" class="btn btn-sm btn-success" target="_blank">
+                                                                    <i class="fas fa-download"></i> Download
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if contract_requirements %}
+                        <div class="row">
+                            {% for requirement in contract_requirements %}
+                            <div class="col-lg-6 mb-4">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="card-title mb-0">
+                                            <i class="fas fa-file-contract me-2"></i>{{ requirement.label }}
+                                            {% if requirement.is_required %}
+                                            <span class="badge bg-danger ms-2">Required</span>
+                                            {% else %}
+                                            <span class="badge bg-secondary ms-2">Optional</span>
+                                            {% endif %}
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="card-text text-muted small mb-3">{{ requirement.description }}</p>
+                                        
+                                        {% if requirement.condition_note %}
+                                        <div class="alert alert-warning alert-sm mb-3">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                            <small>{{ requirement.condition_note }}</small>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        {% with requirement.documents.all as docs %}
+                                        {% if docs %}
+                                        <div class="uploaded-documents">
+                                            <h6 class="small text-muted mb-2">Uploaded Documents:</h6>
+                                            {% for doc in docs %}
+                                            <div class="document-item d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
+                                                <div>
+                                                    <strong class="small">{{ doc.title }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">
+                                                        v{{ doc.version }}
+                                                        {% if doc.document_file %}
+                                                        | {{ doc.file_extension }} ({{ doc.file_size }})
+                                                        {% else %}
+                                                        | Template Document
+                                                        {% endif %}
+                                                        {% if doc.is_current_version %}
+                                                        <span class="badge bg-success ms-1">Current</span>
+                                                        {% endif %}
+                                                    </small>
+                                                </div>
+                                                {% if doc.document_file %}
+                                                <a href="{{ doc.document_file.url }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                                    <i class="fas fa-download"></i>
+                                                </a>
+                                                {% else %}
+                                                <span class="btn btn-sm btn-outline-secondary disabled">
+                                                    <i class="fas fa-file-alt"></i> Template
+                                                </span>
+                                                {% endif %}
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                        {% else %}
+                                        <div class="no-documents text-center py-3">
+                                            <i class="fas fa-file-upload text-muted mb-2"></i>
+                                            <p class="text-muted small mb-0">No documents uploaded for this requirement</p>
+                                        </div>
+                                        {% endif %}
+                                        {% endwith %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-file-contract fa-3x text-muted mb-3"></i>
+                            <h6 class="text-muted">No contract document requirements defined</h6>
+                            <p class="text-muted">Contact administrator to set up contract document requirements.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Activity Tab -->
+                    <div class="tab-pane fade" id="activity" role="tabpanel">
+                        <h6 class="text-primary mb-3">
+                            <i class="fas fa-history me-2"></i>Recent Activity
+                        </h6>
+                        
+                        {% if recent_activity %}
+                        <div class="timeline">
+                            {% for activity in recent_activity %}
+                            <div class="timeline-item">
+                                <div class="timeline-marker"></div>
+                                <div class="timeline-content">
+                                    <h6 class="timeline-title">{{ activity.action }}</h6>
+                                    <p class="timeline-text">{{ activity.date|date:"M d, Y H:i" }}</p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                            <h6 class="text-muted">No recent activity</h6>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Award Contract Modal -->
+<div class="modal fade" id="awardContractModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-award me-2"></i>Award Contract to {{ application.business_name }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="awardContractForm" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <!-- Contract Information -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-file-contract me-2"></i>Contract Information
+                            </h6>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="contract_number" class="form-label">Contract Number *</label>
+                            <input type="text" class="form-control" id="contract_number" name="contract_number" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="contract_type" class="form-label">Contract Type *</label>
+                            <select class="form-select" id="contract_type" name="contract_type" required>
+                                <option value="">Select Type</option>
+                                <option value="SUPPLY_AGREEMENT">Supply Agreement</option>
+                                <option value="SERVICE_AGREEMENT">Service Agreement</option>
+                                <option value="FRAMEWORK_AGREEMENT">Framework Agreement</option>
+                                <option value="OTHER">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="start_date" class="form-label">Start Date *</label>
+                            <input type="date" class="form-control" id="start_date" name="start_date" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="end_date" class="form-label">End Date *</label>
+                            <input type="date" class="form-control" id="end_date" name="end_date" required>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Static Documents Preview -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-file-alt me-2"></i>Static Documents (Auto-Assigned)
+                            </h6>
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                The following static documents will be automatically assigned to this contract:
+                            </div>
+                            {% if contract_documents %}
+                            <div class="row">
+                                {% for doc in contract_documents %}
+                                {% if doc.category == 'STATIC' and doc.status == 'ACTIVE' and doc.is_current_version %}
+                                <div class="col-md-6 mb-2">
+                                    <div class="card border-success">
+                                        <div class="card-body py-2">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <h6 class="card-title mb-0 small">{{ doc.title }}</h6>
+                                                    <small class="text-muted">{{ doc.file_extension }} ({{ doc.file_size }})</small>
+                                                </div>
+                                                <i class="fas fa-check-circle text-success"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                No static documents available. Upload static documents through the admin panel first.
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Contract File and Additional Documents -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-upload me-2"></i>Contract Documents
+                            </h6>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="contract_file" class="form-label">Main Contract File *</label>
+                            <input type="file" class="form-control" id="contract_file" name="contract_file" accept=".pdf,.doc,.docx" required>
+                            <div class="form-text">Upload the signed contract document</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="additional_documents" class="form-label">Additional Documents</label>
+                            <input type="file" class="form-control" id="additional_documents" name="additional_documents" multiple accept=".pdf,.doc,.docx">
+                            <div class="form-text">Upload additional contract-specific documents (optional)</div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>Ready to Award:</strong> This contract will be created and all documents will be sent to the supplier for review and signing.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-award me-2"></i>Award Contract
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Document Modal -->
+<div class="modal fade" id="uploadDocumentModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-upload me-2"></i>Upload Contract Documents
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="uploadDocumentForm" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Instructions:</strong> Upload the required contract documents. Each document type has specific file size and format requirements.
+                    </div>
+                    
+                    <div class="row">
+                        {% for requirement in contract_requirements %}
+                        <div class="col-md-6 mb-4">
+                            <div class="card requirement-card">
+                                <div class="card-header">
+                                    <h6 class="card-title mb-0">
+                                        {{ requirement.label }}
+                                        {% if requirement.is_required %}
+                                        <span class="badge bg-danger ms-2">Required</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary ms-2">Optional</span>
+                                        {% endif %}
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text small text-muted">{{ requirement.description }}</p>
+                                    {% if requirement.condition_note %}
+                                    <p class="card-text small text-warning">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>{{ requirement.condition_note }}
+                                    </p>
+                                    {% endif %}
+                                    <div class="mb-3">
+                                        <label for="document_{{ requirement.code }}" class="form-label">
+                                            Upload File
+                                        </label>
+                                        <input type="file" 
+                                               class="form-control" 
+                                               id="document_{{ requirement.code }}" 
+                                               name="document_{{ requirement.code }}"
+                                               accept="{% for ext in requirement.get_allowed_extensions %}{{ ext }}{% if not forloop.last %},{% endif %}{% endfor %}"
+                                               data-max-size="{{ requirement.max_file_size_mb }}"
+                                               {% if requirement.is_required %}required{% endif %}>
+                                        <div class="form-text">
+                                            <small>
+                                                <i class="fas fa-file me-1"></i>
+                                                Allowed: {% for ext in requirement.get_allowed_extensions %}{{ ext }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                                                | Max size: {{ requirement.max_file_size_mb }}MB
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-upload me-2"></i>Upload Documents
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Activate Account Modal -->
+<div class="modal fade" id="activateAccountModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 12px; border: none;">
+            <div class="modal-header" style="border-bottom: 1px solid #e5e7eb;">
+                <h5 class="modal-title" style="display: flex; align-items: center; gap: 0.5rem;">
+                    <div style="width: 40px; height: 40px; background: #dcfce7; color: #166534; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    Activate Supplier Account
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="padding: 1.5rem;">
+                <div class="alert alert-success" style="border-radius: 8px;">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Action Required:</strong> Activating this account will grant the supplier full access to the system.
+                </div>
+                
+                <div class="mb-3">
+                    <h6 class="mb-2">Supplier Details:</h6>
+                    <div class="bg-light p-3 rounded">
+                        <div class="mb-2">
+                            <strong>Business Name:</strong> {{ application.business_name }}
+                        </div>
+                        <div class="mb-2">
+                            <strong>Email:</strong> {{ application.email }}
+                        </div>
+                        {% if application.user %}
+                        <div>
+                            <strong>User ID:</strong> {{ application.user.pk }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label" style="font-weight: 600;">Activation Notes (Optional)</label>
+                    <textarea class="form-control" rows="3" id="activationNotes" placeholder="Add any notes about this activation..."></textarea>
+                </div>
+                
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="sendActivationEmail" checked>
+                    <label class="form-check-label" for="sendActivationEmail">
+                        Send activation notification email to supplier
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid #e5e7eb; padding: 1rem 1.5rem;">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="confirmActivateBtn" class="btn btn-success" onclick="confirmActivateAccount()">
+                    <i class="fas fa-check me-2"></i>Confirm Activation
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Deactivate Account Modal -->
+<div class="modal fade" id="deactivateAccountModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 12px; border: none;">
+            <div class="modal-header" style="border-bottom: 1px solid #e5e7eb;">
+                <h5 class="modal-title" style="display: flex; align-items: center; gap: 0.5rem;">
+                    <div style="width: 40px; height: 40px; background: #fee2e2; color: #991b1b; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-user-times"></i>
+                    </div>
+                    Deactivate Supplier Account
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="padding: 1.5rem;">
+                <div class="alert alert-warning" style="border-radius: 8px;">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Warning:</strong> Deactivating this account will revoke the supplier's system access immediately.
+                </div>
+                
+                <div class="mb-3">
+                    <h6 class="mb-2">Supplier Details:</h6>
+                    <div class="bg-light p-3 rounded">
+                        <div class="mb-2">
+                            <strong>Business Name:</strong> {{ application.business_name }}
+                        </div>
+                        <div class="mb-2">
+                            <strong>Email:</strong> {{ application.email }}
+                        </div>
+                        {% if application.user %}
+                        <div>
+                            <strong>User ID:</strong> {{ application.user.pk }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label" style="font-weight: 600;">Reason for Deactivation *</label>
+                    <textarea class="form-control" rows="4" id="deactivationReason" placeholder="Please provide a reason for deactivating this account..." required></textarea>
+                </div>
+                
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="sendDeactivationEmail" checked>
+                    <label class="form-check-label" for="sendDeactivationEmail">
+                        Send deactivation notification email to supplier
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid #e5e7eb; padding: 1rem 1.5rem;">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="confirmDeactivateBtn" class="btn btn-danger" onclick="confirmDeactivateAccount()">
+                    <i class="fas fa-times me-2"></i>Confirm Deactivation
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+    <div id="successToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="fas fa-check-circle me-2"></i>
+                <span id="successToastMessage">Operation successful</span>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+    
+    <div id="errorToast" class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <span id="errorToastMessage">An error occurred</span>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
+<form style="display: none;" id="csrf-form">{% csrf_token %}</form>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Dashboard-Style Stat Cards */
+.modern-stat-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.2s ease;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.modern-stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--primary-color);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+}
+
+.modern-stat-card:hover::before {
+    transform: scaleX(1);
+}
+
+.modern-stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
+}
+
+.stat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.stat-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.stat-value-wrapper {
+    margin-top: 0.75rem;
+}
+
+.stat-value-main {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #111827;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label-main {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.stat-trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: 6px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+}
+
+.stat-trend.positive {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.stat-trend.warning {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.stat-trend.neutral {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+/* Modern Card */
+.modern-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+    height: 100%;
+}
+
+.modern-card-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.modern-card-title {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.modern-card-body {
+    padding: 1.5rem;
+}
+
+/* Modern Table */
+.modern-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.modern-table thead th {
+    padding: 0.75rem 1rem;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: left;
+}
+
+.modern-table thead th:first-child {
+    border-top-left-radius: 8px;
+}
+
+.modern-table thead th:last-child {
+    border-top-right-radius: 8px;
+}
+
+.modern-table tbody td {
+    padding: 1rem;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 0.875rem;
+    color: #374151;
+}
+
+.modern-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.modern-table tbody tr:hover {
+    background: #f9fafb;
+}
+
+/* Badge Modern */
+.badge-modern {
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.badge-modern.success {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.badge-modern.warning {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.badge-modern.danger {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.badge-modern.info {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.badge-modern.secondary {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+/* Info Tables in Cards */
+.modern-card-body .table-borderless td {
+    padding: 0.75rem 0;
+    vertical-align: top;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.modern-card-body .table-borderless tr:last-child td {
+    border-bottom: none;
+}
+
+.modern-card-body .table-borderless td:first-child {
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.modern-card-body .table-borderless td:last-child {
+    color: #111827;
+}
+
+/* Main Content Card */
+.row > .col-12 > .card {
+    border: none;
+    border-radius: 20px;
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+}
+
+.card-header {
+    background: linear-gradient(to right, #f8fafc, #f1f5f9);
+    border: none;
+    padding: 0;
+}
+
+.nav-tabs {
+    border: none;
+    padding: 1rem 1.5rem 0;
+}
+
+.nav-tabs .nav-link {
+    border: none;
+    color: #64748b;
+    font-weight: 600;
+    padding: 1rem 1.5rem;
+    margin-right: 0.5rem;
+    border-radius: 12px 12px 0 0;
+    transition: all 0.3s ease;
+    position: relative;
+    background: transparent;
+}
+
+.nav-tabs .nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%) scaleX(0);
+    width: 80%;
+    height: 3px;
+    background: var(--primary-gradient);
+    transition: transform 0.3s ease;
+    border-radius: 3px 3px 0 0;
+}
+
+.nav-tabs .nav-link:hover {
+    background: rgba(102, 126, 234, 0.05);
+    color: #667eea;
+}
+
+.nav-tabs .nav-link.active {
+    background: white;
+    color: #667eea;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
+}
+
+.nav-tabs .nav-link.active::after {
+    transform: translateX(-50%) scaleX(1);
+}
+
+.card-body {
+    padding: 2.5rem;
+}
+
+/* Enhanced Tables */
+.table-responsive {
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.table {
+    margin-bottom: 0;
+}
+
+.table thead th {
+    background: linear-gradient(to right, #f8fafc, #f1f5f9);
+    border: none;
+    color: #475569;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    padding: 1.25rem 1rem;
+}
+
+.table tbody tr {
+    transition: all 0.2s ease;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.table tbody tr:hover {
+    background: linear-gradient(to right, rgba(102, 126, 234, 0.02), rgba(102, 126, 234, 0.05));
+    transform: scale(1.01);
+}
+
+.table tbody td {
+    padding: 1.25rem 1rem;
+    vertical-align: middle;
+    border: none;
+}
+
+.table tbody td strong {
+    color: #1e293b;
+    font-weight: 600;
+}
+
+/* Info Tables Styling */
+.table-sm td {
+    padding: 0.875rem 1rem !important;
+    border: none !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+}
+
+.table-sm tr:last-child td {
+    border-bottom: none !important;
+}
+
+.table-sm td:first-child {
+    color: #64748b;
+    font-weight: 600;
+    width: 40%;
+}
+
+.table-sm td:last-child {
+    color: #1e293b;
+}
+
+/* Enhanced Badges */
+.badge {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.75rem;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+.badge.bg-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.badge.bg-danger {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+}
+
+.badge.bg-warning {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+
+.badge.bg-info {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.badge.bg-secondary {
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%) !important;
+    box-shadow: 0 2px 8px rgba(107, 114, 128, 0.3);
+}
+
+/* Enhanced Buttons */
+.btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.btn-outline-primary {
+    background: white;
+    border: 2px solid #667eea;
+    color: #667eea;
+}
+
+.btn-outline-primary:hover {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: #667eea;
+    color: white;
+}
+
+.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+.btn-group .btn {
+    padding: 0.5rem 0.75rem;
+}
+
+/* Section Headers */
+h6.text-primary {
+    font-weight: 700;
+    font-size: 1.1rem;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 1.5rem;
+    position: relative;
+    padding-bottom: 0.75rem;
+}
+
+h6.text-primary::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 60px;
+    height: 3px;
+    background: var(--primary-gradient);
+    border-radius: 3px;
+}
+
+/* Document Cards */
+.requirement-card {
+    border: none;
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.4s ease;
+    box-shadow: var(--card-shadow);
+    background: white;
+}
+
+.requirement-card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--card-hover-shadow);
+}
+
+.requirement-card .card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    padding: 1.25rem 1.5rem;
+}
+
+.requirement-card .card-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: white;
+    margin: 0;
+}
+
+.requirement-card .badge {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.requirement-card .card-body {
+    padding: 1.5rem;
+}
+
+/* Document Items */
+.document-item {
+    transition: all 0.3s ease;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+}
+
+/* Animation */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.status-card {
+    animation: fadeInUp 0.5s ease backwards;
+}
+
+.status-card:nth-child(1) { animation-delay: 0.1s; }
+.status-card:nth-child(2) { animation-delay: 0.2s; }
+.status-card:nth-child(3) { animation-delay: 0.3s; }
+.status-card:nth-child(4) { animation-delay: 0.4s; }
+
+/* Alert Enhancements */
+.alert {
+    border-radius: 10px;
+    border: none;
+    padding: 1rem 1.25rem;
+}
+
+.alert-info {
+    background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%);
+    color: #0c4a6e;
+}
+
+.alert-warning {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    color: #78350f;
+}
+
+.alert-success {
+    background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+    color: #14532d;
+}
+
+.document-item:hover {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05)) !important;
+    border-color: #667eea;
+    transform: translateX(4px);
+    box-shadow: 0 2px 12px rgba(102, 126, 234, 0.15);
+}
+
+/* Alerts */
+.alert {
+    border: none;
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.alert-info {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.1));
+    color: #1e40af;
+}
+
+.alert-warning {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.1));
+    color: #92400e;
+}
+
+.alert-success {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
+    color: #065f46;
+}
+
+.alert-sm {
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+}
+
+/* Empty States */
+.text-center.py-4 i.fa-3x {
+    color: #cbd5e1;
+    margin-bottom: 1rem;
+}
+
+.text-center.py-4 h6 {
+    color: #64748b;
+    font-weight: 600;
+}
+
+.text-center.py-4 p {
+    color: #94a3b8;
+}
+
+/* Timeline */
+.timeline {
+    position: relative;
+    padding-left: 2.5rem;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 1rem;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(to bottom, #667eea, #764ba2);
+    border-radius: 3px;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -1.65rem;
+    top: 0.35rem;
+    width: 1rem;
+    height: 1rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    border: 3px solid white;
+    box-shadow: 0 0 0 3px #e2e8f0, 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.timeline-content {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: var(--card-shadow);
+    border-left: 3px solid #667eea;
+    transition: all 0.3s ease;
+}
+
+.timeline-content:hover {
+    transform: translateX(4px);
+    box-shadow: var(--card-hover-shadow);
+}
+
+.timeline-title {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.timeline-text {
+    margin: 0;
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+/* Modal Enhancements */
+.modal-content {
+    border: none;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 1.5rem 2rem;
+}
+
+.modal-title {
+    font-weight: 700;
+}
+
+.modal-body {
+    padding: 2rem;
+}
+
+.modal-footer {
+    padding: 1.5rem 2rem;
+    background: #f8fafc;
+    border: none;
+}
+
+/* Form Enhancements */
+.form-label {
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.form-control, .form-select {
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+}
+
+.form-text {
+    color: #94a3b8;
+    font-size: 0.8rem;
+}
+
+/* Page Header Enhancements */
+.page-header-title {
+    font-weight: 800;
+    font-size: 2rem;
+    color: #1e293b;
+}
+
+.page-header-subtitle {
+    color: #64748b;
+    font-size: 1rem;
+}
+
+.breadcrumb {
+    background: transparent;
+    margin-bottom: 0.5rem;
+}
+
+.breadcrumb-item a {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.breadcrumb-item.active {
+    color: #64748b;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .col-lg-3 .card-body {
+        padding: 1.5rem 1rem;
+    }
+
+    .card-body {
+        padding: 1.5rem;
+    }
+
+    .nav-tabs .nav-link {
+        padding: 0.75rem 1rem;
+        font-size: 0.85rem;
+    }
+}
+
+/* Contract Signing Styles */
+.contract-signing-item {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    transition: all 0.2s ease;
+}
+
+.contract-signing-item:hover {
+    background: white;
+    border-color: var(--primary);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.signed-document-card {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    transition: all 0.2s ease;
+}
+
+.signed-document-card:hover {
+    background: white;
+    border-color: #28a745;
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.1);
+}
+
+.signed-doc-icon {
+    width: 40px;
+    height: 40px;
+    background: rgba(40, 167, 69, 0.1);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.bg-gradient-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+}
+
+[data-theme="dark"] .contract-signing-item {
+    background: var(--bg-tertiary);
+    border-color: var(--border-primary);
+}
+
+[data-theme="dark"] .contract-signing-item:hover {
+    background: var(--card-bg);
+    border-color: #3fb950;
+}
+
+[data-theme="dark"] .signed-document-card {
+    background: var(--bg-tertiary);
+    border-color: var(--border-primary);
+}
+
+[data-theme="dark"] .signed-document-card:hover {
+    background: var(--card-bg);
+    border-color: #3fb950;
+}
+
+[data-theme="dark"] .signed-doc-icon {
+    background: rgba(63, 185, 80, 0.2);
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+    
+    // Initialize modals properly
+    var modalElements = document.querySelectorAll('.modal');
+    modalElements.forEach(function(modalEl) {
+        new bootstrap.Modal(modalEl, {
+            backdrop: true,
+            keyboard: true,
+            focus: true
+        });
+    });
+});
+
+// Award Contract Form
+document.getElementById('awardContractForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    fetch('{% url "applications:backoffice-award-contract" application.pk %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', data.message);
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showAlert('danger', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('danger', 'An error occurred while awarding the contract.');
+    });
+});
+
+// Upload Document Form
+document.getElementById('uploadDocumentForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    fetch('{% url "applications:backoffice-upload-document" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', data.message);
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showAlert('danger', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('danger', 'An error occurred while uploading documents.');
+    });
+});
+
+// Toast notification functions
+function showSuccessToast(message) {
+    const toastElement = document.getElementById('successToast');
+    document.getElementById('successToastMessage').textContent = message;
+    const toast = new bootstrap.Toast(toastElement, { delay: 5000 });
+    toast.show();
+}
+
+function showErrorToast(message) {
+    const toastElement = document.getElementById('errorToast');
+    document.getElementById('errorToastMessage').textContent = message;
+    const toast = new bootstrap.Toast(toastElement, { delay: 5000 });
+    toast.show();
+}
+
+// Account Management Functions with Modals
+function confirmActivateAccount() {
+    {% if application.user %}
+    const userId = {{ application.user.pk }};
+    {% else %}
+    showErrorToast('No user account found for this supplier');
+    return;
+    {% endif %}
+    
+    const notes = document.getElementById('activationNotes').value;
+    const sendEmail = document.getElementById('sendActivationEmail').checked;
+    const csrfToken = document.querySelector('#csrf-form input[name="csrfmiddlewaretoken"]').value;
+    
+    // Get button and disable it
+    const activateBtn = document.getElementById('confirmActivateBtn');
+    const originalHtml = activateBtn.innerHTML;
+    activateBtn.disabled = true;
+    activateBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Activating...';
+    
+    fetch(`/backoffice/users/${userId}/activate/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            notes: notes,
+            send_email: sendEmail
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('activateAccountModal')).hide();
+            showSuccessToast('Account activated successfully! ✓');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showErrorToast(data.message || 'Failed to activate account');
+            activateBtn.disabled = false;
+            activateBtn.innerHTML = originalHtml;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showErrorToast('An error occurred while activating the account');
+        activateBtn.disabled = false;
+        activateBtn.innerHTML = originalHtml;
+    });
+}
+
+function confirmDeactivateAccount() {
+    {% if application.user %}
+    const userId = {{ application.user.pk }};
+    {% else %}
+    showErrorToast('No user account found for this supplier');
+    return;
+    {% endif %}
+    
+    const reason = document.getElementById('deactivationReason').value;
+    
+    if (!reason.trim()) {
+        showErrorToast('Please provide a reason for deactivation');
+        document.getElementById('deactivationReason').focus();
+        return;
+    }
+    
+    const sendEmail = document.getElementById('sendDeactivationEmail').checked;
+    const csrfToken = document.querySelector('#csrf-form input[name="csrfmiddlewaretoken"]').value;
+    
+    // Get button and disable it
+    const deactivateBtn = document.getElementById('confirmDeactivateBtn');
+    const originalHtml = deactivateBtn.innerHTML;
+    deactivateBtn.disabled = true;
+    deactivateBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Deactivating...';
+    
+    fetch(`/backoffice/users/${userId}/deactivate/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            reason: reason,
+            send_email: sendEmail
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('deactivateAccountModal')).hide();
+            showSuccessToast('Account deactivated successfully');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showErrorToast(data.message || 'Failed to deactivate account');
+            deactivateBtn.disabled = false;
+            deactivateBtn.innerHTML = originalHtml;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showErrorToast('An error occurred while deactivating the account');
+        deactivateBtn.disabled = false;
+        deactivateBtn.innerHTML = originalHtml;
+    });
+}
+
+function viewContractDetails(contractId) {
+    // Implement contract details view
+    showAlert('info', 'Contract details view will be implemented.');
+}
+
+function exportSupplierData() {
+    // Implement data export
+    showAlert('info', 'Data export functionality will be implemented.');
+}
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    // Insert at the top of the content
+    const content = document.querySelector('.container-fluid');
+    content.insertBefore(alertDiv, content.firstChild);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

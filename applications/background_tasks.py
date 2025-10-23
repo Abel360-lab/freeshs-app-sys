@@ -119,7 +119,7 @@ def enqueue_pdf_generation(application_id):
 
 
 def enqueue_application_processing(application_id):
-    """Enqueue complete application processing (PDF + email)."""
+    """Enqueue complete application processing (PDF + notifications)."""
     from .tasks import process_application_submission
     
     def on_success(result):
@@ -133,6 +133,57 @@ def enqueue_application_processing(application_id):
         application_id,
         success_callback=on_success,
         error_callback=on_error
+    )
+
+
+def enqueue_notifications(application_id):
+    """Enqueue all notifications for an application."""
+    from .notification_tasks import send_all_notifications_task
+    
+    def on_success(result):
+        logger.info(f"All notifications sent successfully for application {application_id}")
+    
+    def on_error(error):
+        logger.error(f"Failed to send notifications for application {application_id}: {str(error)}")
+    
+    task_processor.enqueue_task(
+        send_all_notifications_task,
+        application_id,
+        success_callback=on_success,
+        error_callback=on_error
+    )
+
+
+def enqueue_quick_notifications(application_id):
+    """Enqueue only critical notifications (admin + confirmation) for faster response."""
+    from .notification_tasks import send_admin_notification_task, send_confirmation_notifications_task
+    
+    def on_admin_success(result):
+        logger.info(f"Admin notification sent successfully for application {application_id}")
+    
+    def on_admin_error(error):
+        logger.error(f"Admin notification failed for application {application_id}: {str(error)}")
+    
+    def on_confirmation_success(result):
+        logger.info(f"Confirmation notifications sent successfully for application {application_id}")
+    
+    def on_confirmation_error(error):
+        logger.error(f"Confirmation notifications failed for application {application_id}: {str(error)}")
+    
+    # Send admin notification first (most important)
+    task_processor.enqueue_task(
+        send_admin_notification_task,
+        application_id,
+        success_callback=on_admin_success,
+        error_callback=on_admin_error
+    )
+    
+    # Send confirmation notifications
+    task_processor.enqueue_task(
+        send_confirmation_notifications_task,
+        application_id,
+        success_callback=on_confirmation_success,
+        error_callback=on_confirmation_error
     )
 
 

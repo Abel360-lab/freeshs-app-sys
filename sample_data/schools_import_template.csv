@@ -1,0 +1,7 @@
+name,code,Region,district,address,contact_person,contact_phone,contact_email,is_active
+"Accra Senior High School","ASHS001","Greater Accra Region","Accra Metropolitan","P.O. Box 123, Accra","John Doe","+233 24 123 4567","contact@ashs.edu.gh",True
+"Kumasi Technical Institute","KTI002","Ashanti Region","Kumasi Metropolitan","P.O. Box 456, Kumasi","Jane Smith","+233 20 987 6543","info@kti.edu.gh",True
+"Tamale Secondary School","TSS003","Northern Region","Tamale Metropolitan","P.O. Box 789, Tamale","Ahmed Ibrahim","+233 24 555 1234","admin@tss.edu.gh",True
+"Cape Coast University School","CCUS004","Central Region","Cape Coast Metropolitan","P.O. Box 321, Cape Coast","Mary Johnson","+233 24 777 8888","",True
+"Ho Technical School","HTS005","Volta Region","Ho Municipal","P.O. Box 654, Ho","Kwame Asante","","principal@hts.edu.gh",True
+"Sunyani Senior High","SSH006","Bono Region","Sunyani Municipal","P.O. Box 987, Sunyani","","+233 24 333 2222","",True

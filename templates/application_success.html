@@ -1,17 +1,19 @@
+{% load static %}
+{% load i18n %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{% get_current_language as LANGUAGE_CODE %}{{ LANGUAGE_CODE }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Application Submitted Successfully - Ghana Commodity Exchange</title>
+    <title>{% trans "Application Submitted Successfully - Ghana Commodity Exchange" %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #1e3a5f;
+            --primary-color: #1a472a;
             --primary-dark: #0f2847;
-            --primary-light: #2c4f7c;
+            --primary-light: #2d5a3d;
             --secondary-color: #e8f0fe;
             --accent-color: #28a745;
             --warning-color: #ffc107;
@@ -26,6 +28,65 @@
             --border-radius: 10px;
             --border-radius-sm: 6px;
             --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            
+            /* GCX Brand Colors */
+            --gcx-primary: #1a472a;
+            --gcx-primary-light: #2d5a3d;
+            --gcx-secondary: #f8b500;
+            --gcx-accent: #ffcd3c;
+            --gcx-success: #28a745;
+            --gcx-dark: #1a472a;
+            
+            /* Light mode colors (default) */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-tertiary: #e9ecef;
+            --text-primary: #2c3e50;
+            --text-secondary: #6c757d;
+            --text-muted: #999999;
+            --border-primary: #dee2e6;
+            --border-secondary: #e9ecef;
+            --card-bg: #ffffff;
+            --input-bg: #ffffff;
+            --header-bg: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+        }
+        
+        /* Dark mode color variables */
+        [data-theme="dark"] {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --bg-tertiary: #404040;
+            --text-primary: #ffffff;
+            --text-secondary: #cccccc;
+            --text-muted: #999999;
+            --border-primary: #404040;
+            --border-secondary: #4d4d4d;
+            --card-bg: #2d2d2d;
+            --input-bg: #404040;
+            --header-bg: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+            --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Auto mode - respects system preference */
+        @media (prefers-color-scheme: dark) {
+            [data-theme="auto"] {
+                --bg-primary: #1a1a1a;
+                --bg-secondary: #2d2d2d;
+                --bg-tertiary: #404040;
+                --text-primary: #ffffff;
+                --text-secondary: #cccccc;
+                --text-muted: #999999;
+                --border-primary: #404040;
+                --border-secondary: #4d4d4d;
+                --card-bg: #2d2d2d;
+                --input-bg: #404040;
+                --header-bg: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+                --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+                --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+                --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.3);
+            }
         }
         
         * {
@@ -37,10 +98,11 @@
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
-            color: var(--text-color);
+            color: var(--text-primary);
             padding-top: 100px;
             min-height: 100vh;
             position: relative;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
         
         body::before {
@@ -49,8 +111,24 @@
             top: 0;
             left: 0;
             right: 0;
+            bottom: 0;
+            background-image: url('/media/commodities/Untitled-1.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            z-index: -2;
             height: 400px;
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(30, 58, 95, 0.7);
             z-index: -1;
         }
         
@@ -85,112 +163,240 @@
             animation-duration: 3.5s;
         }
         
-        /* Enhanced Header */
+        /* Enhanced Responsive Header */
         .fixed-header {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             z-index: 1000;
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
-            box-shadow: var(--shadow-lg);
+            background: var(--header-bg);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
             backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            border-bottom: 3px solid var(--gcx-secondary);
         }
         
-        .header-content {
+        .header-content-wrapper {
             display: flex;
             justify-content: space-between;
             align-items: center;
             max-width: 1400px;
             margin: 0 auto;
-            padding: 1rem 2rem;
+            padding: 0.875rem 2rem;
+            gap: 1rem;
         }
         
-        .logo-container {
+        /* Header Left */
+        .header-left {
             display: flex;
             align-items: center;
-            gap: 1.5rem;
+            gap: 1rem;
+            flex: 1;
+            min-width: 0;
         }
         
-        .logo {
-            width: 65px;
-            height: 65px;
-            background: rgba(255, 255, 255, 0.15);
+        .logo-wrapper {
+            flex-shrink: 0;
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.12);
             border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
             backdrop-filter: blur(10px);
             border: 2px solid rgba(255, 255, 255, 0.2);
-            transition: var(--transition);
+            transition: all 0.3s ease;
+            padding: 0.5rem;
         }
         
-        .logo:hover {
+        .logo-wrapper:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+            background: rgba(255, 255, 255, 0.18);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
         }
         
-        .logo i {
-            font-size: 2rem;
-            color: white;
+        .header-logo {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
         }
         
-        .app-title h1 {
-            font-size: 1.75rem;
-            font-weight: 600;
+        .header-title {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .header-title-main {
+            font-size: 1.375rem;
+            font-weight: 700;
             color: white;
             margin: 0;
             letter-spacing: -0.02em;
+            line-height: 1.2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         
-        .app-title p {
-            font-size: 0.875rem;
+        .header-subtitle {
+            font-size: 0.813rem;
             color: rgba(255, 255, 255, 0.85);
             margin: 0.25rem 0 0 0;
             font-weight: 400;
+            line-height: 1.3;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         
-        .header-info {
+        /* Header Right */
+        .header-right {
+            flex-shrink: 0;
+        }
+        
+        .header-actions {
             display: flex;
             align-items: center;
-            gap: 2rem;
+            gap: 1rem;
             color: white;
         }
         
-        .header-info-item {
+        .header-action-item {
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            font-size: 0.875rem;
-            padding: 0.5rem 1rem;
+            padding: 0.5rem 0.875rem;
             background: rgba(255, 255, 255, 0.1);
-            border-radius: var(--border-radius-sm);
+            border-radius: 8px;
             backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-decoration: none;
+            color: white;
         }
         
-        .security-badge {
+        .header-action-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.25);
+            transform: translateY(-1px);
+        }
+        
+        .header-action-item i {
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        
+        .header-phone i {
+            color: var(--gcx-secondary);
+        }
+        
+        .header-secure i {
+            color: #90EE90;
+        }
+        
+        .header-divider {
+            width: 1px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.2);
+            flex-shrink: 0;
+        }
+        
+        /* Language Switcher Override */
+        .header-actions .language-switcher .btn:hover {
+            background: transparent !important;
+            border-color: rgba(255, 255, 255, 0.25) !important;
+            transform: translateY(-1px);
+        }
+        
+        .header-actions .language-switcher .btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: white;
+            padding: 0.5rem 0.875rem;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+        }
+        
+        /* Theme Toggle Button - Django Admin Style */
+        .theme-toggle {
+            cursor: pointer;
+            border: none;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            padding: 0.4rem 0.8rem;
-            background: rgba(40, 167, 69, 0.2);
-            border: 1px solid rgba(40, 167, 69, 0.3);
-            border-radius: 20px;
-            font-size: 0.75rem;
-            color: #90EE90;
-            font-weight: 500;
+            justify-content: center;
+            color: white;
+            vertical-align: middle;
+            transition: var(--transition);
+            backdrop-filter: blur(10px);
+        }
+
+        .theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        .theme-toggle:active {
+            transform: scale(0.95);
+        }
+
+        .theme-toggle svg {
+            vertical-align: middle;
+            height: 16px;
+            width: 16px;
+            display: none;
+            fill: currentColor;
+        }
+
+        html[data-theme="dark"] .theme-toggle svg.theme-icon-when-dark {
+            display: block;
+        }
+
+        html[data-theme="light"] .theme-toggle svg.theme-icon-when-light {
+            display: block;
+        }
+
+        /* Default to light theme if no data-theme attribute */
+        html:not([data-theme]) .theme-toggle svg.theme-icon-when-light {
+            display: block;
+        }
+
+        /* Visually hidden class for accessibility */
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
         }
         
         /* Success Container */
         .success-container {
             max-width: 900px;
             margin: 2rem auto;
-            background: white;
+            background: var(--card-bg);
             border-radius: var(--border-radius);
             box-shadow: var(--shadow-lg);
             overflow: hidden;
             position: relative;
             animation: slideUp 0.6s ease;
+            border: 1px solid var(--border-primary);
+            transition: background-color 0.3s ease, border-color 0.3s ease;
         }
         
         @keyframes slideUp {
@@ -494,6 +700,197 @@
             line-height: 1.5;
         }
         
+        /* Credentials Box Styles */
+        .credentials-box {
+            background: linear-gradient(135deg, rgba(30, 58, 95, 0.05) 0%, rgba(30, 58, 95, 0.02) 100%);
+            border: 2px solid var(--primary-color);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin: 2rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .credentials-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-color) 0%, var(--primary-color) 100%);
+        }
+        
+        .credentials-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .credentials-header i {
+            font-size: 1.5rem;
+            color: var(--accent-color);
+        }
+        
+        .credentials-header h4 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin: 0;
+        }
+        
+        .credentials-details {
+            background: white;
+            border-radius: var(--border-radius-sm);
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+        
+        .credential-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            background: var(--background-light);
+            border-radius: var(--border-radius-sm);
+        }
+        
+        .credential-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .credential-item label {
+            font-weight: 600;
+            color: var(--primary-color);
+            min-width: 120px;
+        }
+        
+        .password-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex: 1;
+        }
+        
+        .credential-value {
+            font-family: 'Courier New', monospace;
+            background: white;
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius-sm);
+            border: 1px solid var(--border-color);
+            flex: 1;
+            font-size: 0.875rem;
+        }
+        
+        .btn-toggle {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem;
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            min-width: 40px;
+        }
+        
+        .btn-toggle:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+        
+        .password-notice {
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            border-radius: var(--border-radius-sm);
+            padding: 1rem;
+            margin: 1rem 0;
+            color: #856404;
+        }
+        
+        .password-notice i {
+            color: #ffc107;
+            margin-right: 0.5rem;
+        }
+        
+        .existing-user-notice {
+            background: rgba(13, 202, 240, 0.1);
+            border: 1px solid rgba(13, 202, 240, 0.3);
+            border-radius: var(--border-radius-sm);
+            padding: 1rem;
+            margin: 1rem 0;
+            color: #055160;
+        }
+        
+        .existing-user-notice i {
+            color: #0dcaf0;
+            margin-right: 0.5rem;
+        }
+        
+        .btn-copy {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 0.5rem;
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .btn-copy:hover {
+            background: #22c55e;
+            transform: translateY(-1px);
+        }
+        
+        .credentials-actions {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+        
+        .btn-login {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-color) 0%, #22c55e 100%);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: var(--border-radius);
+            text-decoration: none;
+            font-weight: 600;
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            color: white;
+        }
+        
+        .credentials-note {
+            margin-top: 1rem;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .password-sent-notice {
+            color: #6c757d;
+            font-style: italic;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.875rem;
+        }
+        
+        .password-sent-notice i {
+            color: #007bff;
+        }
+        
         
         /* Application Summary Styles */
         .application-summary {
@@ -619,66 +1016,239 @@
             transform: translateY(-2px);
         }
         
-        /* Footer */
+        /* Compact Enhanced Footer */
         .footer {
-            background: var(--primary-dark);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
             color: white;
-            padding: 3rem 0;
-            margin-top: 5rem;
+            padding: 2.5rem 0 0;
+            margin-top: 4rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.05)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.03)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
         }
         
         .footer-content {
             max-width: 1200px;
             margin: 0 auto;
             padding: 0 2rem;
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr;
-            gap: 3rem;
+            position: relative;
+            z-index: 2;
         }
         
-        .footer-section h4 {
-            font-size: 1.125rem;
+        /* Footer Brand */
+        .footer-brand h4 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: white;
+            margin: 0;
+        }
+
+        .footer-logo-img {
+            max-width: 80px;
+            height: auto;
+            opacity: 0.95;
+            transition: all 0.3s ease;
+        }
+
+        .footer-logo-img:hover {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+
+        .footer-tagline {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.6rem;
+            line-height: 1.5;
+        }
+
+        /* Footer Heading */
+        .footer-heading {
+            font-size: 1rem;
             font-weight: 600;
             margin-bottom: 1rem;
             color: white;
+            position: relative;
+            padding-bottom: 0.5rem;
         }
         
-        .footer-section p {
-            color: rgba(255, 255, 255, 0.8);
-            line-height: 1.6;
-            margin-bottom: 1rem;
+        .footer-heading::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 30px;
+            height: 2px;
+            background: var(--gcx-secondary);
         }
         
-        .footer-links {
-            list-style: none;
-            padding: 0;
+        .text-lg-start .footer-heading::after {
+            left: 50%;
+            transform: translateX(-50%);
         }
         
-        .footer-links li {
-            margin-bottom: 0.75rem;
+        @media (min-width: 992px) {
+            .text-lg-start .footer-heading::after {
+                left: 0;
+                transform: none;
+            }
+        }
+
+        /* Social Links Compact */
+        .social-links {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
         }
         
-        .footer-links a {
-            color: rgba(255, 255, 255, 0.8);
-            text-decoration: none;
-            transition: var(--transition);
-            display: inline-flex;
+        @media (min-width: 992px) {
+            .social-links {
+                justify-content: flex-start;
+            }
+        }
+        
+        .social-link {
+            display: flex;
             align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-radius: 50%;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .social-link:hover {
+            background: var(--gcx-secondary);
+            color: var(--gcx-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(248, 181, 0, 0.3);
+        }
+        
+        .social-link i {
+            font-size: 0.875rem;
+        }
+        
+        /* Contact Compact */
+        .contact-compact {
+            display: flex;
+            flex-direction: column;
+            gap: 0.625rem;
+        }
+        
+        .contact-compact-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+        
+        .contact-compact-item i {
+            color: var(--gcx-secondary);
+            font-size: 0.875rem;
+            margin-top: 0.125rem;
+            flex-shrink: 0;
+            width: 16px;
+        }
+        
+        /* Footer Badges Compact */
+        .footer-badges-compact {
+            display: flex;
+            flex-direction: column;
             gap: 0.5rem;
         }
         
-        .footer-links a:hover {
-            color: white;
-            transform: translateX(5px);
+        .badge-compact {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.375rem 0.75rem;
+            border-radius: 16px;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            width: fit-content;
         }
         
-        .footer-bottom {
-            margin-top: 2rem;
-            padding-top: 2rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            text-align: center;
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 0.875rem;
+        .badge-compact:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateX(3px);
+        }
+        
+        .badge-compact i {
+            color: var(--gcx-secondary);
+            font-size: 0.75rem;
+        }
+        
+        /* Footer Legal Compact */
+        .footer-legal-compact {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+        
+        .footer-legal-compact a {
+            color: rgba(255, 255, 255, 0.75);
+            text-decoration: none;
+            font-size: 0.813rem;
+            transition: all 0.3s ease;
+            position: relative;
+            padding-bottom: 2px;
+        }
+        
+        .footer-legal-compact a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: var(--gcx-secondary);
+            transition: width 0.3s ease;
+        }
+        
+        .footer-legal-compact a:hover {
+            color: var(--gcx-secondary);
+        }
+        
+        .footer-legal-compact a:hover::after {
+            width: 100%;
+        }
+        
+        /* Footer Bottom Compact */
+        .footer-bottom-compact {
+            margin-top: 1.5rem;
+            padding: 1rem 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        
+        .footer-bottom-compact p {
+            color: rgba(255, 255, 255, 0.75);
+            font-size: 0.813rem;
+            line-height: 1.5;
+        }
+        
+        .government-badge {
+            color: var(--gcx-secondary);
+            font-weight: 600;
         }
         
         /* Toast Notification */
@@ -706,19 +1276,47 @@
         /* Responsive Design */
         @media (max-width: 768px) {
             body {
-                padding-top: 80px;
+                padding-top: 76px;
             }
             
-            .header-content {
-                flex-direction: column;
-                gap: 1rem;
-                padding: 1rem;
+            .header-content-wrapper {
+                padding: 0.75rem 1rem;
             }
             
-            .header-info {
-                width: 100%;
+            .logo-wrapper {
+                width: 48px;
+                height: 48px;
+            }
+            
+            .header-title-main {
+                font-size: 1.125rem;
+            }
+            
+            .header-subtitle {
+                font-size: 0.75rem;
+            }
+            
+            .header-actions {
+                gap: 0.625rem;
+            }
+            
+            .header-action-text {
+                display: none;
+            }
+            
+            .header-action-item {
+                padding: 0.5rem;
+                min-width: 36px;
                 justify-content: center;
-                flex-wrap: wrap;
+            }
+            
+            .header-divider {
+                display: none;
+            }
+            
+            .theme-toggle {
+                width: 36px;
+                height: 36px;
             }
             
             .success-container {
@@ -767,37 +1365,226 @@
             }
             
             .footer-content {
-                grid-template-columns: 1fr;
-                gap: 2rem;
+                padding: 0 1rem;
+            }
+
+            .footer-logo-img {
+                max-width: 70px;
+            }
+            
+            .footer-brand h4 {
+                font-size: 1.125rem;
+            }
+            
+            .footer-heading {
+                font-size: 0.938rem;
+            }
+            
+            .contact-compact-item {
+                font-size: 0.813rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            body {
+                padding-top: 70px;
+            }
+            
+            .header-content-wrapper {
+                padding: 0.625rem 0.75rem;
+                gap: 0.5rem;
+            }
+            
+            .logo-wrapper {
+                width: 44px;
+                height: 44px;
+            }
+            
+            .header-title-main {
+                font-size: 0.938rem;
+            }
+            
+            .header-subtitle {
+                font-size: 0.688rem;
+            }
+            
+            .header-actions {
+                gap: 0.5rem;
+            }
+            
+            .header-phone {
+                display: none;
+            }
+            
+            .header-action-item {
+                padding: 0.438rem;
+                min-width: 32px;
+            }
+            
+            .header-action-item i {
+                font-size: 0.875rem;
+            }
+            
+            .theme-toggle {
+                width: 32px;
+                height: 32px;
+            }
+            
+            .theme-toggle svg {
+                width: 14px;
+                height: 14px;
+            }
+            
+            .footer {
+                padding: 1.5rem 0 0;
+                margin-top: 2rem;
+            }
+
+            .footer-content {
+                padding: 0 0.75rem;
+            }
+
+            .footer-logo-img {
+                max-width: 60px;
+            }
+            
+            .footer-brand h4 {
+                font-size: 1rem;
+            }
+            
+            .footer-tagline {
+                font-size: 0.813rem;
+            }
+            
+            .footer-heading {
+                font-size: 0.875rem;
+            }
+            
+            .social-link {
+                width: 32px;
+                height: 32px;
+            }
+            
+            .social-link i {
+                font-size: 0.75rem;
+            }
+            
+            .contact-compact-item {
+                font-size: 0.75rem;
+                gap: 0.5rem;
+            }
+            
+            .contact-compact-item i {
+                font-size: 0.75rem;
+            }
+            
+            .badge-compact {
+                font-size: 0.688rem;
+                padding: 0.313rem 0.625rem;
+            }
+            
+            .footer-legal-compact a {
+                font-size: 0.75rem;
+            }
+            
+            .footer-bottom-compact {
+                margin-top: 1rem;
+                padding: 0.75rem 0;
+            }
+            
+            .footer-bottom-compact p {
+                font-size: 0.75rem;
+            }
+        }
+        
+        @media (max-width: 375px) {
+            body {
+                padding-top: 64px;
+            }
+            
+            .header-content-wrapper {
+                padding: 0.5rem;
+                gap: 0.375rem;
+            }
+            
+            .logo-wrapper {
+                width: 40px;
+                height: 40px;
+            }
+            
+            .header-title-main {
+                font-size: 0.875rem;
+            }
+            
+            .header-subtitle {
+                display: none;
+            }
+            
+            .header-actions {
+                gap: 0.375rem;
+            }
+            
+            .header-secure .header-action-text {
+                display: none;
+            }
+            
+            .theme-toggle {
+                width: 30px;
+                height: 30px;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Fixed Header -->
+    <!-- Enhanced Responsive Header -->
     <header class="fixed-header">
-        <div class="header-content">
-            <div class="logo-container">
-                <div class="logo">
-                    <img src="/media/logo/logo1.png" alt="GCX Logo" style="height: 50px; width: auto;">
+        <div class="header-content-wrapper">
+            <div class="header-left">
+                <div class="logo-wrapper">
+                    <img src="/media/logo/logo1.png" alt="GCX Logo" class="header-logo">
                 </div>
-                <div class="app-title">
-                    <h1>Ghana Commodity Exchange</h1>
-                    <p>Official Supplier Registration Portal</p>
+                <div class="header-title">
+                    <h1 class="header-title-main">{% if site_settings %}{{ site_settings.company_name }}{% else %}{% trans "Ghana Commodity Exchange" %}{% endif %}</h1>
+                    <p class="header-subtitle">{% trans "Official Supplier Registration Portal" %}</p>
                 </div>
             </div>
-            <div class="header-info">
-                <div class="header-info-item">
-                    <i class="fas fa-headset"></i>
-                    <span>+233 24 123 4567</span>
-                </div>
-                <div class="security-badge">
-                    <i class="fas fa-shield-check"></i>
-                    <span>Secure Portal</span>
+            <div class="header-right">
+                <div class="header-actions">
+                    <a href="tel:{% if site_settings %}{{ site_settings.primary_phone|cut:' '|cut:'+' }}{% else %}233241234567{% endif %}" class="header-action-item header-phone">
+                        <i class="fas fa-headset"></i>
+                        <span class="header-action-text">{% if site_settings %}{{ site_settings.primary_phone }}{% else %}+233 24 123 4567{% endif %}</span>
+                    </a>
+                    <div class="header-action-item header-secure">
+                        <i class="fas fa-shield-check"></i>
+                        <span class="header-action-text">Secure</span>
+                    </div>
+                    <div class="header-divider"></div>
+                    {% include 'language_switcher.html' %}
+                    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">
+                        <span class="visually-hidden">Toggle theme</span>
+                        <svg aria-hidden="true" class="theme-icon-when-light">
+                            <use xlink:href="#icon-moon" />
+                        </svg>
+                        <svg aria-hidden="true" class="theme-icon-when-dark">
+                            <use xlink:href="#icon-sun" />
+                        </svg>
+                    </button>
                 </div>
             </div>
         </div>
     </header>
+
+    <!-- SVG Icons for Theme Toggle -->
+    <svg style="display: none;">
+        <defs>
+            <symbol id="icon-moon" viewBox="0 0 24 24">
+                <path d="M17.75,4.09L15.22,6.03L16.13,9.09L13.5,7.28L10.87,9.09L11.78,6.03L9.25,4.09L12.44,4L13.5,1L14.56,4L17.75,4.09M21.25,11L19.61,12.25L20.2,14.23L18.5,13.06L16.8,14.23L17.39,12.25L15.75,11L17.81,10.95L18.5,9L19.19,10.95L21.25,11M18.97,15.95C19.8,15.87 20.69,17.05 20.16,17.8C19.84,18.25 19.5,18.67 19.08,19.07C15.17,23 8.84,23 4.94,19.07C1.03,15.17 1.03,8.83 4.94,4.93C5.34,4.53 5.76,4.17 6.21,3.85C6.96,3.32 8.14,4.21 8.06,5.04C7.79,7.9 8.75,10.87 10.95,13.06C13.14,15.26 16.1,16.22 18.97,15.95M17.33,17.97C14.5,17.81 11.7,16.64 9.53,14.5C7.36,12.31 6.2,9.5 6.04,6.68C3.23,9.82 3.34,14.4 6.35,17.41C9.37,20.43 14,20.54 17.33,17.97Z"/>
+            </symbol>
+            <symbol id="icon-sun" viewBox="0 0 24 24">
+                <path d="M12,18C8.69,18 6,15.31 6,12C6,8.69 8.69,6 12,6C15.31,6 18,8.69 18,12C18,15.31 15.31,18 12,18M12,8A4,4 0 0,0 8,12A4,4 0 0,0 12,16A4,4 0 0,0 16,12A4,4 0 0,0 12,8M12,1L13.09,3.26L16,2L14.74,4.91L19,5L16.74,7.91L19,9L16,8L13.09,10.74L12,13L10.91,10.74L8,12L9.26,9.09L5,9L7.26,6.09L5,5L8,6L10.91,3.26L12,1Z"/>
+            </symbol>
+        </defs>
+    </svg>
 
     <!-- Success Content -->
     <div class="container">
@@ -806,22 +1593,106 @@
                 <div class="success-icon">
                     <i class="fas fa-check-circle"></i>
                 </div>
-                <h2>Congratulations {{ business_name }}!</h2>
-                <p>Your supplier application has been successfully received and is now under review. If you uploaded partial documents, you'll receive a secure link to upload the remaining documents.</p>
+                <h2>{% trans "Congratulations" %} {{ business_name }}!</h2>
+                <p>{% trans "Your supplier application has been successfully received and is now under review." %}</p>
             </div>
             
             <div class="success-content">
                 <!-- Tracking Code -->
                 <div class="tracking-code-box">
-                    <div class="tracking-label">Application Reference Number</div>
+                    <div class="tracking-label">{% trans "Application Reference Number" %}</div>
                     <div class="tracking-code" id="tracking-code">{{ reference_number }}</div>
                     <div class="copy-hint">
-                        <i class="fas fa-copy"></i> Click to copy • Save this code for future reference
+                        <i class="fas fa-copy"></i> {% trans "Click to copy" %} • {% trans "Save this code for future reference" %}
                     </div>
                 </div>
                 
+                <!-- Login Credentials (if login_credentials exist) -->
+                {% if login_credentials %}
+                <div class="credentials-box">
+                    {% if user_created %}
+                    <!-- New User Account -->
+                    <div class="credentials-header">
+                        <i class="fas fa-user-shield"></i>
+                        <h4>{% trans "Your Account Has Been Created" %}</h4>
+                    </div>
+                    <p>{% trans "You can now track your application status and upload additional documents using your account. Your account is currently pending activation by the admin." %}</p>
+                    <div class="password-notice">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>{% trans "Important:" %}</strong> {% trans "You will be required to change this password on your first login for security purposes." %}
+                    </div>
+                    <div class="credentials-details">
+                        <div class="credential-item">
+                            <label>Email:</label>
+                            <span class="credential-value">{{ login_credentials.email }}</span>
+                        </div>
+                        <div class="credential-item">
+                            <label>{% trans "Temporary Password:" %}</label>
+                            <div class="password-container">
+                                {% if login_credentials.password_sent_via_email %}
+                                    <span class="credential-value password-sent-notice">
+                                        <i class="fas fa-envelope"></i>
+                                        {% trans "Sent to your email address" %}
+                                    </span>
+                                {% else %}
+                                    <span class="credential-value" id="temp-password">{{ login_credentials.temporary_password }}</span>
+                                    <button class="btn-toggle" onclick="togglePassword()" id="toggle-btn" title="Show/Hide Password">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn-copy" onclick="copyToClipboard('temp-password')">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="credentials-actions">
+                        <a href="{{ login_credentials.login_url }}" class="btn-login">
+                            <i class="fas fa-sign-in-alt"></i>
+                            {% trans "Login to Your Account" %}
+                        </a>
+                        <p class="credentials-note">
+                            <i class="fas fa-info-circle"></i>
+                            {% trans "You'll be required to change your password on first login for security." %}
+                        </p>
+                    </div>
+                    {% else %}
+                    <!-- Existing User Account -->
+                    <div class="credentials-header">
+                        <i class="fas fa-user-check"></i>
+                        <h4>{% trans "Your Account Already Exists" %}</h4>
+                    </div>
+                    <p>{% trans "You already have an account with us. You can use your existing login credentials to track this application and manage your account." %}</p>
+                    <div class="existing-user-notice">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>{% trans "Note:" %}</strong> {% trans "Please use your existing email and password to log in. Your account information has been updated with the latest details from this application." %}
+                    </div>
+                    <div class="credentials-details">
+                        <div class="credential-item">
+                            <label>Email:</label>
+                            <span class="credential-value">{{ login_credentials.email }}</span>
+                        </div>
+                        <div class="credential-item">
+                            <label>{% trans "Password:" %}</label>
+                            <span class="credential-value">{% trans "Use your existing password" %}</span>
+                        </div>
+                    </div>
+                    <div class="credentials-actions">
+                        <a href="{{ login_credentials.login_url }}" class="btn-login">
+                            <i class="fas fa-sign-in-alt"></i>
+                            {% trans "Login to Your Account" %}
+                        </a>
+                        <p class="credentials-note">
+                            <i class="fas fa-info-circle"></i>
+                            {% trans "Use your existing login credentials to access your dashboard." %}
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
                 <!-- Timeline -->
-                <div class="timeline-container">
+                <!-- <div class="timeline-container">
                     <h4 class="timeline-title">
                         <i class="fas fa-tasks"></i>
                         Application Process Timeline
@@ -870,7 +1741,7 @@
                     </div>
                 </div>
                 
-                <!-- Info Cards -->
+                <!-- Info Cards
                 <div class="info-grid">
                     <div class="info-card">
                         <div class="info-card-icon">
@@ -895,7 +1766,7 @@
                     </div>
                 </div>
                 
-                <!-- Application Summary -->
+                <!-- Application Summary 
                 <div class="application-summary">
                     <h4 class="summary-title">
                         <i class="fas fa-clipboard-list"></i>
@@ -973,44 +1844,105 @@
                             <span class="status-badge status-{{ status|lower|slugify }}">{{ status }}</span>
                         </div>
                     </div>
-                </div>
+                </div> -->
                 
                 <!-- Action Buttons -->
+                <!-- <div class="action-buttons">
+                    <a href="/apply/" class="btn btn-primary">
+                        <i class="fas fa-plus"></i>
+                        {% trans "Submit Another Application" %}
+                    </a>
+                    <a href="/" class="btn btn-outline">
+                        <i class="fas fa-home"></i>
+                        {% trans "Return to Homepage" %}
+                    </a>
+                </div> -->
             </div>
         </div>
     </div>
 
-    <!-- Footer -->
+    <!-- Compact Enhanced Footer -->
     <footer class="footer">
         <div class="footer-content">
-            <div class="footer-section">
-                <h4>Ghana Commodity Exchange</h4>
-                <p>The official platform for agricultural commodity trading and supplier registration in Ghana.</p>
-                <p><i class="fas fa-map-marker-alt"></i> 2nd Floor, Africa Trade House, Ridge, Accra</p>
-                <p><i class="fas fa-phone"></i> +233 24 123 4567</p>
-                <p><i class="fas fa-envelope"></i> suppliers@gcx.gov.gh</p>
+            <div class="row align-items-start">
+                <div class="col-lg-4 col-md-12 mb-3 text-center text-lg-start">
+                    <div class="footer-brand">
+                        <img src="/media/logo/logo_transparent_white.png" alt="GCX Logo" class="footer-logo-img mb-2">
+                        <h4 class="mb-2">{% if site_settings %}{{ site_settings.company_name }}{% else %}Ghana Commodity Exchange{% endif %}</h4>
+                        <p class="footer-tagline mb-3">{% if site_settings %}{{ site_settings.tagline }}{% else %}Connecting People, Connecting Markets & Providing Opportunities{% endif %}</p>
+                        {% if not site_settings or site_settings.show_social_media %}
+                        <div class="social-links">
+                            {% if not site_settings or site_settings.facebook_url %}
+                            <a href="{% if site_settings %}{{ site_settings.facebook_url }}{% else %}#{% endif %}" class="social-link" aria-label="Facebook" {% if site_settings and site_settings.facebook_url %}target="_blank"{% endif %}><i class="fab fa-facebook-f"></i></a>
+                            {% endif %}
+                            {% if not site_settings or site_settings.twitter_url %}
+                            <a href="{% if site_settings %}{{ site_settings.twitter_url }}{% else %}#{% endif %}" class="social-link social-link-x" aria-label="X (Twitter)" {% if site_settings and site_settings.twitter_url %}target="_blank"{% endif %}>
+                                <svg viewBox="0 0 24 24" fill="currentColor" style="width: 14px; height: 14px;">
+                                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                                </svg>
+                            </a>
+                            {% endif %}
+                            {% if not site_settings or site_settings.linkedin_url %}
+                            <a href="{% if site_settings %}{{ site_settings.linkedin_url }}{% else %}#{% endif %}" class="social-link" aria-label="LinkedIn" {% if site_settings and site_settings.linkedin_url %}target="_blank"{% endif %}><i class="fab fa-linkedin-in"></i></a>
+                            {% endif %}
+                            {% if not site_settings or site_settings.instagram_url %}
+                            <a href="{% if site_settings %}{{ site_settings.instagram_url }}{% else %}#{% endif %}" class="social-link" aria-label="Instagram" {% if site_settings and site_settings.instagram_url %}target="_blank"{% endif %}><i class="fab fa-instagram"></i></a>
+                            {% endif %}
+                            {% if not site_settings or site_settings.youtube_url %}
+                            <a href="{% if site_settings %}{{ site_settings.youtube_url }}{% else %}#{% endif %}" class="social-link" aria-label="YouTube" {% if site_settings and site_settings.youtube_url %}target="_blank"{% endif %}><i class="fab fa-youtube"></i></a>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6 mb-3">
+                    <h5 class="footer-heading">Contact Us</h5>
+                    <div class="contact-compact">
+                        <div class="contact-compact-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>{% if site_settings %}{{ site_settings.get_full_address }}{% else %}2nd Floor, Africa Trade House, Ridge, Accra{% endif %}</span>
+                        </div>
+                        <div class="contact-compact-item">
+                            <i class="fas fa-phone"></i>
+                            <span>{% if site_settings %}{{ site_settings.primary_phone }}{% if site_settings.secondary_phone %} | {{ site_settings.secondary_phone }}{% endif %}{% else %}+233 24 123 4567 | +233 30 123 4567{% endif %}</span>
+                        </div>
+                        <div class="contact-compact-item">
+                            <i class="fas fa-envelope"></i>
+                            <span>{% if site_settings %}{{ site_settings.support_email }}{% else %}itsupport@gcx.com.gh{% endif %}</span>
+                        </div>
+                        <div class="contact-compact-item">
+                            <i class="fas fa-clock"></i>
+                            <span>{% if site_settings %}{{ site_settings.get_business_hours_compact }}{% else %}Mon-Fri: 8AM-5PM | Sat: 9AM-1PM{% endif %}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6 mb-3">
+                    <h5 class="footer-heading">Trust & Security</h5>
+                    <div class="footer-badges-compact mb-3">
+                        <span class="badge-compact"><i class="fas fa-shield-check"></i> SSL Secured</span>
+                        <span class="badge-compact"><i class="fas fa-lock"></i> Data Protected</span>
+                    </div>
+                    <div class="footer-legal-compact">
+                        <a href="#">Privacy</a>
+                        <a href="#">Terms</a>
+                        <a href="#">Data Protection</a>
+                        <a href="#">Compliance</a>
+                    </div>
+                </div>
             </div>
-            <div class="footer-section">
-                <h4>Quick Links</h4>
-                <ul class="footer-links">
-                    <li><a href="#"><i class="fas fa-angle-right"></i> About GCX</a></li>
-                    <li><a href="#"><i class="fas fa-angle-right"></i> Supplier Guidelines</a></li>
-                    <li><a href="#"><i class="fas fa-angle-right"></i> FAQ</a></li>
-                    <li><a href="#"><i class="fas fa-angle-right"></i> Contact Support</a></li>
-                </ul>
+            
+            <div class="footer-bottom-compact">
+                <div class="row align-items-center">
+                    <div class="col-md-6 text-center text-md-start">
+                        <p class="mb-0">&copy; 2025 Ghana Commodity Exchange. All rights reserved. | <span class="government-badge">Government of Ghana</span></p>
+                    </div>
+                    <div class="col-md-6 text-center text-md-end">
+                        <p class="mb-0">Supplier Registration Portal {% if site_settings %}{{ site_settings.portal_version }}{% else %}v1.0{% endif %}</p>
+                    </div>
+                </div>
             </div>
-            <div class="footer-section">
-                <h4>Legal</h4>
-                <ul class="footer-links">
-                    <li><a href="#"><i class="fas fa-angle-right"></i> Privacy Policy</a></li>
-                    <li><a href="#"><i class="fas fa-angle-right"></i> Terms of Service</a></li>
-                    <li><a href="#"><i class="fas fa-angle-right"></i> Data Protection</a></li>
-                    <li><a href="#"><i class="fas fa-angle-right"></i> Compliance</a></li>
-                </ul>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; 2025 Ghana Commodity Exchange. All rights reserved. | Government of Ghana</p>
         </div>
     </footer>
 
@@ -1042,29 +1974,73 @@
             }
         }
         
+        // Copy to clipboard function
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                const text = element.textContent;
+                navigator.clipboard.writeText(text).then(function() {
+                    // Show toast notification
+                    const toast = document.getElementById('toast');
+                    if (toast) {
+                        toast.classList.add('show');
+                        setTimeout(function() {
+                            toast.classList.remove('show');
+                        }, 3000);
+                    }
+                    
+                    // Animate the element
+                    element.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        element.style.transform = 'scale(1.05)';
+                    }, 100);
+                    setTimeout(() => {
+                        element.style.transform = 'scale(1)';
+                    }, 200);
+                });
+            }
+        }
+        
+        // Toggle password visibility
+        function togglePassword() {
+            const passwordElement = document.getElementById('temp-password');
+            const toggleBtn = document.getElementById('toggle-btn');
+            const icon = toggleBtn.querySelector('i');
+            
+            if (passwordElement.style.filter === 'none' || passwordElement.style.filter === '') {
+                // Hide password
+                passwordElement.style.filter = 'blur(5px)';
+                passwordElement.style.userSelect = 'none';
+                icon.className = 'fas fa-eye';
+                toggleBtn.title = 'Show Password';
+            } else {
+                // Show password
+                passwordElement.style.filter = 'none';
+                passwordElement.style.userSelect = 'text';
+                icon.className = 'fas fa-eye-slash';
+                toggleBtn.title = 'Hide Password';
+            }
+        }
+        
+        // Initialize password as visible (user can toggle to hide if needed)
+        document.addEventListener('DOMContentLoaded', function() {
+            const passwordElement = document.getElementById('temp-password');
+            const toggleBtn = document.getElementById('toggle-btn');
+            const icon = toggleBtn ? toggleBtn.querySelector('i') : null;
+            
+            if (passwordElement) {
+                passwordElement.style.filter = 'none';
+                passwordElement.style.userSelect = 'text';
+                if (icon) {
+                    icon.className = 'fas fa-eye-slash';
+                    toggleBtn.title = 'Hide Password';
+                }
+            }
+        });
+        
         // Copy tracking code functionality
         document.getElementById('tracking-code').addEventListener('click', function() {
-            const code = this.textContent;
-            navigator.clipboard.writeText(code).then(function() {
-                // Show toast notification
-                const toast = document.getElementById('toast');
-                toast.classList.add('show');
-                
-                // Animate the tracking code
-                const trackingElement = document.getElementById('tracking-code');
-                trackingElement.style.transform = 'scale(0.95)';
-                setTimeout(() => {
-                    trackingElement.style.transform = 'scale(1.05)';
-                }, 100);
-                setTimeout(() => {
-                    trackingElement.style.transform = 'scale(1)';
-                }, 200);
-                
-                // Hide toast after 3 seconds
-                setTimeout(function() {
-                    toast.classList.remove('show');
-                }, 3000);
-            });
+            copyToClipboard('tracking-code');
         });
         
         // Create confetti effect
@@ -1139,6 +2115,30 @@
             card.addEventListener('mouseleave', function() {
                 this.style.transform = 'translateY(0) scale(1)';
             });
+        });
+        
+        // Django Admin Style Theme Toggle
+        document.addEventListener("DOMContentLoaded", function () {
+            const themeToggle = document.getElementById("theme-toggle");
+
+            function setTheme(theme) {
+                document.documentElement.setAttribute("data-theme", theme);
+                localStorage.setItem("theme", theme);
+            }
+
+            function toggleTheme() {
+                const currentTheme = document.documentElement.getAttribute("data-theme");
+                const newTheme = currentTheme === "light" ? "dark" : "light";
+                setTheme(newTheme);
+            }
+
+            if (themeToggle) {
+                themeToggle.addEventListener("click", toggleTheme);
+            }
+
+            // Initialize theme on page load
+            const savedTheme = localStorage.getItem("theme") || "light";
+            setTheme(savedTheme);
         });
     </script>
 </body>

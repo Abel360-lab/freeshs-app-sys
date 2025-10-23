@@ -1,31 +1,42 @@
 # GCX Supplier Application Portal
 
-A production-ready Django application for managing supplier applications to the Ghana Commodity Exchange (GCX). This portal allows applicants to submit applications without login, while admins can review, request additional documents, and approve/reject applications.
+A comprehensive, production-ready Django application for managing supplier applications to the Ghana Commodity Exchange (GCX). This portal provides a complete ecosystem for application submission, review, and management with advanced features including multi-language support, theme customization, real-time updates, and comprehensive admin tools.
 
 ## Features
 
 ### For Applicants (Public)
-- Multi-step application form with validation
-- No login required for submission
-- Track application status using tracking code
-- Upload additional documents when requested
-- Responsive Bootstrap 5 UI
+- **Multi-step Application Form**: Intuitive 6-step wizard with real-time validation
+- **No Login Required**: Submit applications without creating accounts
+- **Multi-language Support**: Available in 16+ languages including Ghanaian languages
+- **Theme Customization**: Light/Dark/Auto theme modes with independent settings
+- **Document Upload**: Upload required documents with drag-and-drop interface
+- **Status Tracking**: Real-time application status updates using tracking codes
+- **Mobile Responsive**: Optimized for all device sizes with touch-friendly interface
+- **Background Images**: Professional commodity-themed backgrounds
+- **Real-time Validation**: Instant feedback on form fields and document requirements
 
 ### For Administrators
-- **Backoffice Portal** (`/backoffice/`) - Professional admin interface
-- Real-time dashboard with live statistics
-- Application management with real-time search and filtering
-- Document verification and management
-- Request additional documents from applicants
-- Approve/reject applications with one-click actions
-- Create supplier user accounts upon approval
-- Comprehensive audit logging
-- WebSocket-powered real-time updates
+- **Professional Backoffice Portal** (`/backoffice/`) - Modern, responsive admin interface
+- **Real-time Dashboard**: Live statistics, charts, and application metrics
+- **Advanced Search & Filtering**: Real-time search with instant results
+- **Document Management**: Upload, verify, and manage application documents
+- **Application Workflow**: Complete review process with status management
+- **One-click Actions**: Approve, reject, request documents, activate accounts
+- **Notification System**: Automated email notifications with customizable templates
+- **Audit Logging**: Comprehensive tracking of all admin actions
+- **Multi-language Admin**: Admin interface supports multiple languages
+- **Theme Customization**: Independent theme settings for admin portal
+- **WebSocket Integration**: Real-time updates across all admin interfaces
+- **Export & Reporting**: PDF generation and data export capabilities
 
 ### For Approved Suppliers
-- User accounts created automatically upon approval
-- Access to their application details
-- Profile management
+- **Automatic Account Creation**: User accounts created upon application approval
+- **Supplier Portal Access**: Dedicated dashboard for approved suppliers
+- **Application History**: View all submitted applications and their status
+- **Document Management**: Access to uploaded documents and verification status
+- **Profile Management**: Update personal and business information
+- **Password Management**: Secure password change functionality
+- **Multi-language Support**: Supplier portal available in multiple languages
 
 ## Technology Stack
 
@@ -37,7 +48,33 @@ A production-ready Django application for managing supplier applications to the 
 - **Email**: SMTP with configurable backend
 - **Authentication**: Custom User model with role-based access
 
-## Recent Improvements
+## Latest Features & Improvements
+
+### ✅ Multi-language Support (i18n)
+- **16+ Languages**: English, Ghanaian languages (Akan, Ewe, Ga, Hausa, Twi), and international languages
+- **Dynamic Language Switching**: Seamless language switching with URL prefix handling
+- **Independent Language Settings**: Separate language preferences for different user types
+- **Translation Management**: Django's built-in translation system with gettext support
+
+### ✅ Advanced Theme System
+- **Three-Mode Themes**: Auto (system preference), Light, and Dark modes
+- **Independent Theme Storage**: Separate theme preferences for application form and backoffice
+- **Django Admin-Style Toggle**: Professional theme switching with SVG icons
+- **System Integration**: Auto mode respects OS theme preferences
+
+### ✅ Enhanced User Experience
+- **Professional UI**: Modern, responsive design with Bootstrap 5
+- **Commodity Images**: Visual commodity selection with image cards
+- **Background Themes**: Professional commodity-themed backgrounds
+- **Mobile Optimization**: Touch-friendly interface with responsive breakpoints
+- **Toast Notifications**: Modern notification system for user feedback
+
+### ✅ Comprehensive Admin Tools
+- **Advanced Application Management**: Complete workflow with timeline tracking
+- **Document Verification System**: Upload, view, and verify documents with notes
+- **Notification Templates**: Customizable email templates for all scenarios
+- **Audit Logging**: Complete tracking of all admin actions and changes
+- **Real-time Updates**: WebSocket-powered live updates across all interfaces
 
 ### ✅ Simplified Status System
 - Streamlined from 8+ statuses to 4 clear statuses
@@ -48,18 +85,6 @@ A production-ready Django application for managing supplier applications to the 
 - Live dashboard updates via WebSockets
 - Real-time search and filtering (no trigger button needed)
 - Instant status updates across all admin interfaces
-
-### ✅ Enhanced Admin Experience
-- Professional backoffice portal with modern UI
-- One-click actions for common tasks
-- Responsive design for all screen sizes
-- Improved document verification workflow
-
-### ✅ Better Search & Filtering
-- Real-time search as you type (500ms debounce)
-- Instant filter changes
-- Clear all filters with one click
-- Search by business name, email, or tracking code
 
 ## Project Structure
 

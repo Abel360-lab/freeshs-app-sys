@@ -1,0 +1,172 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: GCX Supplier Portal\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-09-21 04:00+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# Language names
+msgid "English"
+msgstr "English"
+
+msgid "Akan"
+msgstr "Akan"
+
+msgid "Ewe"
+msgstr "Ewe"
+
+msgid "Ga"
+msgstr "Ga"
+
+msgid "Hausa"
+msgstr "Hausa"
+
+msgid "Twi"
+msgstr "Twi"
+
+msgid "French"
+msgstr "Français"
+
+msgid "Spanish"
+msgstr "Español"
+
+msgid "German"
+msgstr "Deutsch"
+
+msgid "Italian"
+msgstr "Italiano"
+
+msgid "Portuguese"
+msgstr "Português"
+
+msgid "Arabic"
+msgstr "العربية"
+
+msgid "Chinese"
+msgstr "中文"
+
+msgid "Japanese"
+msgstr "日本語"
+
+msgid "Korean"
+msgstr "한국어"
+
+msgid "Russian"
+msgstr "Русский"
+
+msgid "Hindi"
+msgstr "हिन्दी"
+
+msgid "Urdu"
+msgstr "اردو"
+
+# Common application strings (using English as fallback)
+msgid "Ghana Commodity Exchange"
+msgstr "Ghana Commodity Exchange"
+
+msgid "GCX Admin Portal"
+msgstr "GCX Admin Portal"
+
+msgid "GCX Supplier Application Portal - Official Registration"
+msgstr "GCX Supplier Application Portal - Official Registration"
+
+msgid "Official Supplier Registration Portal"
+msgstr "Official Supplier Registration Portal"
+
+# Form labels and buttons (using English as fallback)
+msgid "Submit Application"
+msgstr "Submit Application"
+
+msgid "Login"
+msgstr "Login"
+
+msgid "Register"
+msgstr "Register"
+
+msgid "Dashboard"
+msgstr "Dashboard"
+
+msgid "Applications"
+msgstr "Applications"
+
+msgid "Documents"
+msgstr "Documents"
+
+msgid "Settings"
+msgstr "Settings"
+
+msgid "Logout"
+msgstr "Logout"
+
+# Common messages (using English as fallback)
+msgid "Welcome"
+msgstr "Welcome"
+
+msgid "Success"
+msgstr "Success"
+
+msgid "Error"
+msgstr "Error"
+
+msgid "Warning"
+msgstr "Warning"
+
+msgid "Information"
+msgstr "Information"
+
+msgid "Please wait..."
+msgstr "Please wait..."
+
+msgid "Loading..."
+msgstr "Loading..."
+
+msgid "Save"
+msgstr "Save"
+
+msgid "Cancel"
+msgstr "Cancel"
+
+msgid "Delete"
+msgstr "Delete"
+
+msgid "Edit"
+msgstr "Edit"
+
+msgid "View"
+msgstr "View"
+
+msgid "Close"
+msgstr "Close"
+
+msgid "Next"
+msgstr "Next"
+
+msgid "Previous"
+msgstr "Previous"
+
+msgid "Back"
+msgstr "Back"
+
+msgid "Continue"
+msgstr "Continue"
+
+msgid "Confirm"
+msgstr "Confirm"
+
+msgid "Yes"
+msgstr "Yes"
+
+msgid "No"
+msgstr "No"

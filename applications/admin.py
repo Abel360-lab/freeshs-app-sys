@@ -8,7 +8,108 @@ from django.urls import reverse
 from django.utils import timezone
 from django.contrib import messages
 from django.http import HttpResponseRedirect
-from .models import SupplierApplication, TeamMember, NextOfKin, BankAccount
+from import_export import resources
+from import_export.admin import ImportExportModelAdmin
+from import_export.fields import Field
+from .models import SupplierApplication, TeamMember, NextOfKin, BankAccount, ContractDocumentRequirement, ContractDocument, ContractDocumentAssignment, ContractSigning, School
+
+
+class RegionNameField(Field):
+    """Custom field to handle region name to region instance conversion during import."""
+    
+    def clean(self, data, **kwargs):
+        """Convert region name to region instance during import."""
+        region_name = data.get(self.column_name)
+        if region_name:
+            from core.models import Region
+            try:
+                region = Region.objects.get(name__iexact=str(region_name).strip())
+                return region  # Return the Region instance, not just the ID
+            except Region.DoesNotExist:
+                # Create a new region if it doesn't exist
+                region = Region.objects.create(
+                    name=str(region_name).strip(),
+                    code=str(region_name).strip().upper()[:10]
+                )
+                return region  # Return the Region instance, not just the ID
+        return None
+
+class SchoolResource(resources.ModelResource):
+    """
+    Resource for School import/export.
+    """
+    
+    region_name = Field(attribute='region__name', column_name='Region Name')
+    region = RegionNameField(attribute='region', column_name='Region Name')
+    
+    class Meta:
+        model = School
+        fields = (
+            'id', 'name', 'code', 'region', 'district', 'address',
+            'contact_person', 'contact_phone', 'contact_email', 'is_active'
+        )
+        export_order = (
+            'id', 'name', 'code', 'region_name', 'district', 'address',
+            'contact_person', 'contact_phone', 'contact_email', 'is_active'
+        )
+        import_id_fields = ['code']
+        skip_unchanged = True
+        report_skipped = True
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Map different column name variations for import
+        self.fields['name'] = Field(attribute='name', column_name='Name')
+        self.fields['code'] = Field(attribute='code', column_name='Code')
+        self.fields['district'] = Field(attribute='district', column_name='District')
+        self.fields['address'] = Field(attribute='address', column_name='Address')
+        self.fields['contact_person'] = Field(attribute='contact_person', column_name='Contact Person')
+        self.fields['contact_phone'] = Field(attribute='contact_phone', column_name='Contact Phone')
+        self.fields['contact_email'] = Field(attribute='contact_email', column_name='Contact Email')
+        self.fields['is_active'] = Field(attribute='is_active', column_name='Is Active')
+    
+    def dehydrate_region_name(self, school):
+        """Get region name for export."""
+        try:
+            return school.region.name if school.region else ''
+        except AttributeError:
+            return ''
+    
+    def before_import_row(self, row, **kwargs):
+        """Process row before import."""
+        # Validate required fields
+        name = row.get('Name') or row.get('name')
+        if not name or not str(name).strip():
+            raise ValueError("School name is required")
+        
+        code = row.get('Code') or row.get('code')
+        if not code or not str(code).strip():
+            raise ValueError("School code is required")
+        
+        district = row.get('District') or row.get('district')
+        if not district or not str(district).strip():
+            raise ValueError("District is required")
+        
+        address = row.get('Address') or row.get('address')
+        if not address or not str(address).strip():
+            raise ValueError("Address is required")
+        
+        region_name = row.get('Region Name')
+        if not region_name or not str(region_name).strip():
+            raise ValueError("Region Name is required")
+    
+    def after_import_row(self, row, row_result, **kwargs):
+        """Process row after import."""
+        if row_result.import_type == 'new':
+            # Log successful import
+            pass
+        elif row_result.import_type == 'update':
+            # Log successful update
+            pass
+    
+    def get_import_id_fields(self):
+        """Get the fields used to identify existing records."""
+        return ['code']
 
 
 class TeamMemberInline(admin.TabularInline):
@@ -295,3 +396,223 @@ class BankAccountAdmin(admin.ModelAdmin):
     ]
     ordering = ['bank_name', 'account_name']
     readonly_fields = ['created_at', 'updated_at']
+
+
+@admin.register(ContractDocumentRequirement)
+class ContractDocumentRequirementAdmin(admin.ModelAdmin):
+    """Admin for ContractDocumentRequirement model."""
+    
+    list_display = [
+        'label', 'code', 'is_required', 'max_file_size_mb', 'is_active', 'created_at'
+    ]
+    list_filter = ['is_required', 'is_active', 'created_at']
+    search_fields = ['label', 'code', 'description']
+    ordering = ['label']
+    readonly_fields = ['created_at', 'updated_at']
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('code', 'label', 'description'),
+            'description': 'Enter a unique code for this requirement. Common codes include: CONTRACT_TEMPLATE, TERMS_CONDITIONS, PRICING_SCHEDULE, etc. You can also create custom codes like CUSTOM_DOC_1, SPECIAL_REQUIREMENT, etc.'
+        }),
+        ('Requirements', {
+            'fields': ('is_required', 'condition_note')
+        }),
+        ('File Settings', {
+            'fields': ('allowed_extensions', 'max_file_size_mb'),
+            'description': 'Specify allowed file extensions as a JSON list (e.g., [".pdf", ".doc", ".docx"]) and maximum file size in MB.'
+        }),
+        ('Status', {
+            'fields': ('is_active',)
+        }),
+        ('Audit Information', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def get_form(self, request, obj=None, **kwargs):
+        """Customize the form to provide better help text for the code field."""
+        form = super().get_form(request, obj, **kwargs)
+        
+        # Add custom help text for the code field
+        if 'code' in form.base_fields:
+            from .models import ContractDocumentRequirement
+            
+            # Get common codes for suggestions
+            common_codes = ContractDocumentRequirement.get_common_codes()
+            code_suggestions = ', '.join([code for code, _ in common_codes[:5]])
+            
+            form.base_fields['code'].help_text = (
+                f"Enter a unique code for this requirement. "
+                f"Common examples: {code_suggestions}, or create custom codes like CUSTOM_DOC_1, SPECIAL_REQUIREMENT, etc. "
+                f"Use uppercase letters, numbers, and underscores only."
+            )
+            form.base_fields['code'].widget.attrs.update({
+                'placeholder': 'e.g., CONTRACT_TEMPLATE or CUSTOM_DOC_1',
+                'style': 'text-transform: uppercase;',
+                'list': 'code-suggestions'
+            })
+        
+        return form
+    
+    def get_changelist_form(self, request, **kwargs):
+        """Add code suggestions to the changelist form as well."""
+        form = super().get_changelist_form(request, **kwargs)
+        if form and 'code' in form.base_fields:
+            form.base_fields['code'].widget.attrs.update({
+                'style': 'text-transform: uppercase;'
+            })
+        return form
+
+
+@admin.register(ContractDocument)
+class ContractDocumentAdmin(admin.ModelAdmin):
+    """Admin for ContractDocument model."""
+    
+    list_display = [
+        'title', 'category', 'requirement', 'version', 'status', 'is_current_version', 'created_at'
+    ]
+    list_filter = ['category', 'status', 'is_current_version', 'requirement', 'created_at']
+    search_fields = ['title', 'description', 'requirement__label']
+    ordering = ['-created_at']
+    readonly_fields = ['created_at', 'updated_at', 'file_size', 'file_extension']
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('category', 'requirement', 'title', 'description'),
+            'description': 'Select STATIC for pre-uploaded documents (terms, conditions, etc.) or DYNAMIC for contract templates that will be filled during contract awarding.'
+        }),
+        ('Document File', {
+            'fields': ('document_file', 'file_size', 'file_extension'),
+            'description': 'Upload files for STATIC documents. Leave empty for DYNAMIC documents (they serve as templates).'
+        }),
+        ('Version Control', {
+            'fields': ('version', 'is_current_version')
+        }),
+        ('Status & Dates', {
+            'fields': ('status', 'effective_from', 'effective_until')
+        }),
+        ('Metadata', {
+            'fields': ('notes', 'created_by')
+        }),
+        ('Audit Information', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def save_model(self, request, obj, form, change):
+        if not change:  # If creating new object
+            obj.created_by = request.user
+        super().save_model(request, obj, form, change)
+    
+    def get_queryset(self, request):
+        """Optimize queryset for admin list view."""
+        return super().get_queryset(request).select_related('requirement', 'created_by').prefetch_related('assigned_contracts')
+
+
+@admin.register(ContractDocumentAssignment)
+class ContractDocumentAssignmentAdmin(admin.ModelAdmin):
+    """Admin for ContractDocumentAssignment model."""
+    
+    list_display = [
+        'contract', 'document', 'is_required', 'assigned_by', 'assigned_at'
+    ]
+    list_filter = ['is_required', 'assigned_at', 'contract__status']
+    search_fields = ['contract__contract_number', 'document__title', 'assigned_by__username']
+    ordering = ['-assigned_at']
+    readonly_fields = ['assigned_at']
+    
+    fieldsets = (
+        ('Assignment Details', {
+            'fields': ('contract', 'document', 'is_required')
+        }),
+        ('Assignment Info', {
+            'fields': ('assigned_by', 'assigned_at')
+        }),
+    )
+    
+    def save_model(self, request, obj, form, change):
+        if not change:  # If creating new object
+            obj.assigned_by = request.user
+        super().save_model(request, obj, form, change)
+
+
+@admin.register(ContractSigning)
+class ContractSigningAdmin(admin.ModelAdmin):
+    """Admin for ContractSigning model."""
+    
+    list_display = [
+        'contract', 'supplier', 'status', 'reviewed_at', 'signed_at', 'created_at'
+    ]
+    list_filter = ['status', 'created_at', 'reviewed_at', 'signed_at']
+    search_fields = ['contract__contract_number', 'supplier__username', 'supplier__first_name', 'supplier__last_name']
+    ordering = ['-created_at']
+    readonly_fields = ['created_at', 'updated_at']
+    
+    fieldsets = (
+        ('Contract & Supplier', {
+            'fields': ('contract', 'supplier')
+        }),
+        ('Signing Status', {
+            'fields': ('status', 'reviewed_at', 'signed_at')
+        }),
+        ('Signing Details', {
+            'fields': ('signature_file', 'rejection_reason', 'notes')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def get_queryset(self, request):
+        """Optimize queryset for admin list view."""
+        return super().get_queryset(request).select_related('contract', 'supplier')
+
+
+@admin.register(School)
+class SchoolAdmin(ImportExportModelAdmin):
+    """
+    Admin interface for School model with import/export functionality.
+    """
+    
+    resource_class = SchoolResource
+    
+    list_display = [
+        'name', 'code', 'region', 'district', 'contact_person', 
+        'contact_phone', 'is_active', 'created_at'
+    ]
+    list_filter = [
+        'region', 'district', 'is_active', 'created_at'
+    ]
+    search_fields = [
+        'name', 'code', 'district', 'contact_person', 'contact_phone', 'contact_email'
+    ]
+    ordering = ['region', 'name']
+    readonly_fields = ['created_at', 'updated_at']
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': (
+                'name', 'code', 'region', 'district', 'address'
+            )
+        }),
+        ('Contact Information', {
+            'fields': (
+                'contact_person', 'contact_phone', 'contact_email'
+            )
+        }),
+        ('Status', {
+            'fields': ('is_active',)
+        }),
+        ('Audit Information', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def get_queryset(self, request):
+        """Optimize queryset for admin list view."""
+        return super().get_queryset(request).select_related('region')

@@ -1,0 +1,17 @@
+name,description,is_active,is_processed_food
+"Rice","White rice for school feeding programs",True,False
+"Maize","Yellow maize for school meals",True,False
+"Beans","Red beans for protein in school meals",True,False
+"Groundnut","Groundnuts for school feeding",True,False
+"Tomatoes","Fresh tomatoes for school cooking",True,False
+"Onions","Fresh onions for school meals",True,False
+"Plantain","Fresh plantains for school feeding",True,False
+"Yam","Fresh yams for school meals",True,False
+"Cooking Oil","Vegetable cooking oil for school meals",True,True
+"Salt","Iodized salt for school cooking",True,True
+"Sugar","White sugar for school meals",True,True
+"Bread","Fresh bread for school feeding",True,True
+"Milk","Powdered milk for school meals",True,True
+"Fish","Fresh fish for school protein",True,False
+"Chicken","Fresh chicken for school meals",True,False
+

@@ -37,6 +37,10 @@ def system_settings(request):
             
             # Update SMS settings
             settings.sms_from_name = request.POST.get('sms_from_name', settings.sms_from_name)
+            settings.sms_provider = request.POST.get('sms_provider', settings.sms_provider)
+            settings.sms_api_key = request.POST.get('sms_api_key', settings.sms_api_key)
+            settings.sms_api_secret = request.POST.get('sms_api_secret', settings.sms_api_secret)
+            settings.sms_sender_id = request.POST.get('sms_sender_id', settings.sms_sender_id)
             
             # Update notification settings
             settings.notification_api_url = request.POST.get('notification_api_url', settings.notification_api_url)
@@ -78,7 +82,6 @@ def system_settings(request):
     
     context = {
         'settings': settings,
-        'log_level_choices': SystemSettings._meta.get_field('log_level').choices,
     }
     
     return render(request, 'backoffice/system_settings.html', context)
@@ -143,14 +146,23 @@ def test_notification_api(request):
         
         settings_obj = SystemSettings.get_settings()
         
+        # Get custom parameters from request or use defaults
+        from_email = request.POST.get('from_email', settings_obj.email_from_address)
+        from_name = request.POST.get('from_name', settings_obj.email_from_name)
+        test_email = request.POST.get('test_email', 'test@example.com')
+        test_subject = request.POST.get('test_subject', 'API Test')
+        test_body = request.POST.get('test_body', 'This is a test message from GCX Admin Portal')
+        is_html = request.POST.get('is_html', 'false').lower() == 'true'
+        
         # Test email endpoint
         email_url = f"{settings_obj.notification_api_url}/api/email"
         test_payload = {
-            "to": "test@example.com",
-            "subject": "API Test",
-            "body": "This is a test message from GCX Admin Portal",
-            "isHtml": False,
-            "fromName": settings_obj.email_from_name,
+            "to": test_email,
+            "subject": test_subject,
+            "body": test_body,
+            "isHtml": is_html,
+            "fromEmail": from_email,
+            "fromName": from_name,
             "priority": "normal",
             "tracking": False,
             "immediate": True
@@ -190,6 +202,93 @@ def test_notification_api(request):
         return JsonResponse({
             'success': False,
             'message': f'Error testing API: {str(e)}'
+        })
+
+
+@staff_member_required
+@require_POST
+def test_sms_service(request):
+    """
+    Test the SMS service connection.
+    """
+    try:
+        import requests
+        from django.conf import settings
+        
+        settings_obj = SystemSettings.get_settings()
+        
+        # Get SMS parameters from request
+        provider = request.POST.get('provider', settings_obj.sms_provider)
+        api_key = request.POST.get('api_key', settings_obj.sms_api_key)
+        sender_id = request.POST.get('sender_id', settings_obj.sms_sender_id)
+        test_number = request.POST.get('test_number', '+233123456789')
+        test_message = request.POST.get('test_message', 'This is a test SMS from GCX Admin Portal')
+        
+        if not sender_id:
+            return JsonResponse({
+                'success': False,
+                'message': 'SMS Sender ID is required'
+            })
+        
+        # Test SMS endpoint
+        sms_url = f"{settings_obj.notification_api_url}/api/sms"
+        test_payload = {
+            "number": test_number,  # Use custom test number
+            "message": test_message,  # Use custom test message
+            "from": sender_id
+        }
+        
+        # Only add provider and API key if provided
+        if provider:
+            test_payload["provider"] = provider
+        if api_key:
+            test_payload["api_key"] = api_key
+        
+        try:
+            response = requests.post(
+                sms_url,
+                json=test_payload,
+                headers={'Content-Type': 'application/json'},
+                timeout=settings_obj.notification_timeout
+            )
+            
+            # Log the response for debugging
+            logger.info(f"SMS API Response Status: {response.status_code}")
+            logger.info(f"SMS API Response Body: {response.text}")
+            
+            if response.status_code == 200:
+                result = response.json()
+                if result.get('success'):
+                    return JsonResponse({
+                        'success': True,
+                        'message': 'SMS service is working correctly!'
+                    })
+                else:
+                    return JsonResponse({
+                        'success': False,
+                        'message': f'SMS service returned error: {result.get("message", "Unknown error")}'
+                    })
+            else:
+                return JsonResponse({
+                    'success': False,
+                    'message': f'SMS service request failed with status {response.status_code}. Response: {response.text}'
+                })
+        except requests.exceptions.RequestException as e:
+            logger.error(f"SMS API Request Exception: {str(e)}")
+            return JsonResponse({
+                'success': False,
+                'message': f'SMS service request failed: {str(e)}'
+            })
+            
+    except requests.exceptions.Timeout:
+        return JsonResponse({
+            'success': False,
+            'message': 'SMS service request timed out'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Error testing SMS service: {str(e)}'
         })
 
 

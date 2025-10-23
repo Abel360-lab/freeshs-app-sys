@@ -1,0 +1,501 @@
+{% extends 'backoffice/base.html' %}
+{% load static %}
+
+{% block title %}Audit Statistics - GCX Admin Portal{% endblock %}
+
+{% block page_icon %}<i class="fas fa-chart-bar"></i>{% endblock %}
+{% block page_title %}Audit Statistics{% endblock %}
+
+{% block page_header_container %}
+<div class="page-header-container">
+    <div class="page-header-content">
+        <div class="page-header-info">
+            <div class="page-header-breadcrumb">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'applications:backoffice-dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'core:audit-logs' %}">Audit Logs</a></li>
+                        <li class="breadcrumb-item active">Statistics</li>
+                    </ol>
+                </nav>
+            </div>
+            <h1 class="page-header-title">Audit Statistics</h1>
+            <p class="page-header-subtitle">Analytics and insights into system activity</p>
+        </div>
+        <div class="page-header-actions">
+            <a href="{% url 'core:audit-logs' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-list"></i> All Logs
+            </a>
+            <a href="{% url 'core:audit-log-export' %}" class="btn btn-primary">
+                <i class="fas fa-download"></i> Export
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<style>
+    /* Modern Dashboard Styles */
+    .modern-stat-card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 1.5rem;
+        transition: all 0.2s ease;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .modern-stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--primary-color);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.3s ease;
+    }
+
+    .modern-stat-card:hover::before {
+        transform: scaleX(1);
+    }
+
+    .modern-stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
+
+    .stat-icon-wrapper {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+    }
+
+    .stat-value-wrapper {
+        margin-top: 0.75rem;
+    }
+
+    .stat-value-main {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #111827;
+        line-height: 1;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label-main {
+        font-size: 0.875rem;
+        color: #6b7280;
+        font-weight: 500;
+    }
+
+    .stat-trend {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+    }
+
+    .stat-trend.positive {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .stat-trend.warning {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .stat-trend.danger {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .stat-trend.info {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    
+    .stats-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .stats-card h3 {
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .stat-item:last-child {
+        border-bottom: none;
+    }
+    
+    .stat-label {
+        font-weight: 500;
+        color: var(--text-dark);
+    }
+    
+    .stat-value {
+        font-weight: 600;
+        color: var(--primary-color);
+        font-size: 1.1rem;
+    }
+    
+    .chart-container {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .chart-placeholder {
+        height: 300px;
+        background: var(--bg-light);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted);
+        font-style: italic;
+    }
+    
+    .date-range-form {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .form-group label {
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-group input,
+    .form-group select {
+        padding: 0.75rem;
+        border: 2px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 0.9rem;
+        transition: border-color 0.2s ease;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+    }
+    
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
+    }
+    
+    .btn-primary {
+        background: var(--primary-color);
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
+    }
+    
+    .btn-outline-secondary {
+        background: transparent;
+        color: var(--text-dark);
+        border: 2px solid var(--border-color);
+    }
+    
+    .btn-outline-secondary:hover {
+        background: var(--bg-light);
+        border-color: var(--text-muted);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: var(--text-muted);
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="container">
+    <!-- Date Range Form -->
+    <div class="date-range-form">
+        <h3><i class="fas fa-calendar-alt"></i> Date Range</h3>
+        <form method="GET">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="start_date">Start Date</label>
+                    <input type="date" id="start_date" name="start_date" value="{{ start_date|date:'Y-m-d' }}">
+                </div>
+                <div class="form-group">
+                    <label for="end_date">End Date</label>
+                    <input type="date" id="end_date" name="end_date" value="{{ end_date|date:'Y-m-d' }}">
+                </div>
+            </div>
+            <div class="form-row">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-refresh"></i> Update Statistics
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Overview Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-lg-6 col-md-6 mb-3">
+            <div class="modern-stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon-wrapper" style="background: #eff6ff; color: #1e40af;">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <span class="stat-trend positive">
+                        <i class="fas fa-arrow-up"></i>
+                        {{ days }}d
+                    </span>
+                </div>
+                <div class="stat-value-wrapper">
+                    <div class="stat-value-main">{{ total_logs|default:"0" }}</div>
+                    <div class="stat-label-main">Total Logs</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-lg-6 col-md-6 mb-3">
+            <div class="modern-stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon-wrapper" style="background: #fef3c7; color: #92400e;">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <span class="stat-trend info">
+                        <i class="fas fa-calendar"></i>
+                        From
+                    </span>
+                </div>
+                <div class="stat-value-wrapper">
+                    <div class="stat-value-main">{{ start_date|date:"M d" }}</div>
+                    <div class="stat-label-main">Start Date</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-lg-6 col-md-6 mb-3">
+            <div class="modern-stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon-wrapper" style="background: #fef3c7; color: #92400e;">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <span class="stat-trend info">
+                        <i class="fas fa-calendar"></i>
+                        To
+                    </span>
+                </div>
+                <div class="stat-value-wrapper">
+                    <div class="stat-value-main">{{ end_date|date:"M d" }}</div>
+                    <div class="stat-label-main">End Date</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-lg-6 col-md-6 mb-3">
+            <div class="modern-stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon-wrapper" style="background: #dbeafe; color: #1e40af;">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <span class="stat-trend positive">
+                        <i class="fas fa-chart-line"></i>
+                        Period
+                    </span>
+                </div>
+                <div class="stat-value-wrapper">
+                    <div class="stat-value-main">{{ days }}</div>
+                    <div class="stat-label-main">Days</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Grid -->
+    <div class="stats-grid">
+        <!-- Action Statistics -->
+        <div class="stats-card">
+            <h3><i class="fas fa-tasks"></i> Action Statistics</h3>
+            {% if action_counts %}
+                {% for action in action_counts %}
+                    <div class="stat-item">
+                        <span class="stat-label">{{ action.action }}</span>
+                        <span class="stat-value">{{ action.count }}</span>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-chart-bar"></i>
+                    <p>No action data available</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- User Activity -->
+        <div class="stats-card">
+            <h3><i class="fas fa-users"></i> User Activity</h3>
+            {% if user_activity %}
+                {% for user in user_activity %}
+                    <div class="stat-item">
+                        <span class="stat-label">{{ user.user__username|default:"System" }}</span>
+                        <span class="stat-value">{{ user.count }}</span>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-users"></i>
+                    <p>No user activity data available</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Severity Distribution -->
+        <div class="stats-card">
+            <h3><i class="fas fa-exclamation-triangle"></i> Severity Distribution</h3>
+            {% if severity_counts %}
+                {% for severity in severity_counts %}
+                    <div class="stat-item">
+                        <span class="stat-label">{{ severity.severity }}</span>
+                        <span class="stat-value">{{ severity.count }}</span>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p>No severity data available</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Object Type Statistics -->
+        <div class="stats-card">
+            <h3><i class="fas fa-cube"></i> Object Types</h3>
+            {% if object_type_counts %}
+                {% for obj_type in object_type_counts %}
+                    <div class="stat-item">
+                        <span class="stat-label">{{ obj_type.object_type|default:"Unknown" }}</span>
+                        <span class="stat-value">{{ obj_type.count }}</span>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-cube"></i>
+                    <p>No object type data available</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="chart-container">
+        <h3><i class="fas fa-chart-line"></i> Activity Trends</h3>
+        <div class="chart-placeholder">
+            <div>
+                <i class="fas fa-chart-line" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                <p>Chart visualization would go here</p>
+                <small>This could be implemented with Chart.js or similar library</small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit form on date change
+    const dateInputs = document.querySelectorAll('input[type="date"]');
+    dateInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            this.form.submit();
+        });
+    });
+});
+</script>
+{% endblock %}

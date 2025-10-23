@@ -43,53 +43,81 @@
 <!-- Key Metrics -->
 <div class="row mb-4">
     <div class="col-lg-3 col-md-6 mb-3">
-        <div class="stat-card">
-            <i class="fas fa-file-alt stat-icon"></i>
-            <div class="stat-value">{{ total_applications|default:"0" }}</div>
-            <div class="stat-label">Total Applications</div>
-            <div class="stat-change positive">
-                <i class="fas fa-arrow-up"></i> 
-                <span>+{{ new_this_month|default:"0" }}</span>
-                <small>this month</small>
+        <div class="modern-stat-card">
+            <div class="stat-header">
+                <div class="stat-icon-wrapper" style="background: #dbeafe; color: #1e40af;">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <span class="stat-trend positive">
+                    <i class="fas fa-arrow-up"></i> +{{ new_this_month|default:"0" }}
+                </span>
+            </div>
+            <div class="stat-value-wrapper">
+                <div class="stat-value-main">{{ total_applications|default:"0" }}</div>
+                <div class="stat-label-main">Total Applications</div>
+                <div class="mt-2 text-muted" style="font-size: 0.8125rem;">
+                    <i class="fas fa-calendar"></i> This month
+                </div>
             </div>
         </div>
     </div>
     
     <div class="col-lg-3 col-md-6 mb-3">
-        <div class="stat-card success">
-            <i class="fas fa-check-circle stat-icon"></i>
-            <div class="stat-value">{{ approved_applications|default:"0" }}</div>
-            <div class="stat-label">Approved</div>
-            <div class="stat-change positive">
-                <i class="fas fa-percentage"></i> 
-                <span>{{ approval_rate|default:"0" }}%</span>
-                <small>approval rate</small>
+        <div class="modern-stat-card">
+            <div class="stat-header">
+                <div class="stat-icon-wrapper" style="background: #dcfce7; color: #166534;">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <span class="stat-trend positive">
+                    <i class="fas fa-percentage"></i> {{ approval_rate|default:"0" }}%
+                </span>
+            </div>
+            <div class="stat-value-wrapper">
+                <div class="stat-value-main">{{ approved_applications|default:"0" }}</div>
+                <div class="stat-label-main">Approved Apps</div>
+                <div class="mt-2 text-muted" style="font-size: 0.8125rem;">
+                    <i class="fas fa-check-circle text-success"></i> Approval rate
+                </div>
             </div>
         </div>
     </div>
     
     <div class="col-lg-3 col-md-6 mb-3">
-        <div class="stat-card warning">
-            <i class="fas fa-clock stat-icon"></i>
-            <div class="stat-value">{{ pending_applications|default:"0" }}</div>
-            <div class="stat-label">Pending</div>
-            <div class="stat-change">
-                <i class="fas fa-hourglass-half"></i>
-                <span>{{ avg_processing_time|default:"0" }} days</span>
-                <small>avg processing</small>
+        <div class="modern-stat-card">
+            <div class="stat-header">
+                <div class="stat-icon-wrapper" style="background: #fef3c7; color: #92400e;">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <span class="stat-trend warning">
+                    <i class="fas fa-hourglass-half"></i> {{ avg_processing_time|default:"0" }} days
+                </span>
+            </div>
+            <div class="stat-value-wrapper">
+                <div class="stat-value-main">{{ pending_applications|default:"0" }}</div>
+                <div class="stat-label-main">Pending Review</div>
+                <div class="mt-2 text-muted" style="font-size: 0.8125rem;">
+                    <i class="fas fa-clock"></i> Avg processing
+                </div>
             </div>
         </div>
     </div>
     
     <div class="col-lg-3 col-md-6 mb-3">
-        <div class="stat-card info">
-            <i class="fas fa-users stat-icon"></i>
-            <div class="stat-value">{{ active_suppliers|default:"0" }}</div>
-            <div class="stat-label">Active Suppliers</div>
-            <div class="stat-change positive">
-                <i class="fas fa-arrow-up"></i> 
-                <span>+{{ new_suppliers|default:"0" }}</span>
-                <small>this month</small>
+        <div class="modern-stat-card">
+            <div class="stat-header">
+                <div class="stat-icon-wrapper" style="background: #fee2e2; color: #991b1b;">
+                    <i class="fas fa-users"></i>
+                </div>
+                <span class="stat-trend positive">
+                    <i class="fas fa-arrow-up"></i> +{{ new_suppliers|default:"0" }}
+                </span>
+            </div>
+            <div class="stat-value-wrapper">
+                <div class="stat-value-main">{{ active_suppliers|default:"0" }}</div>
+                <div class="stat-label-main">Active Suppliers</div>
+                <div class="mt-2 text-muted" style="font-size: 0.8125rem;">
+                    <i class="fas fa-user-check text-success"></i> New this month
+                </div>
             </div>
         </div>
     </div>
@@ -99,53 +127,57 @@
 <div class="row mb-4">
     <!-- Application Trends -->
     <div class="col-lg-8 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title">
-                    <i class="fas fa-chart-line"></i>
-                    Application Trends
-                </h5>
-                <div class="card-actions">
-                    <select class="form-select form-select-sm" style="width: auto;" onchange="updateTrendsChart(this.value)">
-                        <option value="6">Last 6 Months</option>
-                        <option value="12">Last Year</option>
-                        <option value="24">Last 2 Years</option>
-                    </select>
-                </div>
+        <div class="modern-card">
+            <div class="modern-card-header">
+                <h6 class="modern-card-title mb-0">
+                    <i class="fas fa-chart-line"></i> Application Trends
+                </h6>
+                <select class="form-select form-select-sm" style="width: auto; border-radius: 6px;" onchange="updateTrendsChart(this.value)">
+                    <option value="6">Last 6 Months</option>
+                    <option value="12" selected>Last Year</option>
+                    <option value="24">Last 2 Years</option>
+                </select>
             </div>
-            <div class="card-body">
-                <div id="trendsChart" style="height: 400px;"></div>
+            <div class="modern-card-body">
+                <div id="trendsChart" style="height: 380px; position: relative;"></div>
             </div>
         </div>
     </div>
     
     <!-- Status Distribution -->
     <div class="col-lg-4 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title">
-                    <i class="fas fa-chart-pie"></i>
-                    Status Distribution
-                </h5>
+        <div class="modern-card">
+            <div class="modern-card-header">
+                <h6 class="modern-card-title mb-0">
+                    <i class="fas fa-chart-pie"></i> Status Distribution
+                </h6>
             </div>
-            <div class="card-body">
-                <div id="statusChart" style="height: 300px;"></div>
-                <div class="mt-3">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="badge-status badge-pending">Pending Review</span>
-                        <strong>{{ pending_count|default:"0" }}</strong>
+            <div class="modern-card-body">
+                <div id="statusChart" style="height: 280px; position: relative;"></div>
+                <div class="mt-4">
+                    <div class="status-breakdown-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge-modern warning">Pending Review</span>
+                            <strong style="font-size: 1.125rem; color: #111827;">{{ pending_count|default:"0" }}</strong>
+                        </div>
                     </div>
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="badge-status badge-approved">Approved</span>
-                        <strong>{{ approved_count|default:"0" }}</strong>
+                    <div class="status-breakdown-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge-modern success">Approved</span>
+                            <strong style="font-size: 1.125rem; color: #111827;">{{ approved_count|default:"0" }}</strong>
+                        </div>
                     </div>
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="badge-status badge-review">Under Review</span>
-                        <strong>{{ review_count|default:"0" }}</strong>
+                    <div class="status-breakdown-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge-modern info">Under Review</span>
+                            <strong style="font-size: 1.125rem; color: #111827;">{{ review_count|default:"0" }}</strong>
+                        </div>
                     </div>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="badge-status badge-rejected">Rejected</span>
-                        <strong>{{ rejected_count|default:"0" }}</strong>
+                    <div class="status-breakdown-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge-modern danger">Rejected</span>
+                            <strong style="font-size: 1.125rem; color: #111827;">{{ rejected_count|default:"0" }}</strong>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -157,30 +189,28 @@
 <div class="row mb-4">
     <!-- Regional Distribution -->
     <div class="col-lg-6 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title">
-                    <i class="fas fa-map-marked-alt"></i>
-                    Regional Distribution
-                </h5>
+        <div class="modern-card">
+            <div class="modern-card-header">
+                <h6 class="modern-card-title mb-0">
+                    <i class="fas fa-map-marked-alt"></i> Regional Distribution
+                </h6>
             </div>
-            <div class="card-body">
-                <div id="regionalChart" style="height: 300px;"></div>
+            <div class="modern-card-body">
+                <div id="regionalChart" style="height: 320px; position: relative;"></div>
             </div>
         </div>
     </div>
     
     <!-- Commodity Analysis -->
     <div class="col-lg-6 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title">
-                    <i class="fas fa-seedling"></i>
-                    Commodity Analysis
-                </h5>
+        <div class="modern-card">
+            <div class="modern-card-header">
+                <h6 class="modern-card-title mb-0">
+                    <i class="fas fa-seedling"></i> Commodity Analysis
+                </h6>
             </div>
-            <div class="card-body">
-                <div id="commodityChart" style="height: 300px;"></div>
+            <div class="modern-card-body">
+                <div id="commodityChart" style="height: 320px; position: relative;"></div>
             </div>
         </div>
     </div>
@@ -189,39 +219,48 @@
 <!-- Performance Metrics -->
 <div class="row mb-4">
     <div class="col-lg-6 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title">
-                    <i class="fas fa-tachometer-alt"></i>
-                    Processing Performance
-                </h5>
+        <div class="modern-card">
+            <div class="modern-card-header">
+                <h6 class="modern-card-title mb-0">
+                    <i class="fas fa-tachometer-alt"></i> Processing Performance
+                </h6>
             </div>
-            <div class="card-body">
-                <div class="row">
+            <div class="modern-card-body">
+                <div class="row g-3">
                     <div class="col-6">
-                        <div class="metric-item">
-                            <div class="metric-value">{{ avg_processing_days|default:"0" }}</div>
-                            <div class="metric-label">Avg Processing Days</div>
+                        <div class="performance-metric-box">
+                            <div class="metric-icon-small mb-2" style="background: #dbeafe; color: #1e40af;">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="metric-value-lg">{{ avg_processing_days|default:"0" }}</div>
+                            <div class="metric-label-sm">Avg Processing Days</div>
                         </div>
                     </div>
                     <div class="col-6">
-                        <div class="metric-item">
-                            <div class="metric-value">{{ fastest_processing|default:"0" }}</div>
-                            <div class="metric-label">Fastest Processing</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="row mt-3">
-                    <div class="col-6">
-                        <div class="metric-item">
-                            <div class="metric-value">{{ slowest_processing|default:"0" }}</div>
-                            <div class="metric-label">Slowest Processing</div>
+                        <div class="performance-metric-box">
+                            <div class="metric-icon-small mb-2" style="background: #dcfce7; color: #166534;">
+                                <i class="fas fa-bolt"></i>
+                            </div>
+                            <div class="metric-value-lg">{{ fastest_processing|default:"0" }}</div>
+                            <div class="metric-label-sm">Fastest Processing</div>
                         </div>
                     </div>
                     <div class="col-6">
-                        <div class="metric-item">
-                            <div class="metric-value">{{ on_time_rate|default:"0" }}%</div>
-                            <div class="metric-label">On-Time Rate</div>
+                        <div class="performance-metric-box">
+                            <div class="metric-icon-small mb-2" style="background: #fee2e2; color: #991b1b;">
+                                <i class="fas fa-turtle"></i>
+                            </div>
+                            <div class="metric-value-lg">{{ slowest_processing|default:"0" }}</div>
+                            <div class="metric-label-sm">Slowest Processing</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="performance-metric-box">
+                            <div class="metric-icon-small mb-2" style="background: #fef3c7; color: #92400e;">
+                                <i class="fas fa-check-double"></i>
+                            </div>
+                            <div class="metric-value-lg">{{ on_time_rate|default:"0" }}%</div>
+                            <div class="metric-label-sm">On-Time Rate</div>
                         </div>
                     </div>
                 </div>
@@ -230,40 +269,53 @@
     </div>
     
     <div class="col-lg-6 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title">
-                    <i class="fas fa-calendar-check"></i>
-                    Monthly Targets
-                </h5>
+        <div class="modern-card">
+            <div class="modern-card-header">
+                <h6 class="modern-card-title mb-0">
+                    <i class="fas fa-bullseye"></i> Monthly Targets
+                </h6>
             </div>
-            <div class="card-body">
-                <div class="target-item">
+            <div class="modern-card-body">
+                <div class="target-progress-item">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span>Applications Target</span>
-                        <span class="fw-bold">{{ monthly_target|default:"100" }}</span>
+                        <div>
+                            <i class="fas fa-file-alt text-primary me-2"></i>
+                            <span style="font-weight: 600; color: #374151;">Applications Target</span>
+                        </div>
+                        <span class="fw-bold" style="color: #111827; font-size: 1.125rem;">{{ monthly_target|default:"100" }}</span>
                     </div>
-                    <div class="progress mb-3">
-                        <div class="progress-bar" role="progressbar" style="width: {{ target_achievement|default:"75" }}%"></div>
+                    <div class="progress mb-3" style="height: 10px; border-radius: 10px; background: #f3f4f6;">
+                        <div class="progress-bar" role="progressbar" style="width: {{ target_achievement|default:"75" }}%; background: #3b82f6; border-radius: 10px;"></div>
                     </div>
+                    <div class="text-muted text-end" style="font-size: 0.8125rem;">{{ target_achievement|default:"75" }}% achieved</div>
                 </div>
-                <div class="target-item">
+                
+                <div class="target-progress-item">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span>Approvals Target</span>
-                        <span class="fw-bold">{{ approval_target|default:"80" }}</span>
+                        <div>
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            <span style="font-weight: 600; color: #374151;">Approvals Target</span>
+                        </div>
+                        <span class="fw-bold" style="color: #111827; font-size: 1.125rem;">{{ approval_target|default:"80" }}</span>
                     </div>
-                    <div class="progress mb-3">
-                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ approval_achievement|default:"90" }}%"></div>
+                    <div class="progress mb-3" style="height: 10px; border-radius: 10px; background: #f3f4f6;">
+                        <div class="progress-bar" role="progressbar" style="width: {{ approval_achievement|default:"90" }}%; background: #166534; border-radius: 10px;"></div>
                     </div>
+                    <div class="text-muted text-end" style="font-size: 0.8125rem;">{{ approval_achievement|default:"90" }}% achieved</div>
                 </div>
-                <div class="target-item">
+                
+                <div class="target-progress-item mb-0">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span>Processing Time Target</span>
-                        <span class="fw-bold">{{ time_target|default:"5" }} days</span>
+                        <div>
+                            <i class="fas fa-clock text-info me-2"></i>
+                            <span style="font-weight: 600; color: #374151;">Processing Time Target</span>
+                        </div>
+                        <span class="fw-bold" style="color: #111827; font-size: 1.125rem;">{{ time_target|default:"5" }} days</span>
                     </div>
-                    <div class="progress">
-                        <div class="progress-bar bg-info" role="progressbar" style="width: {{ time_achievement|default:"85" }}%"></div>
+                    <div class="progress mb-3" style="height: 10px; border-radius: 10px; background: #f3f4f6;">
+                        <div class="progress-bar" role="progressbar" style="width: {{ time_achievement|default:"85" }}%; background: #1e40af; border-radius: 10px;"></div>
                     </div>
+                    <div class="text-muted text-end" style="font-size: 0.8125rem;">{{ time_achievement|default:"85" }}% achieved</div>
                 </div>
             </div>
         </div>
@@ -274,16 +326,15 @@
 <div class="row">
     <!-- Top Performing Regions -->
     <div class="col-lg-6 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title">
-                    <i class="fas fa-trophy"></i>
-                    Top Performing Regions
-                </h5>
+        <div class="modern-card">
+            <div class="modern-card-header">
+                <h6 class="modern-card-title mb-0">
+                    <i class="fas fa-trophy"></i> Top Performing Regions
+                </h6>
             </div>
-            <div class="card-body">
+            <div class="modern-card-body">
                 <div class="table-responsive">
-                    <table class="table table-sm">
+                    <table class="modern-table">
                         <thead>
                             <tr>
                                 <th>Region</th>
@@ -295,22 +346,32 @@
                         <tbody>
                             {% for region in top_regions %}
                             <tr>
-                                <td>{{ region.name }}</td>
-                                <td>{{ region.app_count }}</td>
-                                <td>{{ region.approval_rate }}%</td>
+                                <td style="font-weight: 600; color: #111827;">{{ region.name }}</td>
+                                <td><span class="badge-modern info">{{ region.app_count }}</span></td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="progress" style="width: 60px; height: 6px; border-radius: 10px; background: #f3f4f6;">
+                                            <div class="progress-bar" style="width: {{ region.approval_rate }}%; background: #166534; border-radius: 10px;"></div>
+                                        </div>
+                                        <span style="font-weight: 600; color: #111827;">{{ region.approval_rate }}%</span>
+                                    </div>
+                                </td>
                                 <td>
                                     {% if region.trend > 0 %}
-                                    <i class="fas fa-arrow-up text-success"></i>
+                                    <span class="trend-badge positive"><i class="fas fa-arrow-up"></i></span>
                                     {% elif region.trend < 0 %}
-                                    <i class="fas fa-arrow-down text-danger"></i>
+                                    <span class="trend-badge negative"><i class="fas fa-arrow-down"></i></span>
                                     {% else %}
-                                    <i class="fas fa-minus text-muted"></i>
+                                    <span class="trend-badge neutral"><i class="fas fa-minus"></i></span>
                                     {% endif %}
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="4" class="text-center text-muted">No data available</td>
+                                <td colspan="4" class="text-center text-muted py-4">
+                                    <i class="fas fa-map fa-2x mb-2" style="opacity: 0.3;"></i>
+                                    <div>No regional data available</div>
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -322,49 +383,51 @@
     
     <!-- Recent Activity -->
     <div class="col-lg-6 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title">
-                    <i class="fas fa-history"></i>
-                    Recent Activity
-                </h5>
+        <div class="modern-card">
+            <div class="modern-card-header">
+                <h6 class="modern-card-title mb-0">
+                    <i class="fas fa-stream"></i> Recent Activity
+                </h6>
             </div>
-            <div class="card-body">
-                <div class="activity-timeline">
-                    <div class="activity-item">
-                        <div class="activity-icon bg-success">
+            <div class="modern-card-body">
+                <div class="activity-feed-modern">
+                    <div class="activity-item-modern">
+                        <div class="activity-icon-box" style="background: rgba(22, 101, 52, 0.15); color: #166534;">
                             <i class="fas fa-check"></i>
                         </div>
-                        <div class="activity-content">
-                            <h6>Application Approved</h6>
-                            <p class="text-muted mb-0">ABC Trading Ltd. - 2 hours ago</p>
+                        <div class="activity-content-box">
+                            <h6 class="activity-title">Application Approved</h6>
+                            <p class="activity-meta">ABC Trading Ltd. • 2 hours ago</p>
                         </div>
                     </div>
-                    <div class="activity-item">
-                        <div class="activity-icon bg-warning">
+                    
+                    <div class="activity-item-modern">
+                        <div class="activity-icon-box" style="background: rgba(146, 64, 14, 0.15); color: #92400e;">
                             <i class="fas fa-file-upload"></i>
                         </div>
-                        <div class="activity-content">
-                            <h6>Documents Uploaded</h6>
-                            <p class="text-muted mb-0">XYZ Suppliers - 4 hours ago</p>
+                        <div class="activity-content-box">
+                            <h6 class="activity-title">Documents Uploaded</h6>
+                            <p class="activity-meta">XYZ Suppliers • 4 hours ago</p>
                         </div>
                     </div>
-                    <div class="activity-item">
-                        <div class="activity-icon bg-info">
+                    
+                    <div class="activity-item-modern">
+                        <div class="activity-icon-box" style="background: rgba(30, 64, 175, 0.15); color: #1e40af;">
                             <i class="fas fa-user-plus"></i>
                         </div>
-                        <div class="activity-content">
-                            <h6>New Application</h6>
-                            <p class="text-muted mb-0">Global Commodities - 6 hours ago</p>
+                        <div class="activity-content-box">
+                            <h6 class="activity-title">New Application</h6>
+                            <p class="activity-meta">Global Commodities • 6 hours ago</p>
                         </div>
                     </div>
-                    <div class="activity-item">
-                        <div class="activity-icon bg-danger">
+                    
+                    <div class="activity-item-modern">
+                        <div class="activity-icon-box" style="background: rgba(153, 27, 27, 0.15); color: #991b1b;">
                             <i class="fas fa-times"></i>
                         </div>
-                        <div class="activity-content">
-                            <h6>Application Rejected</h6>
-                            <p class="text-muted mb-0">Local Traders - 8 hours ago</p>
+                        <div class="activity-content-box">
+                            <h6 class="activity-title">Application Rejected</h6>
+                            <p class="activity-meta">Local Traders • 8 hours ago</p>
                         </div>
                     </div>
                 </div>
@@ -374,97 +437,362 @@
 </div>
 
 <style>
-.metric-item {
-    text-align: center;
-    padding: 1rem;
-    background: var(--background-light);
-    border-radius: var(--border-radius-sm);
-}
-
-.metric-value {
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--primary-color);
-    margin-bottom: 0.5rem;
-}
-
-.metric-label {
-    font-size: 0.875rem;
-    color: var(--text-muted);
-    font-weight: 500;
-}
-
-.target-item {
-    margin-bottom: 1.5rem;
-}
-
-.target-item:last-child {
-    margin-bottom: 0;
-}
-
-.progress {
-    height: 8px;
-    border-radius: 4px;
-}
-
-.activity-timeline {
+/* Dashboard-Style Components */
+.modern-stat-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.2s ease;
+    height: 100%;
     position: relative;
-    padding-left: 3rem;
+    overflow: hidden;
 }
 
-.activity-timeline::before {
+.modern-stat-card::before {
     content: '';
     position: absolute;
-    left: 1.25rem;
     top: 0;
-    bottom: 0;
-    width: 2px;
-    background: var(--background-light);
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--primary-color);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
 }
 
-.activity-item {
-    position: relative;
-    margin-bottom: 1.5rem;
+.modern-stat-card:hover::before {
+    transform: scaleX(1);
+}
+
+.modern-stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
+}
+
+.stat-header {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
 }
 
-.activity-icon {
-    position: absolute;
-    left: -2rem;
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 50%;
+.stat-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
-    font-size: 0.875rem;
+    font-size: 1.25rem;
 }
 
-.activity-content h6 {
-    margin: 0;
+.stat-value-wrapper {
+    margin-top: 0.75rem;
+}
+
+.stat-value-main {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #111827;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label-main {
     font-size: 0.875rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.stat-trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: 6px;
+    font-size: 0.8125rem;
     font-weight: 600;
 }
 
-.activity-content p {
-    margin: 0;
-    font-size: 0.8125rem;
+.stat-trend.positive {
+    background: #dcfce7;
+    color: #166534;
 }
 
-/* Chart container fixes */
+.stat-trend.warning {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.stat-trend.neutral {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+/* Modern Card */
+.modern-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.modern-card-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #ffffff;
+}
+
+.modern-card-title {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.modern-card-body {
+    padding: 1.5rem;
+}
+
+/* Badge Modern */
+.badge-modern {
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.badge-modern.success {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.badge-modern.warning {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.badge-modern.danger {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.badge-modern.info {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+/* Status Breakdown */
+.status-breakdown-item {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.status-breakdown-item:last-child {
+    border-bottom: none;
+}
+
+/* Performance Metric Box */
+.performance-metric-box {
+    text-align: center;
+    padding: 1.25rem;
+    background: #f9fafb;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+    transition: all 0.2s ease;
+}
+
+.performance-metric-box:hover {
+    background: #f3f4f6;
+    transform: translateY(-2px);
+}
+
+.metric-icon-small {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    font-size: 1.1rem;
+}
+
+.metric-value-lg {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0.5rem 0;
+}
+
+.metric-label-sm {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+/* Target Progress Items */
+.target-progress-item {
+    margin-bottom: 1.75rem;
+}
+
+.target-progress-item:last-child {
+    margin-bottom: 0;
+}
+
+/* Modern Table */
+.modern-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.modern-table thead th {
+    padding: 0.75rem 1rem;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.modern-table tbody td {
+    padding: 1rem;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 0.875rem;
+    color: #374151;
+}
+
+.modern-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.modern-table tbody tr:hover {
+    background: #f9fafb;
+}
+
+/* Trend Badges */
+.trend-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+}
+
+.trend-badge.positive {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.trend-badge.negative {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.trend-badge.neutral {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+/* Activity Feed Modern */
+.activity-feed-modern {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.activity-item-modern {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f9fafb;
+    border-radius: 10px;
+    margin-bottom: 0.75rem;
+    border: 1px solid #e5e7eb;
+    transition: all 0.2s ease;
+}
+
+.activity-item-modern:hover {
+    background: #f3f4f6;
+    transform: translateX(4px);
+    border-color: #667eea;
+}
+
+.activity-icon-box {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1rem;
+}
+
+.activity-content-box {
+    flex-grow: 1;
+}
+
+.activity-title {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 0.25rem;
+}
+
+.activity-meta {
+    font-size: 0.8125rem;
+    color: #6b7280;
+    margin: 0;
+}
+
+/* Chart Containers */
 #trendsChart, #statusChart, #regionalChart, #commodityChart {
-    min-height: 200px;
     width: 100%;
 }
 
-#statusChart {
-    min-height: 300px;
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-#trendsChart {
-    min-height: 400px;
+.modern-stat-card {
+    animation: fadeInUp 0.5s ease backwards;
+}
+
+.modern-stat-card:nth-child(1) { animation-delay: 0.1s; }
+.modern-stat-card:nth-child(2) { animation-delay: 0.2s; }
+.modern-stat-card:nth-child(3) { animation-delay: 0.3s; }
+.modern-stat-card:nth-child(4) { animation-delay: 0.4s; }
+
+.modern-card {
+    animation: fadeInUp 0.6s ease backwards;
 }
 </style>
 {% endblock %}
@@ -586,7 +914,7 @@ function initTrendsChart() {
                 speed: 800
             }
         },
-        colors: ['#1e3a5f'],
+        colors: ['#667eea'],
         dataLabels: {
             enabled: false
         },
@@ -598,10 +926,14 @@ function initTrendsChart() {
             type: 'gradient',
             gradient: {
                 shadeIntensity: 1,
-                opacityFrom: 0.4,
-                opacityTo: 0.1,
+                opacityFrom: 0.3,
+                opacityTo: 0.05,
                 stops: [0, 90, 100]
             }
+        },
+        grid: {
+            borderColor: '#f3f4f6',
+            strokeDashArray: 3
         },
         xaxis: {
             categories: {{ monthly_labels|default:"['Jan','Feb','Mar','Apr','May','Jun']"|safe }}
@@ -644,19 +976,22 @@ function initStatusChart() {
             }
         },
         labels: ['Pending Review', 'Approved', 'Under Review', 'Rejected'],
-        colors: ['#ffc107', '#28a745', '#17a2b8', '#dc3545'],
+        colors: ['#fbbf24', '#166534', '#1e40af', '#991b1b'],
         dataLabels: {
             enabled: false
         },
         plotOptions: {
             pie: {
                 donut: {
-                    size: '70%',
+                    size: '65%',
                     labels: {
                         show: true,
                         total: {
                             show: true,
                             label: 'Total',
+                            fontSize: '14px',
+                            fontWeight: 600,
+                            color: '#111827',
                             formatter: function (w) {
                                 return w.globals.seriesTotals.reduce((a, b) => a + b, 0)
                             }
@@ -667,6 +1002,10 @@ function initStatusChart() {
         },
         legend: {
             show: false
+        },
+        stroke: {
+            width: 3,
+            colors: ['#fff']
         }
     };
     
@@ -702,7 +1041,7 @@ function initRegionalChart() {
                 distributed: true
             }
         },
-        colors: ['#1e3a5f', '#2c4f7c', '#3498db', '#5dade2', '#85c1e2'],
+        colors: ['#667eea', '#764ba2', '#3b82f6', '#1e40af', '#60a5fa'],
         dataLabels: {
             enabled: false
         },
@@ -758,7 +1097,7 @@ function initCommodityChart() {
                 distributed: true
             }
         },
-        colors: ['#28a745', '#20c997', '#17a2b8', '#6f42c1', '#e83e8c'],
+        colors: ['#166534', '#10b981', '#059669', '#047857', '#065f46'],
         dataLabels: {
             enabled: false
         },

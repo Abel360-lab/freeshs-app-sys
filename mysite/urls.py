@@ -7,9 +7,19 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import RedirectView
+from django.conf.urls.i18n import i18n_patterns
+from django.views.static import serve
 
+# URL patterns that should be internationalized
 urlpatterns = [
+    # Admin URLs (not internationalized)
     path('admin/', admin.site.urls),
+    path('admin/login/', RedirectView.as_view(url='/accounts/admin/login/', permanent=False)),
+    
+    # i18n URL patterns
+    path('i18n/', include('django.conf.urls.i18n')),
+] + i18n_patterns(
+    # Internationalized URL patterns
     path('', include('applications.urls', namespace='applications')),
     path('accounts/', include('accounts.urls', namespace='accounts')),
     path('documents/', include('documents.urls')),
@@ -18,9 +28,16 @@ urlpatterns = [
     path('core/', include('core.urls', namespace='core')),
     # Redirect only the exact root path to backoffice
     path('', RedirectView.as_view(url='/backoffice/', permanent=False)),
-]
+    prefix_default_language=False,  # Don't prefix default language URLs
+)
 
 # Serve media files in development
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+else:
+    # Serve media files in production (temporary solution)
+    # In production, you should serve media files through your web server (nginx/apache)
+    urlpatterns += [
+        path('media/<path:path>', serve, {'document_root': settings.MEDIA_ROOT}),
+    ]

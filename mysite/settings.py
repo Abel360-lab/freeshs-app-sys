@@ -18,10 +18,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-5yolj=!di$3k4wdco+5#sc85)&+&##lyyh5b@ysgra%&4d2wz*')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
+DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 'yes')
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
-
+#ALLOWED_HOSTS = ['172.25.221.182', 'localhost']
 
 # Application definition
 
@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'django_celery_results',
     'channels',
+    'import_export',
     
     # Local apps
     'core',
@@ -54,7 +55,10 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'core.middleware.AuditLogMiddleware',
+    'django.middleware.locale.LocaleMiddleware',  # Add locale middleware for i18n
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -76,6 +80,8 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'django.template.context_processors.media',
+                'django.template.context_processors.i18n',  # Add i18n context processor
+                'core.context_processors.sidebar_counts',  # Add sidebar badge counts
             ],
         },
     },
@@ -121,12 +127,44 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+from django.utils.translation import gettext_lazy as _
 
-TIME_ZONE = 'UTC'
+# Default language
+LANGUAGE_CODE = 'en'
+
+# Supported languages including Ghanaian languages and international languages
+LANGUAGES = [
+    ('en', _('English')),
+    ('ak', _('Akan')),
+    ('ee', _('Ewe')),
+    ('ga', _('Ga')),
+    ('ha', _('Hausa')),
+    ('tw', _('Twi')),
+    # International languages
+    ('fr', _('French')),
+    ('es', _('Spanish')),
+    ('de', _('German')),
+    ('it', _('Italian')),
+    ('pt', _('Portuguese')),
+    ('ar', _('Arabic')),
+    ('zh', _('Chinese')),
+    ('ja', _('Japanese')),
+    ('ko', _('Korean')),
+    ('ru', _('Russian')),
+    ('hi', _('Hindi')),
+    ('ur', _('Urdu')),
+]
+
+# Locale paths for translation files
+LOCALE_PATHS = [
+    BASE_DIR / 'locale',
+]
+
+# Time zone settings
+TIME_ZONE = 'Africa/Accra'  # Ghana timezone
 
 USE_I18N = True
-
+USE_L10N = True
 USE_TZ = True
 
 
@@ -138,6 +176,7 @@ STATIC_ROOT = os.getenv('STATIC_ROOT', BASE_DIR / 'staticfiles')
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media files
 MEDIA_URL = os.getenv('MEDIA_URL', '/media/')
@@ -147,6 +186,20 @@ MEDIA_ROOT = os.getenv('MEDIA_ROOT', BASE_DIR / 'media')
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Authentication Configuration
+LOGIN_URL = '/accounts/login/'
+LOGIN_REDIRECT_URL = '/accounts/dashboard/'
+LOGOUT_REDIRECT_URL = '/accounts/login/'
+
+# Admin Configuration
+ADMIN_LOGIN_URL = '/accounts/admin/login/'
+
+# Custom Authentication Backends
+AUTHENTICATION_BACKENDS = [
+    'accounts.backends.SupplierAuthenticationBackend',  # Allow inactive suppliers to login
+    'django.contrib.auth.backends.ModelBackend',  # Default backend for staff/superusers
+]
 
 # Django REST Framework Configuration
 REST_FRAMEWORK = {
@@ -245,14 +298,10 @@ CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 CELERY_RESULT_BACKEND_DB = 'django_celery_results'
 
 # Channels Configuration (for WebSockets)
+# Temporarily using in-memory channel layer until Redis is fixed
 CHANNEL_LAYERS = {
     'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [os.getenv('REDIS_URL', 'redis://localhost:6379/1')],
-            "capacity": 1500,
-            "expiry": 10,
-        },
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
     },
 }
 

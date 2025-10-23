@@ -1,0 +1,146 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+
+{% block title %}My Waybills - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-left">
+                <h1 class="page-title">
+                    <i class="fas fa-truck me-2"></i>
+                    My Waybills
+                </h1>
+                <p class="page-subtitle">Manage your waybill documents</p>
+            </div>
+            <div class="header-right">
+                <a href="{% url 'applications:supplier-create-waybill' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Create New Waybill
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Waybills List -->
+    <div class="card">
+        <div class="card-body">
+            {% if waybills %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Waybill Number</th>
+                                <th>Commodity</th>
+                                <th>Destination</th>
+                                <th>Transporter</th>
+                                <th>Vehicle</th>
+                                <th>Driver</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for waybill in waybills %}
+                            <tr>
+                                <td>
+                                    <strong>{{ waybill.waybill_number }}</strong>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ waybill.commodity.name }}</span>
+                                </td>
+                                <td>
+                                    {{ waybill.destination_school.name }}<br>
+                                    <small class="text-muted">{{ waybill.destination_region.name }}</small>
+                                </td>
+                                <td>
+                                    {{ waybill.transporter_name }}
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ waybill.vehicle_number }}</span>
+                                </td>
+                                <td>
+                                    {{ waybill.driver_name }}
+                                </td>
+                                <td>
+                                    {% if waybill.status == 'DRAFT' %}
+                                        <span class="badge bg-secondary">{{ waybill.get_status_display }}</span>
+                                    {% elif waybill.status == 'SUBMITTED' %}
+                                        <span class="badge bg-warning">{{ waybill.get_status_display }}</span>
+                                    {% elif waybill.status == 'APPROVED' %}
+                                        <span class="badge bg-success">{{ waybill.get_status_display }}</span>
+                                    {% elif waybill.status == 'REJECTED' %}
+                                        <span class="badge bg-danger">{{ waybill.get_status_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{ waybill.created_at|date:"M d, Y" }}<br>
+                                    <small class="text-muted">{{ waybill.created_at|time:"g:i A" }}</small>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button type="button" class="btn btn-outline-primary" 
+                                                onclick="viewWaybill({{ waybill.id }})" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        {% if waybill.document %}
+                                        <a href="{{ waybill.document.url }}" class="btn btn-outline-success" 
+                                           target="_blank" title="Download Document">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-truck fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No Waybills Found</h5>
+                    <p class="text-muted">You haven't created any waybills yet.</p>
+                    <a href="{% url 'applications:supplier-create-waybill' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Create Your First Waybill
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Waybill Details Modal -->
+<div class="modal fade" id="waybillModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Waybill Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="waybillModalBody">
+                <!-- Content will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function viewWaybill(waybillId) {
+    // Load waybill details via AJAX
+    fetch(`/supplier/waybills/${waybillId}/details/`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('waybillModalBody').innerHTML = data.html;
+            new bootstrap.Modal(document.getElementById('waybillModal')).show();
+        })
+        .catch(error => {
+            console.error('Error loading waybill details:', error);
+            alert('Error loading waybill details');
+        });
+}
+</script>
+{% endblock %}
+

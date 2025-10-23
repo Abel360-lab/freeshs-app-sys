@@ -3,29 +3,43 @@
 
 {% block title %}Notification Analytics{% endblock %}
 
-{% block breadcrumb_current %}Notification Analytics{% endblock %}
-
-{% block page_icon %}<i class="fas fa-chart-bar"></i>{% endblock %}
-{% block page_title %}Notification Analytics{% endblock %}
-{% block page_subtitle %}Detailed performance metrics and analytics for notifications{% endblock %}
-
-{% block page_actions %}
-<div class="btn-group" role="group">
-    <button type="button" class="btn btn-outline-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
-        <i class="fas fa-calendar"></i> Last {{ days }} days
-    </button>
-    <ul class="dropdown-menu">
-        <li><a class="dropdown-item" href="?days=7">Last 7 days</a></li>
-        <li><a class="dropdown-item" href="?days=30">Last 30 days</a></li>
-        <li><a class="dropdown-item" href="?days=90">Last 90 days</a></li>
-    </ul>
+{% block page_header_container %}
+<div class="page-header-container">
+    <div class="page-header-content">
+        <div class="page-header-info">
+            <div class="page-header-breadcrumb">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'applications:backoffice-dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'notifications:dashboard' %}">Notifications</a></li>
+                        <li class="breadcrumb-item active">Analytics</li>
+                    </ol>
+                </nav>
+            </div>
+            <h1 class="page-header-title">Notification Analytics</h1>
+            <p class="page-header-subtitle">Detailed performance metrics and analytics for notifications</p>
+        </div>
+        <div class="page-header-actions">
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-outline-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                    <i class="fas fa-calendar"></i> Last {{ days }} days
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="?days=7">Last 7 days</a></li>
+                    <li><a class="dropdown-item" href="?days=30">Last 30 days</a></li>
+                    <li><a class="dropdown-item" href="?days=90">Last 90 days</a></li>
+                </ul>
+            </div>
+            <a href="{% url 'notifications:dashboard' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+            <a href="{% url 'notifications:logs' %}" class="btn btn-primary btn-sm">
+                <i class="fas fa-list"></i> View Logs
+            </a>
+        </div>
+    </div>
+    
 </div>
-<a href="{% url 'notifications:dashboard' %}" class="btn btn-outline-primary btn-sm">
-    <i class="fas fa-arrow-left"></i> Back to Dashboard
-</a>
-<a href="{% url 'notifications:logs' %}" class="btn btn-primary btn-sm">
-    <i class="fas fa-list"></i> View Logs
-</a>
 {% endblock %}
 
 {% block extrahead %}
@@ -126,8 +140,9 @@
     }
     
     .chart-container {
-        background: white;
-        border-radius: var(--border-radius);
+        background: #ffffff;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
         padding: 1.5rem;
         box-shadow: var(--shadow-sm);
         margin-bottom: 2rem;
@@ -166,6 +181,8 @@
         gap: 1rem;
         margin-bottom: 2rem;
     }
+    .card-modern { background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; box-shadow: var(--shadow-sm); overflow: hidden; }
+    .card-modern .card-header { background: #f9fafb; border-bottom: 1px solid var(--border-color); }
     
     .metric-item {
         background: white;
@@ -254,7 +271,7 @@
 <!-- Email vs SMS Comparison -->
 <div class="comparison-grid">
     <!-- Email Statistics -->
-    <div class="card">
+    <div class="card-modern">
         <div class="card-header">
             <h3 class="card-title">
                 <i class="fas fa-envelope"></i>
@@ -324,7 +341,7 @@
     </div>
     
     <!-- SMS Statistics -->
-    <div class="card">
+    <div class="card-modern">
         <div class="card-header">
             <h3 class="card-title">
                 <i class="fas fa-sms"></i>
@@ -406,7 +423,7 @@
 </div>
 
 <!-- Top Templates -->
-<div class="card">
+<div class="card-modern">
     <div class="card-header">
         <h3 class="card-title">
             <i class="fas fa-star"></i>
@@ -415,7 +432,7 @@
     </div>
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table">
+            <table class="table align-middle">
                 <thead>
                     <tr>
                         <th>Template Name</th>
@@ -429,18 +446,20 @@
                     {% for template in top_templates %}
                     <tr>
                         <td>
-                            <strong>{{ template.name }}</strong>
+                            <a href="{% url 'notifications:template-edit' template.id %}" class="text-decoration-none">
+                                <strong>{{ template.name }}</strong>
+                            </a>
                         </td>
                         <td>
-                            <span class="badge {% if template.notification_type == 'APPLICATION_SUBMITTED' %}badge-info{% elif template.notification_type == 'DOCUMENT_REQUEST' %}badge-warning{% else %}badge-secondary{% endif %}">
-                                {{ template.notification_type }}
+                            <span class="badge bg-secondary-subtle text-dark">
+                                {{ template.get_notification_type_display }}
                             </span>
                         </td>
                         <td>
-                            <span class="badge badge-primary">{{ template.sent_count|default:0 }}</span>
+                            <span class="badge bg-primary-subtle text-dark">{{ template.sent_count|default:0 }}</span>
                         </td>
                         <td>
-                            <span class="badge badge-success">95%</span>
+                            <span class="badge bg-success-subtle text-dark">{{ template.success_rate }}%</span>
                         </td>
                         <td>
                             <small>{{ template.last_used|date:"M d, Y" }}</small>
@@ -459,13 +478,17 @@
         </div>
     </div>
 </div>
+<!-- Ensure containers don't collapse on some screens -->
+<div style="height:1px"></div>
 {% endblock %}
 
 {% block extrajs %}
+{{ daily_stats|json_script:"daily-data" }}
+{{ status_distribution|json_script:"status-data" }}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     // Daily activity chart
-    const dailyData = {{ daily_stats|safe }};
+    const dailyData = JSON.parse(document.getElementById('daily-data').textContent);
     
     const ctx = document.getElementById('dailyChart').getContext('2d');
     new Chart(ctx, {
@@ -535,6 +558,39 @@
                 element.classList.add('fade-in');
             }, index * 100);
         });
+    });
+
+    // Status distribution doughnut (compact)
+    const dist = JSON.parse(document.getElementById('status-data').textContent);
+    const afterDaily = document.querySelector('.chart-container');
+    const distContainer = document.createElement('div');
+    distContainer.className = 'chart-container';
+    distContainer.innerHTML = `
+        <div class="chart-title"><i class="fas fa-chart-pie"></i>Status Distribution</div>
+        <div class="chart-wrapper" style="height: 280px;">
+            <canvas id="statusChart"></canvas>
+        </div>
+    `;
+    afterDaily.insertAdjacentElement('afterend', distContainer);
+    const distCtx = document.getElementById('statusChart').getContext('2d');
+    new Chart(distCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Sent','Delivered','Opened','Clicked','Failed','Bounced'],
+            datasets: [{
+                data: [dist.sent, dist.delivered, dist.opened, dist.clicked, dist.failed, dist.bounced],
+                backgroundColor: ['#93c5fd','#34d399','#60a5fa','#a78bfa','#fca5a5','#fcd34d'],
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '60%',
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
     });
 </script>
 {% endblock %}
