@@ -30,9 +30,6 @@ urlpatterns = [
     path('reviews/', include('reviews.urls')),
     path('notifications/', include('notifications.urls')),
     path('core/', include('core.urls', namespace='core')),
-    
-    # Redirect root to backoffice
-    path('', RedirectView.as_view(url='/backoffice/', permanent=False)),
 ]
 
 # Serve media files in development
