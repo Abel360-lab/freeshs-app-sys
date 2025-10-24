@@ -3,7 +3,7 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "mkdir -p logs && export RAILWAY_ENVIRONMENT=true && python manage.py migrate --noinput && python manage.py collectstatic --noinput && python manage.py runserver 0.0.0.0:$PORT",
+    "startCommand": "chmod +x start.sh && ./start.sh",
     "healthcheckPath": "/health/",
     "healthcheckTimeout": 60,
     "restartPolicyType": "ON_FAILURE",
