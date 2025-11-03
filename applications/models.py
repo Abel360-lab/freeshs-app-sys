@@ -16,10 +16,14 @@ class SupplierApplication(models.Model):
     """
     
     class ApplicationStatus(models.TextChoices):
+        DRAFT = 'DRAFT', 'Draft'
+        SUBMITTED = 'SUBMITTED', 'Submitted'
         PENDING_REVIEW = 'PENDING_REVIEW', 'Pending Review'
         UNDER_REVIEW = 'UNDER_REVIEW', 'Under Review'
+        NEEDS_MORE_DOCS = 'NEEDS_MORE_DOCS', 'Needs More Documents'
         APPROVED = 'APPROVED', 'Approved'
         REJECTED = 'REJECTED', 'Rejected'
+        WITHDRAWN = 'WITHDRAWN', 'Withdrawn'
     
     # User Account (created upon application submission)
     user = models.ForeignKey(
