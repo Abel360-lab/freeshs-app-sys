@@ -377,6 +377,13 @@ class AuditLog(models.Model):
         else:
             ip = request.META.get('REMOTE_ADDR')
         return ip
+
+    @classmethod
+    def get_client_ip(cls, request):
+        """Public wrapper for retrieving client IP, kept for backward compatibility."""
+        if request is None:
+            return None
+        return cls._get_client_ip(request)
     
     @classmethod
     def _sanitize_request_data(cls, request):

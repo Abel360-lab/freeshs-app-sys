@@ -1464,13 +1464,16 @@ def bulk_approve_applications(request):
         return redirect('applications:backoffice-applications')
     
     applications = SupplierApplication.objects.filter(
-        id__in=application_ids, 
-        status='pending'
+        id__in=application_ids,
+        status__in=[
+            SupplierApplication.ApplicationStatus.PENDING_REVIEW,
+            SupplierApplication.ApplicationStatus.UNDER_REVIEW,
+        ]
     )
     
     count = 0
     for application in applications:
-        application.status = 'approved'
+        application.status = SupplierApplication.ApplicationStatus.APPROVED
         application.decided_at = timezone.now()
         application.save()
         count += 1
@@ -1495,15 +1498,18 @@ def bulk_reject_applications(request):
         return redirect('applications:backoffice-applications')
     
     applications = SupplierApplication.objects.filter(
-        id__in=application_ids, 
-        status='pending'
+        id__in=application_ids,
+        status__in=[
+            SupplierApplication.ApplicationStatus.PENDING_REVIEW,
+            SupplierApplication.ApplicationStatus.UNDER_REVIEW,
+        ]
     )
     
     count = 0
     notification_success_count = 0
     
     for application in applications:
-        application.status = 'rejected'
+        application.status = SupplierApplication.ApplicationStatus.REJECTED
         application.decided_at = timezone.now()
         application.reviewer_comment = reason
         application.save()
@@ -1814,7 +1820,7 @@ def approve_application(request, pk):
                     </head>
                     <body>
                         <div class="header">
-                            <h1>🎉 Congratulations!</h1>
+                            <h1>?? Congratulations!</h1>
                             <p>Your Application Has Been Approved</p>
                         </div>
                         <div class="content">
@@ -1822,17 +1828,17 @@ def approve_application(request, pk):
                             <p>We are pleased to inform you that your application to become a GCX supplier has been <strong>APPROVED</strong>!</p>
                             <div class="tracking-code">Tracking Code: {{ tracking_code }}</div>
                             <div class="success-box">
-                                <h3>✅ Application Status: APPROVED</h3>
+                                <h3>? Application Status: APPROVED</h3>
                                 <p>Your business has been successfully registered as a GCX supplier.</p>
                             </div>
                             {% if activate_account %}
                             <div class="credentials-box">
-                                <h3>🔐 Your Account Has Been Activated</h3>
+                                <h3>?? Your Account Has Been Activated</h3>
                                 <p>Your supplier account has been activated and you can now log in to the supplier portal.</p>
                             </div>
                             {% else %}
                             <div class="info-box">
-                                <h3>🔐 Account Activation</h3>
+                                <h3>?? Account Activation</h3>
                                 <p>Your supplier account will be activated shortly.</p>
                             </div>
                             {% endif %}
@@ -1850,7 +1856,7 @@ def approve_application(request, pk):
                             </div>
                             {% if approval_notes %}
                             <div class="info-box">
-                                <h3>📝 Approval Notes:</h3>
+                                <h3>?? Approval Notes:</h3>
                                 <p>{{ approval_notes }}</p>
                             </div>
                             {% endif %}
@@ -2189,7 +2195,7 @@ def request_documents(request, pk):
                     </head>
                     <body>
                         <div class="header">
-                            <h1>📄 Additional Documents Required</h1>
+                            <h1>?? Additional Documents Required</h1>
                             <p style="margin: 5px 0 0 0; opacity: 0.9;">GCX Supplier Application Portal</p>
                         </div>
                         <div class="content">
@@ -2197,7 +2203,7 @@ def request_documents(request, pk):
                             
                             {% if missing_count > 0 %}
                             <div class="docs-box">
-                                <h3>⚠️ Missing Documents ({{ missing_count }})</h3>
+                                <h3>?? Missing Documents ({{ missing_count }})</h3>
                                 <p>The following documents are required to proceed with your application:</p>
                                 <ul class="docs-list">
                                     {% for doc in missing_documents %}
@@ -2213,11 +2219,11 @@ def request_documents(request, pk):
                             <div class="message-box">{{ request_message }}</div>
                             
                             <div style="text-align: center; margin: 30px 0;">
-                                <a href="{{ upload_url }}" class="button">📤 Upload Documents Now</a>
+                                <a href="{{ upload_url }}" class="button">?? Upload Documents Now</a>
                             </div>
                             
                             <div class="info-box">
-                                <h4 style="margin-top: 0;">📋 Document Requirements:</h4>
+                                <h4 style="margin-top: 0;">?? Document Requirements:</h4>
                                 <ul style="margin: 10px 0; padding-left: 20px;">
                                     <li>All documents must be in <strong>PDF, JPG, or PNG</strong> format</li>
                                     <li>Maximum file size: <strong>10MB</strong> per document</li>
@@ -2227,7 +2233,7 @@ def request_documents(request, pk):
                             </div>
                             
                             <div class="info-box">
-                                <p style="margin: 0;"><strong>📞 Need Help?</strong></p>
+                                <p style="margin: 0;"><strong>?? Need Help?</strong></p>
                                 <p style="margin: 10px 0 0 0;">Contact our support team at <strong>membership@gcx.com.gh</strong> or call <strong>+233 302 937 677</strong></p>
                             </div>
                             
@@ -2247,7 +2253,7 @@ GCX Supplier Application Portal
 Application: {{ tracking_code }}
 
 {% if missing_count > 0 %}
-⚠️ Missing Documents ({{ missing_count }}):
+?? Missing Documents ({{ missing_count }}):
 {% for doc in missing_documents %}
 - {{ doc.name }}{% if doc.description %} ({{ doc.description }}){% endif %}
 {% endfor %}
@@ -2256,7 +2262,7 @@ Application: {{ tracking_code }}
 MESSAGE FROM GCX ADMIN:
 {{ request_message }}
 
-📋 DOCUMENT REQUIREMENTS:
+?? DOCUMENT REQUIREMENTS:
 - All documents must be in PDF, JPG, or PNG format
 - Maximum file size: 10MB per document
 - Documents must be clear and legible
@@ -2265,7 +2271,7 @@ MESSAGE FROM GCX ADMIN:
 UPLOAD YOUR DOCUMENTS:
 {{ upload_url }}
 
-📞 NEED HELP?
+?? NEED HELP?
 Contact our support team:
 Email: membership@gcx.com.gh
 Phone: +233 302 937 677
@@ -2275,7 +2281,7 @@ GCX Supplier Portal Team
 
 ---
 This is an automated message from GCX Supplier Portal
-© {{ request_date|slice:"-4:" }} Ghana Commodity Exchange. All rights reserved.
+? {{ request_date|slice:"-4:" }} Ghana Commodity Exchange. All rights reserved.
                     ''',
                     'is_active': True
                 }
@@ -2480,7 +2486,7 @@ def send_notification(request, pk):
                     </head>
                     <body>
                         <div class="header">
-                            <h1>📢 Notification</h1>
+                            <h1>?? Notification</h1>
                             <p>Important Update</p>
                         </div>
                         <div class="content">
@@ -2488,7 +2494,7 @@ def send_notification(request, pk):
                             <p>We have an important update regarding your application.</p>
                             <div class="tracking-code">Tracking Code: {{ tracking_code }}</div>
                             <div class="info-box">
-                                <h3>📝 Message from GCX Team:</h3>
+                                <h3>?? Message from GCX Team:</h3>
                                 <p>{{ notification_message }}</p>
                             </div>
                             <div style="text-align: center;">
